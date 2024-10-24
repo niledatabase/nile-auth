@@ -1,0 +1,20 @@
+{
+  "extends": "@nile-auth/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "next.config.mjs",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "jest.config.js",
+    "next.config.js"
+, "../../packages/api/src/routes/me/me.test.ts"  ],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,11 @@
+{
+  "apiFolder": "app",
+  "outputFile": "openapi/swagger.json",
+  "definition": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "nile-auth APIs",
+      "version": "1.0"
+    }
+  }
+}

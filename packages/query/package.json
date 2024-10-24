@@ -1,0 +1,31 @@
+{
+  "name": "@nile-auth/query",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/query.ts",
+    "./getDbInfo": "./src/getDbInfo.ts"
+  },
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint . --max-warnings 0",
+    "generate:component": "turbo gen react-component"
+  },
+  "devDependencies": {
+    "@nile-auth/eslint-config": "*",
+    "@nile-auth/typescript-config": "*",
+    "@turbo/gen": "^1.12.4",
+    "@types/eslint": "^8.56.5",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.11.24",
+    "@types/pg": "^8",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@nile-auth/logger": "*",
+    "pg": "^8.13.0"
+  }
+}

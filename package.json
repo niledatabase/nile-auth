@@ -3,19 +3,24 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
+    "start:server": "turbo start --filter=@nile-auth/server",
     "dev": "turbo dev",
     "lint": "turbo lint",
+    "test": "turbo test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
+    "eslint": "^9.13.0",
     "prettier": "^3.2.5",
+    "prettier-plugin-embed": "^0.4.15",
+    "prettier-plugin-sql": "^0.18.1",
     "turbo": "^2.2.3",
     "typescript": "^5.4.5"
   },
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "yarn@1.22.21",
+  "packageManager": "yarn@4.5.0",
   "workspaces": [
     "apps/*",
     "packages/*"

@@ -9,14 +9,17 @@ module.exports = {
     "prettier",
     require.resolve("@vercel/style-guide/eslint/next"),
     "turbo",
+    'plugin:@typescript-eslint/recommended'
   ],
   globals: {
     React: true,
     JSX: true,
+    jest: true
   },
   env: {
     node: true,
     browser: true,
+    jest: true
   },
   plugins: ["only-warn"],
   settings: {
@@ -31,5 +34,9 @@ module.exports = {
     ".*.js",
     "node_modules/",
   ],
+  rules: {
+    "@typescript-eslint/no-unused-vars": "error",
+    "no-unused-vars": "off"
+  },
   overrides: [{ files: ["*.js?(x)", "*.ts?(x)"] }],
 };
