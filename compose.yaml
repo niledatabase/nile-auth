@@ -1,0 +1,25 @@
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Docker compose reference guide at
+# https://docs.docker.com/go/compose-spec-reference/
+
+# Here the instructions define your application as a service called "server".
+# This service is built from the Dockerfile in the current directory.
+# You can add other services your application may depend on here, such as a
+# database or a cache. For examples, see the Awesome Compose repository:
+# https://github.com/docker/awesome-compose
+services:
+  nile-auth-server:
+    container_name: nile-auth-server
+    build:
+      context: .
+      dockerfile: ./apps/server/Dockerfile
+    environment:
+      NODE_ENV: production
+      # LOG_LEVEL: debug
+      NEXT_TELEMETRY_DISABLED: 1
+      ## Get these values from console.thenile.dev
+      # NILEDB_HOST: 
+      # NILEDB_USER: 
+      # NILEDB_PASSWORD: 
+    ports:
+      - 3001:3001

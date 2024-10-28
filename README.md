@@ -1,81 +1,59 @@
-# Turborepo starter
+  <p align="center">
+<a href="https://thenile.dev" target="_blank"><img width="96px" src="https://www.thenile.dev/about-logo.png" /></a>
 
-This is an official starter Turborepo.
+<h2>Nile Auth</h2>
+User authentication and authorization for <a href="https://thenile.dev">Nile database</a>
+    <br />
+    <a href="https://thenile.dev/docs/auth"><strong>Learn more »</strong></a>
+    <br />
+    <br />
+    <a href="https://discord.gg/akRKRPKA">Discord</a>
+    ·
+    <a href="https://thenile.dev">Website</a>
+    ·
+    <a href="https://github.com/niledatabase/nile-auth/issues">Issues</a>
 
-## Using this example
+  </p>
 
-Run the following command:
+🚧 This project is in alpha and not yet recommended for production use. 🚧
 
-```sh
-npx create-turbo@latest
+## Using this service
+
+First, update `compose.yaml` with a set of developer credentials and region, which can be obtained at [here](console.thenile.dev).
+
+```yaml
+services:
+  nile-auth-server:
+    container_name: nile-auth-server
+    build:
+      context: .
+      dockerfile: ./apps/server/Dockerfile
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+      NILEDB_HOST: <the db region url>
+      NILEDB_USER: <UUID>
+      NILEDB_PASSWORD: <UUID>
+    ports:
+      - 3001:3001
+```
+
+Then build/start the container.
+
+```bash
+docker compose up --build
 ```
 
 ## What's inside?
 
-This Turborepo includes the following packages/apps:
+A Nextjs web server that handles authentication and authorization, as well as tenant and user management.
 
 ### Apps and Packages
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@nile-auth/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@nile-auth/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@nile-auth/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- `@nile-auth/server`: a [Next.js](https://nextjs.org/) app for serving REST APIs
+- `@nile-auth/query`: a small wrapper around [pg node](https://node-postgres.com/) to make querying easier
+- `@nile-auth/core`: a small wrapper around NextAuth(https://next-auth.js.org/) which connects to a Nile database
 
 Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
 
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm build
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm dev
-```
-
-### Remote Caching
-
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+Nile Auth is free and open source project licensed under the [MIT License](./LICENSE.md). You are free to do whatever you want with it.

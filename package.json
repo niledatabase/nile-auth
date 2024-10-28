@@ -1,8 +1,9 @@
 {
-  "name": "nile-auth",
+  "name": "@nile-auth/package",
   "private": true,
   "scripts": {
     "build": "turbo build",
+    "install:server": "turbo install --filter=@nile-auth/server",
     "start:server": "turbo start --filter=@nile-auth/server",
     "dev": "turbo dev",
     "lint": "turbo lint",

@@ -1420,6 +1420,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@nile-auth/package@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@nile-auth/package@workspace:."
+  dependencies:
+    eslint: "npm:^9.13.0"
+    prettier: "npm:^3.2.5"
+    prettier-plugin-embed: "npm:^0.4.15"
+    prettier-plugin-sql: "npm:^0.18.1"
+    turbo: "npm:^2.2.3"
+    typescript: "npm:^5.4.5"
+  languageName: unknown
+  linkType: soft
+
 "@nile-auth/query@npm:*, @nile-auth/query@workspace:packages/query":
   version: 0.0.0-use.local
   resolution: "@nile-auth/query@workspace:packages/query"
@@ -7696,19 +7709,6 @@ __metadata:
   checksum: 10c0/8cd036a6f30d4cc8ab8480c19339ee6134ffd5b18338ff5a07de397ed4e29fad54de5219f70aafabf1fe9c48a7d54b7df58ba1f29cfa5d3351ff7763e8d4844e
   languageName: node
   linkType: hard
-
-"nile-auth@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "nile-auth@workspace:."
-  dependencies:
-    eslint: "npm:^9.13.0"
-    prettier: "npm:^3.2.5"
-    prettier-plugin-embed: "npm:^0.4.15"
-    prettier-plugin-sql: "npm:^0.18.1"
-    turbo: "npm:^2.2.3"
-    typescript: "npm:^5.4.5"
-  languageName: unknown
-  linkType: soft
 
 "no-case@npm:^2.2.0, no-case@npm:^2.3.2":
   version: 2.3.2
