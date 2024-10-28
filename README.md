@@ -1,21 +1,25 @@
+<p align="center">
+ <a href="https://thenile.dev" target="_blank"><img width="96px" src="https://www.thenile.dev/about-logo.png" /></a>
+ <h2 align="center">Nile Auth</h2>
   <p align="center">
-<a href="https://thenile.dev" target="_blank"><img width="96px" src="https://www.thenile.dev/about-logo.png" /></a>
+  User authentication and authorization for <a href="https://thenile.dev">Nile database</a>
+  <br />
+  <a href="https://thenile.dev/docs/auth"><strong>Learn more ↗️</strong></a>
+  <br />
+  <br />
+  <a href="https://discord.gg/akRKRPKA">Discord</a>
+  🔵
+  <a href="https://thenile.dev">Website</a>
+  🔵 
+  <a href="https://github.com/niledatabase/nile-auth/issues">Issues</a>
+ </p>
+</p>
 
-<h2>Nile Auth</h2>
-User authentication and authorization for <a href="https://thenile.dev">Nile database</a>
-    <br />
-    <a href="https://thenile.dev/docs/auth"><strong>Learn more »</strong></a>
-    <br />
-    <br />
-    <a href="https://discord.gg/akRKRPKA">Discord</a>
-    ·
-    <a href="https://thenile.dev">Website</a>
-    ·
-    <a href="https://github.com/niledatabase/nile-auth/issues">Issues</a>
-
-  </p>
-
+<p align="center">
+<strong>
 🚧 This project is in alpha and not yet recommended for production use. 🚧
+</strong>
+</p>
 
 ## Using this service
 
