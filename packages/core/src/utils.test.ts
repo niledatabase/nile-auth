@@ -1,4 +1,4 @@
-import { getSecureCookies } from "./nextOptions";
+import { getSecureCookies } from "./next-auth/cookies";
 
 describe("buildOptionsFromReq", () => {
   beforeEach(() => {

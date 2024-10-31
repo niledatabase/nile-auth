@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./cookies": "./src/next-auth/cookies.ts",
+    "./csrf": "./src/next-auth/csrf.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",

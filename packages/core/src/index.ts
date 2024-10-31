@@ -52,4 +52,3 @@ export default async function NileAuth(
   return new Response(null, { status: 500 });
 }
 export { auth } from "./auth";
-export { getSecureCookies } from "./nextOptions";

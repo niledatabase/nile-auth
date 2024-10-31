@@ -1,7 +1,6 @@
 import { handleFailure, queryByReq } from "@nile-auth/query";
 import { ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
-
 import { ErrorResultSet } from "@nile-auth/query";
 
 /**
@@ -53,6 +52,13 @@ export async function POST(req: NextRequest) {
   const sql = await queryByReq(req);
   if (!body.email) {
     return responder("email is required", { status: 400 });
+  }
+  const validEmail =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(
+      body.email,
+    );
+  if (!validEmail) {
+    return handleFailure(req, undefined, "Invalid email address");
   }
   const newUser = await sql`
     INSERT INTO
