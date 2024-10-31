@@ -1,6 +1,6 @@
 import { getToken } from "next-auth/jwt";
 import { Logger } from "@nile-auth/logger";
-import { getSecureCookies } from "./nextOptions";
+import { getSecureCookies } from "./next-auth/cookies";
 
 type SessionUser = { user?: { id?: string } };
 

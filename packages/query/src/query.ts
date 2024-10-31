@@ -81,7 +81,10 @@ export function query(pool: Pool) {
         e,
       );
     });
-    debug("[SQL]", { text: text.replace(/(\n\s+)/g, " ").trim(), values });
+    debug("[SQL]", {
+      text: text.replace(/(\n\s+)/g, " ").trim(),
+      ...(values.length ? { values } : {}),
+    });
     if (client) {
       await client.release();
     }

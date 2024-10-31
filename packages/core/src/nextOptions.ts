@@ -4,18 +4,7 @@ import { Logger } from "@nile-auth/logger";
 
 import { DbInfo } from "./types";
 import { getProviders } from "./next-auth/getProviders";
-import { defaultCookies } from "./next-auth/cookies";
-
-export function getSecureCookies(req: Request): boolean {
-  const secureCookies = req.headers.get("niledb-useSecureCookies");
-
-  if (secureCookies != null) {
-    return Boolean(secureCookies);
-  }
-
-  const origin = req.headers.get("niledb-origin");
-  return Boolean(String(origin).startsWith("https://"));
-}
+import { defaultCookies, getSecureCookies } from "./next-auth/cookies";
 
 const { error } = Logger("[next-auth-options]");
 

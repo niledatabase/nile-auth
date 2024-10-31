@@ -72,7 +72,7 @@ export async function POST(
       requestHeaders: serializeHeaders(req.headers),
       responseHeaders: serializeHeaders(res.headers),
       body: await new Response(body.body).text(),
-      href: req.nextUrl.href,
+      href: req.nextUrl?.href ?? req.url,
     };
 
     if (res.status > 303) {
