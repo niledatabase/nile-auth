@@ -1,8 +1,8 @@
 replicaCount: 1
 
 image:
-  repository: ''
-  tag: ''
+  repository: ""
+  tag: ""
 
 resources:
   requests:
@@ -10,20 +10,18 @@ resources:
     memory: 128Mi
 
 ingress:
-  host: ''
-  certificateArn: ''
-  globalControlPlaneHost: ''
+  host: ""
+  certificateArn: ""
+  globalControlPlaneHost: ""
 
-jwtSecretKey: ''
-nextauthSecret: ''
-khnumHostname: 'khnum.nile.svc.cluster.local'
-khnumUser: ''
-khnumPassword: ''
-consoleSession: ''
+nextauthSecret: ""
+niledbHostname: "khnum.nile.svc.cluster.local"
+niledbUser: ""
+niledbPassword: ""
 
 datadog:
-  env: ''
+  env: ""
 
 sentry:
-  authToken: ''
-  dsn: ''
+  authToken: ""
+  dsn: ""

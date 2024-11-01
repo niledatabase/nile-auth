@@ -31,22 +31,18 @@ spec:
         env:
           - name: DISABLE_LOGGING
             value: "true"
-          - name: JWT_SECRET_KEY
-            value: "{{ .Values.jwtSecretKey }}"
-          - name: KHNUM
-            value: "{{ .Values.khnumHostname }}"
           - name: NEXTAUTH_SECRET
             value: "{{ .Values.nextauthSecret }}"
-          - name: CONSOLE_SESSION
-            value: "{{ .Values.consoleSession }}"
           - name: SENTRY_AUTH_TOKEN
             value: "{{ .Values.sentry.authToken }}"
           - name: SENTRY_DSN
             value: "{{ .Values.sentry.dsn }}"
-          - name: KHNUM_USER
-            value: "{{ .Values.khnumUser }}"
-          - name: KHNUM_PASSWORD
-            value: "{{ .Values.khnumPassword }}"
+          - name: NILEDB_HOST
+            value: "{{ .Values.niledbHostname }}"
+          - name: NILEDB_USER
+            value: "{{ .Values.niledbUser }}"
+          - name: NILEDB_PASSWORD
+            value: "{{ .Values.niledbPassword }}"
         ports:
           - containerPort: 3001
             name: http
