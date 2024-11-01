@@ -46,7 +46,7 @@ jobs:
             type=sha,format=short
             type=sha,format=long
             type=raw,value=${{ steps.tag.outputs.tag }}
-            type=raw,value=ts{{date 'X'}}-sha-{{sha}}
+            type=raw,value=ts-{{date 'X'}}-sha-{{sha}}
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
           images: |
             ${{ env.GHCR_IMAGE }}
