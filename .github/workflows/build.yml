@@ -16,6 +16,8 @@ env:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     permissions:
       id-token: write
       contents: write
@@ -81,3 +83,40 @@ jobs:
           platforms: linux/amd64,linux/arm64
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
+  helm:
+    runs-on: ubuntu-latest
+    needs: docker
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: '3.16.2'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::483388953608:role/github-role-Role-MIMIOJ3EPX6V
+          role-session-name: khnum-github-action
+
+      - name: Helm login
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io -u $ --password-stdin
+          aws ecr get-login-password \
+            --region ${{ env.AWS_REGION }} | helm registry login \
+            --username AWS \
+            --password-stdin 483388953608.dkr.ecr.us-west-2.amazonaws.com
+
+      - name: Package helm chart
+        run: |
+          helm package --app-version '${{ needs.docker.outputs.tag }}' --version '${{ needs.docker.outputs.tag }}' ./charts/server
+
+      - name: Push helm chart
+        run: |
+          helm push nile-auth-${{ needs.docker.outputs.tag }}.tgz oci://ghcr.io/${{ github.repository_owner }}/helm-charts
+          helm push nile-auth-${{ needs.docker.outputs.tag }}.tgz oci://483388953608.dkr.ecr.us-west-2.amazonaws.com/helm-charts
