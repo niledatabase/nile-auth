@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: auth-server
+  name: nile-auth
 spec:
   selector:
-      app.kubernetes.io/name: auth-server
+      app.kubernetes.io/name: nile-auth
   ports:
     - protocol: TCP
       port: 3001

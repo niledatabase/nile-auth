@@ -1,30 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth-server
+  name: nile-auth
   namespace: nile
   labels:
-    tags.datadoghq.com/service: auth-server
+    tags.datadoghq.com/service: nile-auth
     tags.datadoghq.com/env: {{ .Values.datadog.env }}
     tags.datadoghq.com/version: "{{ default .Chart.AppVersion .Values.image.tag }}"
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: auth-server
+      app.kubernetes.io/name: nile-auth
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: auth-server
-        tags.datadoghq.com/service: auth-server
+        app.kubernetes.io/name: nile-auth
+        tags.datadoghq.com/service: nile-auth
         tags.datadoghq.com/env: {{ .Values.datadog.env }}
         tags.datadoghq.com/version: "{{ default .Chart.AppVersion .Values.image.tag }}"
         admission.datadoghq.com/enabled: "true"
       annotations:
-        ad.datadoghq.com/auth-server.logs: '[{}]'
+        ad.datadoghq.com/nile-auth.logs: '[{}]'
     spec:
       containers:
-      - name: auth-server
+      - name: nile-auth
         image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
         resources:
 {{ toYaml .Values.resources | indent 12 }}
