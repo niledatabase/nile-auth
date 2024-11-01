@@ -1,0 +1,65 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: auth-server
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.certificateArn }}
+    alb.ingress.kubernetes.io/success-codes: "404"
+    alb.ingress.kubernetes.io/healthcheck-path: "/nothing_here"
+    alb.ingress.kubernetes.io/target-group-attributes: 'stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=300'
+spec:
+  ingressClassName: alb
+  defaultBackend:
+    service:
+      name: khnum
+      port:
+        number: 8080
+  rules:
+{{- if .Values.ingress.globalControlPlaneHost }}
+    - host: "{{ .Values.ingress.globalControlPlaneHost }}"
+      http:
+        paths:
+          - backend:
+              service:
+                name: khnum
+                port:
+                  number: 8080
+            path: /
+            pathType: Prefix
+{{- end }}
+    - host: "{{ .Values.ingress.host }}"
+      http:
+        paths:
+          - path: /v2/
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-server
+                port:
+                  number: 3001
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: khnum
+                port:
+                  number: 8080
+    - host: '*.{{ .Values.ingress.host }}'
+      http:
+        paths:
+          - path: /v2/
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-server
+                port:
+                  number: 3001
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: khnum
+                port:
+                  number: 8080

@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: ''
+  tag: ''
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+ingress:
+  host: ''
+  certificateArn: ''
+  globalControlPlaneHost: ''
+
+jwtSecretKey: ''
+nextauthSecret: ''
+khnumHostname: 'khnum.nile.svc.cluster.local'
+khnumUser: ''
+khnumPassword: ''
+consoleSession: ''
+
+datadog:
+  env: ''
+
+sentry:
+  authToken: ''
+  dsn: ''
