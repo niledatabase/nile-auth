@@ -2,7 +2,9 @@
  * this is wrong, but its better than 0
  * @swagger
  * /v2/databases/{database}/auth/signin:
- *   post:
+ *   get:
+ *     tags:
+ *     - auth
  *     summary: Sign in to the application
  *     description: Authenticates a user and creates a session.
  *     parameters:
@@ -58,6 +60,8 @@
  *                   example: Unauthorized
  * /v2/databases/{database}/auth/signout:
  *   post:
+ *     tags:
+ *       - auth
  *     summary: Sign out of the application
  *     description: Ends the user session.
  *     parameters:
@@ -75,6 +79,8 @@
  *                   example: Signed out
  * /v2/databases/{database}/auth/session:
  *   get:
+ *     tags:
+ *       - auth
  *     summary: Get the current session
  *     description: Returns the session object if the user is authenticated.
  *     parameters:
@@ -117,6 +123,8 @@
  *                   example: Unauthorized
  * /v2/databases/{database}/auth/csrf:
  *   get:
+ *     tags:
+ *       - auth
  *     summary: Get CSRF token
  *     description: Returns a CSRF token to be used in subsequent requests.
  *     parameters:
@@ -134,6 +142,8 @@
  *                   example: abc123
  * /v2/databases/{database}/auth/providers:
  *   get:
+ *     tags:
+ *       - auth
  *     summary: Get available providers
  *     description: Returns a list of available authentication providers.
  *     parameters:
@@ -159,10 +169,13 @@
  *                     example: oauth
  * /v2/databases/{database}/auth/callback/{provider}:
  *   post:
+ *     tags:
+ *       - auth
  *     summary: Handle provider callback
  *     description: Handles the callback from an authentication provider.
  *     parameters:
  *       - $ref: '#/components/parameters/database'
+ *       - $ref: '#/components/parameters/provider'
  *     responses:
  *       '200':
  *         description: Successful callback
@@ -197,6 +210,8 @@
  *                   example: Unauthorized
  * /v2/databases/{database}/auth/session/token:
  *   post:
+ *     tags:
+ *       - auth
  *     summary: Refresh session token
  *     description: Refreshes the session token to extend the session duration.
  *     parameters:

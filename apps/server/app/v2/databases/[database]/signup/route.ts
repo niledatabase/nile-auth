@@ -3,9 +3,9 @@
  * /v2/databases/{database}/signup:
  *   post:
  *     tags:
- *     - databases
- *     summary: Creates a user
- *     description: Creates a user in the database
+ *     - users
+ *     summary: Signs up a new user
+ *     description: Creates a user in the database and then logs them in.
  *     operationId: signup
  *     parameters:
  *       - name: database
@@ -23,6 +23,11 @@
  *         in: query
  *         schema:
  *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateUser'
  *     responses:
  *       "201":
  *         description: User created
@@ -63,6 +68,19 @@ export async function POST(
   if (!hasValidToken) {
     // maybe make the client go get it
     return new Response("Request blocked", { status: 400 });
+  }
+  // support /swagger ability to allow developers to log in
+  const swagger = req.clone();
+
+  const swagBody = await swagger.json();
+
+  // only do this if sign up has swagger values
+  if (swagBody.developerPassword) {
+    process.env.NILEDB_USER = swagBody.developerUser;
+    process.env.NILEDB_PASSWORD = swagBody.developerPassword;
+    process.env.NILEDB_NAME = swagBody.database;
+    process.env.NILEDB_HOST = swagBody.host;
+    process.env.NILEDB_PORT = swagBody.port;
   }
 
   const userCreate = await USER_POST(req);
