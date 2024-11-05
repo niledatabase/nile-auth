@@ -1,0 +1,58 @@
+body {
+  font-family: sans-serif;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 111ch;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.form-content {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+label {
+  font-weight: 500;
+  padding: .3rem 0 .3rem;
+}
+input {
+  padding:.4rem;
+  margin-bottom:.3rem;
+  border-radius: .3rem;
+  border: 1px solid rgba(0,0,0,.3)
+}
+.form-wrapper {
+  width: 50ch;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0,0,0,.5);
+  border-radius: .3rem;
+  padding:1rem;
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+button {
+  padding: .6rem 1rem;
+  font-size:14px;
+  border-radius: .6rem;
+  cursor: pointer;
+  border: none;
+  background: #fca130;
+
+}
+
+.warning {
+  padding: 1rem;
+  border-radius: 3rem;
+  text-align: center;
+  color: white;
+  background: rgb(205, 0, 0);
+  font-weight: 600;
+}

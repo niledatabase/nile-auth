@@ -7,7 +7,7 @@ import { ErrorResultSet } from "@nile-auth/query";
 /**
  * @swagger
  * /v2/databases/{database}/tenants:
- *   POST:
+ *   post:
  *     tags:
  *     - tenants
  *     summary: creates a tenant
@@ -34,10 +34,10 @@ import { ErrorResultSet } from "@nile-auth/query";
  *     responses:
  *       "201":
  *         description: A created tenants
- *           content:
- *             application/json:
- *               schema:
- *                  $ref: '#/components/schemas/Tenant'
+ *         content:
+ *           application/json:
+ *             schema:
+ *                $ref: '#/components/schemas/Tenant'
  *       "400":
  *         description: API/Database failures
  *         content:
@@ -50,6 +50,8 @@ import { ErrorResultSet } from "@nile-auth/query";
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *     security:
+ *     - sessionCookie: []
  */
 export async function POST(req: NextRequest) {
   const responder = ResponseLogger(req);
