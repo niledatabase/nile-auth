@@ -10,9 +10,9 @@ import { ErrorResultSet } from "@nile-auth/query";
  * /v2/databases/{database}/tenants/{tenantId}/users/{userId}:
  *   delete:
  *     tags:
- *     - databases
+ *     - users
  *     summary: deletes a user
- *     description: Deletes user sessions, and marks them deleted from the database and tenants
+ *     description: Deletes user sessions, and marks them deleted from the tenant. It does not remove the user from other tenants or invalidate active sessions.
  *     operationId: deleteTenantUser
  *     parameters:
  *       - name: database
@@ -40,6 +40,8 @@ import { ErrorResultSet } from "@nile-auth/query";
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *     security:
+ *     - sessionCookie: []
  */
 export async function DELETE(
   req: NextRequest,
@@ -134,7 +136,7 @@ export async function DELETE(
  * /v2/databases/{database}/tenants/{tenantId}/users/{userId}:
  *   put:
  *     tags:
- *     - databases
+ *     - users
  *     summary: update a user
  *     description: updates a user
  *     operationId: updateTenantUser
@@ -154,6 +156,11 @@ export async function DELETE(
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       content:
+ *        application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUser'
  *     responses:
  *       "200":
  *         description: Identified user
@@ -167,6 +174,8 @@ export async function DELETE(
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *     security:
+ *     - sessionCookie: []
  */
 export async function PUT(
   req: NextRequest,

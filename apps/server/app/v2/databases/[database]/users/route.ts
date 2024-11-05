@@ -9,9 +9,9 @@ import { ErrorResultSet } from "@nile-auth/query";
  * /v2/databases/{database}/users:
  *   post:
  *     tags:
- *       - databases
+ *       - users
  *     summary: Creates a user
- *     description: Creates a user in the database
+ *     description: Adds a brand new user to the database
  *     operationId: createUser
  *     parameters:
  *       - name: database
@@ -29,6 +29,11 @@ import { ErrorResultSet } from "@nile-auth/query";
  *         in: query
  *         schema:
  *           type: string
+ *     requestBody:
+ *        content:
+ *         application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/CreateUser'
  *     responses:
  *       "201":
  *         description: User created

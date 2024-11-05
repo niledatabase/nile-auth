@@ -4,7 +4,57 @@
  *
  * @swagger
  * components:
+ *   securitySchemes:
+ *    sessionCookie:
+ *      type: apiKey
+ *      in: cookie
+ *      name: nile-auth.session-token
+ *      description: "Session token stored in a cookie after user signs in, prefixed with __Secure if on https"
+ *   parameters:
+ *     database:
+ *        name: database
+ *        in: path
+ *        required: true
+ *        schema:
+ *          type: string
+ *        description: The string (id or name, depending on the credentials)
+ *     provider:
+ *        name: provider
+ *        in: path
+ *        required: true
+ *        schema:
+ *          type: string
+ *        description: the name of the provider (credentials, google, etc)
  *   schemas:
+ *     CreateUser:
+ *       required:
+ *       - email
+ *       - password
+ *       type: object
+ *       properties:
+ *         email:
+ *           type: string
+ *         password:
+ *           type: string
+ *         name:
+ *           type: string
+ *         givenName:
+ *           type: string
+ *         familyName:
+ *           type: string
+ *         picture:
+ *           type: string
+ *     UpdateUser:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *         givenName:
+ *           type: string
+ *         familyName:
+ *           type: string
+ *         picture:
+ *           type: string
  *     CreateTenantRequest:
  *       required:
  *         - name

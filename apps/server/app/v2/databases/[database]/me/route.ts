@@ -8,7 +8,7 @@ import { NextRequest } from "next/server";
  * /v2/databases/{database}/me:
  *   get:
  *     tags:
- *     - databases
+ *     - users
  *     summary: Identify the principal
  *     description: Returns information about the principal associated with the session
  *       provided
@@ -38,6 +38,8 @@ import { NextRequest } from "next/server";
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *     security:
+ *     - sessionCookie: []
  */
 export async function GET(req: NextRequest) {
   const responder = ResponseLogger(req);
