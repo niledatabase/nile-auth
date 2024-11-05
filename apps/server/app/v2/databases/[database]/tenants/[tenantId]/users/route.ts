@@ -10,7 +10,7 @@ import { ErrorResultSet } from "@nile-auth/query";
  * /v2/databases/{database}/tenants/{tenantId}/users:
  *   get:
  *     tags:
- *     - tenants
+ *     - users
  *     summary: a list of tenant users
  *     description: Returns a list of tenant users from the database
  *     operationId: listTenantUsers
@@ -44,6 +44,8 @@ import { ErrorResultSet } from "@nile-auth/query";
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *     security:
+ *     - sessionCookie: []
  */
 export async function GET(
   req: NextRequest,
@@ -112,9 +114,9 @@ export async function GET(
  * /v2/databases/{database}/tenants/{tenantId}/users:
  *   post:
  *     tags:
- *       - tenants
- *     summary: create a tenant user
- *     description: Creates a user on the tenant
+ *       - users
+ *     summary: create a new user and assigns them to a tenant
+ *     description: Creates a brand new user on a tenant
  *     operationId: createTenantUser
  *     parameters:
  *       - name: database
@@ -127,6 +129,11 @@ export async function GET(
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *        content:
+ *         application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/UpdateUser'
  *     responses:
  *       "201":
  *         description: update an existing tenant
@@ -146,6 +153,8 @@ export async function GET(
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *     security:
+ *     - sessionCookie: []
  */
 export async function POST(
   req: NextRequest,
@@ -176,7 +185,19 @@ export async function POST(
       return responder(null, { status: 404 });
     }
 
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      /*noop*/
+    }
+    if (!body) {
+      return handleFailure(
+        req,
+        {} as ErrorResultSet,
+        "Missing body from request",
+      );
+    }
 
     const newUser = await sql`
       INSERT INTO
@@ -280,11 +301,11 @@ export async function POST(
  *
  * @swagger
  * /v2/databases/{database}/tenants/{tenantId}/users:
- *   post:
+ *   put:
  *     tags:
- *       - tenants
- *     summary: links a user to a tenant
- *     description: adds a user on the tenant
+ *       - users
+ *     summary: links an existing user to a tenant
+ *     description: A user that already exists is added to a tenant
  *     operationId: linkTenantUser
  *     parameters:
  *       - name: database
@@ -297,6 +318,11 @@ export async function POST(
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUser'
  *     responses:
  *       "201":
  *         description: update an existing tenant
@@ -316,6 +342,8 @@ export async function POST(
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *     security:
+ *     - sessionCookie: []
  */
 export async function PUT(
   req: NextRequest,

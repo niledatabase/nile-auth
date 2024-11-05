@@ -48,6 +48,8 @@ import { NextRequest } from "next/server";
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *     security:
+ *     - sessionCookie: []
  */
 export async function PUT(
   req: NextRequest,
@@ -139,6 +141,8 @@ export async function PUT(
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *     security:
+ *     - sessionCookie: []
  */
 export async function DELETE(
   req: NextRequest,
@@ -229,6 +233,8 @@ export async function DELETE(
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *     security:
+ *     - sessionCookie: []
  */
 export async function GET(
   req: NextRequest,
