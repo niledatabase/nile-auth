@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   if (session && session?.user?.id) {
     const body = await req.json();
     const sql = await queryByReq(req);
-    const userRows = await sql`
+    const [userRows] = await sql`
       SELECT
         *
       FROM
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     }
     const [user] = userRows.rows;
 
-    const tenants = await sql`
+    const [tenants] = await sql`
       INSERT INTO
         tenants (name)
       VALUES
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
       "id" in user &&
       "email" in user
     ) {
-      const tenantUser = await sql`
+      const [tenantUser] = await sql`
         INSERT INTO
           users.tenant_users (tenant_id, user_id, email)
         VALUES

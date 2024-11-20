@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
   const [session] = await auth(req);
   if (session && session?.user?.id) {
     const sql = await queryByReq(req);
-    const [user, tenants] = await Promise.all([
+    const [[user], [tenants]] = await Promise.all([
       await sql`
         SELECT
           id,

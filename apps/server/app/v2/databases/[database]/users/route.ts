@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   if (!validEmail) {
     return handleFailure(req, undefined, "Invalid email address");
   }
-  const newUser = await sql`
+  const [newUser] = await sql`
     INSERT INTO
       users.users (email, name, family_name, given_name, picture)
     VALUES
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
 
   const user = newUser.rows[0] as { id: string };
   if (newTenantName) {
-    const tenant = await sql`
+    const [tenant] = await sql`
       INSERT INTO
         tenants (name)
       VALUES
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (tenantId) {
-    const tenantUser = await sql`
+    const [tenantUser] = await sql`
       INSERT INTO
         users.tenant_users (tenant_id, user_id, email)
       VALUES
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
     }
   }
   if (body.password) {
-    const credentials = await sql`
+    const [credentials] = await sql`
       INSERT INTO
         auth.credentials (user_id, method, provider, payload)
       VALUES

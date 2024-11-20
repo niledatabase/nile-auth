@@ -9,7 +9,7 @@ export default async function Swagger() {
   const spec = await getSpec();
   return (
     <div>
-      <form className="form">
+      <form className="form" autoComplete="off">
         <div className="warning">
           Warning: this is sending developer credentials across the wire. We
           recommend deleting the credentials after testing this out.

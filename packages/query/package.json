@@ -26,6 +26,6 @@
   },
   "dependencies": {
     "@nile-auth/logger": "*",
-    "pg": "^8.13.0"
+    "pg": "^8.13.1"
   }
 }

@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const responder = ResponseLogger(req);
   if (session && session?.user?.id) {
     const sql = await queryByReq(req);
-    const tenantRows = await sql`
+    const [tenantRows] = await sql`
       SELECT DISTINCT
         t.id,
         t.name

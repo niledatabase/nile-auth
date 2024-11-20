@@ -4,6 +4,7 @@ import { Pool } from "pg";
 import { handleQuery } from "./handleQuery";
 import getDbInfo from "./getDbInfo";
 export { formatTime } from "./formatTime";
+import format from "pg-format";
 const { debug } = Logger("adaptor sql");
 
 export enum Commands {
@@ -102,31 +103,47 @@ export async function queryByReq(req: Request) {
   return async function sqlTemplate(
     strings: TemplateStringsArray,
     ...values: Primitive[]
-  ): Promise<ResultSet> {
+  ): Promise<ResultSet[]> {
     let text = strings[0] ?? "";
 
+    const [initial] = values;
+    const usesContext = String(initial).startsWith(":");
+    let removed = 0;
     for (let i = 1; i < strings.length; i++) {
-      text += `$${i}${strings[i] ?? ""}`;
+      // context is always first, I suppose
+      if (String(values[0]).startsWith(":")) {
+        // we have a context, so we need to "manually" parse all the values so pgnode actually works
+        text += `${String(values[0]).slice(1)}${strings[i] ?? ""}`;
+        values.splice(0, 1);
+        removed++;
+      } else {
+        if (usesContext) {
+          text += `${fixPrepare(null, String(values[0]))}${strings[i] ?? ""}`;
+          values.splice(0, 1);
+        } else {
+          text += `$${i - removed}${strings[i] ?? ""}`;
+        }
+      }
     }
     const json = {
       text,
       values: values as string[],
     };
     if (!dbInfo) {
-      return {
-        name: "error",
-        message: "unable to connect to the database",
-      } as ErrorResultSet;
+      return [
+        {
+          name: "error",
+          message: "unable to connect to the database",
+        } as ErrorResultSet,
+      ];
     } else {
       const data = await handleQuery({
         json,
         ...dbInfo,
         rowMode: "none",
       });
-
       debug(text.replace(/(\n\s+)/g, " ").trim());
-      const body = await new Response(data.body).json();
-      return body[0];
+      return data;
     }
   };
 }
@@ -160,4 +177,31 @@ export function handleFailure(
   }
 
   return responder(`${msg}`, { status: 400 });
+}
+
+// pg node prepared statements throw an Internal Error when trying to do `SET`, so "hard code" it into the query
+// works in conjunction with queryByReq to look for `:` and replace it accordingly
+export function addContext({
+  tenantId,
+  userId,
+}: {
+  tenantId?: string;
+  userId?: string;
+}) {
+  let ctx = "";
+  if (tenantId) {
+    ctx = fixPrepare("SET nile.tenant_id", tenantId);
+  }
+  // can't have one without the other, but that's not how the query gets built
+  if (userId) {
+    ctx += fixPrepare("SET nile.user_id", userId);
+  }
+  return ctx;
+}
+
+export function fixPrepare(line: string | null, val: string) {
+  if (line) {
+    return `:${format(`${line} = '%s'`, val)}`;
+  }
+  return `${format("'%s'", val)}`;
 }
