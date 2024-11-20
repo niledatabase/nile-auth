@@ -53,7 +53,7 @@ export function Form() {
                 developerUser: e.target.value,
               }))
             }
-            name="developer_user"
+            name="nothing"
           />
           <label>NileDB password</label>
           <input
@@ -61,11 +61,11 @@ export function Form() {
             onChange={(e) =>
               setForm((state) => ({
                 ...state,
-                host: e.target.value,
+                developerPassword: e.target.value,
               }))
             }
-            name="developer_password"
             type="password"
+            autoComplete="new-password"
           />
           <label>NileDB host</label>
           <input

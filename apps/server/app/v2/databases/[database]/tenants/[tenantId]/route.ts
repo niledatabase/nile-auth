@@ -4,6 +4,7 @@ import {
   ErrorResultSet,
   handleFailure,
   queryByReq,
+  addContext,
 } from "@nile-auth/query";
 import { ResponseLogger } from "@nile-auth/logger";
 
@@ -29,13 +30,25 @@ import { NextRequest } from "next/server";
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       description: Tenant values to be updated.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateTenant'
+ *           examples:
+ *             Rename tenant:
+ *               summary: Renames the tenant
+ *               description: Tenant Request
+ *               value:
+ *                 name: New tenant name
  *     responses:
  *       "201":
  *         description: update an existing tenant
  *         content:
  *           application/json:
  *             schema:
- *                $ref: '#/components/schemas/Tenant'
+ *                $ref: '#/components/schemas/UpdateTenant'
  *       "400":
  *         description: API/Database failures
  *         content:
@@ -58,20 +71,21 @@ export async function PUT(
   const [session] = await auth(req);
   const responder = ResponseLogger(req);
   if (session && session?.user?.id) {
-    if (!params.tenantId) {
+    const { tenantId } = params;
+    if (!tenantId) {
       return handleFailure(req, undefined, "tenantId is required.");
     }
 
     const sql = await queryByReq(req);
 
-    const userInTenant = await sql`
+    const [userInTenant] = await sql`
       SELECT
         COUNT()
       FROM
         users.tenant_users
       WHERE
         user_id = ${session.user.id}
-        AND tenant_id = ${params.tenantId}
+        AND tenant_id = ${tenantId}
     `;
 
     if (userInTenant && "name" in userInTenant) {
@@ -81,12 +95,12 @@ export async function PUT(
       return responder(null, { status: 404 });
     }
     const body = await req.json();
-    const tenants = await sql`
+    const [tenants] = await sql`
       UPDATE tenants
       SET
         name = ${body.name}
       WHERE
-        id = ${params.tenantId}
+        id = ${tenantId}
       RETURNING
         *;
     `;
@@ -157,7 +171,7 @@ export async function DELETE(
 
     const sql = await queryByReq(req);
 
-    const userInTenant = await sql`
+    const [userInTenant] = await sql`
       SELECT
         COUNT(*)
       FROM
@@ -173,7 +187,7 @@ export async function DELETE(
     if (!userInTenant || (userInTenant && userInTenant.rowCount === 0)) {
       return new Response(null, { status: 404 });
     }
-    const tenants = await sql`
+    const [tenants] = await sql`
       UPDATE tenants
       SET
         deleted = ${formatTime()}
@@ -249,7 +263,7 @@ export async function GET(
 
     const sql = await queryByReq(req);
 
-    const userInTenant = await sql`
+    const [userInTenant] = await sql`
       SELECT
         COUNT(*)
       FROM
@@ -265,7 +279,7 @@ export async function GET(
     if (!userInTenant || (userInTenant && userInTenant.rowCount === 0)) {
       return new Response(null, { status: 404 });
     }
-    const tenants = await sql`
+    const [tenants] = await sql`
       SELECT
         *
       FROM

@@ -44,6 +44,13 @@
  *           type: string
  *         picture:
  *           type: string
+ *     LinkUser:
+ *       type: object
+ *       required:
+ *         - id
+ *       properties:
+ *         id:
+ *           type: string
  *     UpdateUser:
  *       type: object
  *       properties:
@@ -69,6 +76,11 @@
  *       properties:
  *         id:
  *           type: string
+ *         name:
+ *           type: string
+ *     UpdateTenant:
+ *       type: object
+ *       properties:
  *         name:
  *           type: string
  *     User:

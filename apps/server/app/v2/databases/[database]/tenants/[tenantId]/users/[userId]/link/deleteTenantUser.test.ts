@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { auth } from "../../../../../../../../../../packages/core/src/auth";
+import { auth } from "../../../../../../../../../../../packages/core/src/auth";
 import { queryByReq, formatTime } from "@nile-auth/query";
 
 import { DELETE } from "./route";

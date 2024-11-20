@@ -1,135 +1,13 @@
 import { auth } from "@nile-auth/core";
-import { handleFailure, queryByReq, formatTime } from "@nile-auth/query";
+import {
+  handleFailure,
+  queryByReq,
+  formatTime,
+  addContext,
+  ErrorResultSet,
+} from "@nile-auth/query";
 import { ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
-
-import { ErrorResultSet } from "@nile-auth/query";
-
-/**
- * @swagger
- * /v2/databases/{database}/tenants/{tenantId}/users/{userId}:
- *   delete:
- *     tags:
- *     - users
- *     summary: deletes a user
- *     description: Deletes user sessions, and marks them deleted from the tenant. It does not remove the user from other tenants or invalidate active sessions.
- *     operationId: deleteTenantUser
- *     parameters:
- *       - name: database
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *       - name: tenantId
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *       - name: userId
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       "204":
- *         description: The user was deleted
- *         content: {}
- *       "404":
- *         description: Not found
- *         content: {}
- *       "401":
- *         description: Unauthorized
- *         content: {}
- *     security:
- *     - sessionCookie: []
- */
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { userId?: string; tenantId: string } },
-) {
-  const [session] = await auth(req);
-  const responder = ResponseLogger(req);
-  if (session && session?.user?.id) {
-    if (!params.userId) {
-      return handleFailure(req, undefined, "userid is required.");
-    }
-    if (!params.tenantId) {
-      return handleFailure(req, undefined, "tenantId is required.");
-    }
-
-    const sql = await queryByReq(req);
-    const existingSessionUser = await sql`
-      SELECT
-        COUNT(*)
-      FROM
-        users.tenant_users
-      WHERE
-        user_id = ${session.user.id}
-        AND tenant_id = ${params.tenantId}
-    `;
-    if (
-      existingSessionUser &&
-      "rowCount" in existingSessionUser &&
-      existingSessionUser.rowCount === 0
-    ) {
-      return responder(null, { status: 404 });
-    }
-
-    const body = await req.json();
-    let userInTenant;
-    if (body.email) {
-      userInTenant = await sql`
-        SELECT
-          *
-        FROM
-          users.tenant_users
-        WHERE
-          email = ${decodeURIComponent(body.email)}
-          AND tenant_id = ${params.tenantId}
-      `;
-    } else {
-      userInTenant = await sql`
-        SELECT
-          *
-        FROM
-          users.tenant_users
-        WHERE
-          user_id = ${params.userId}
-          AND tenant_id = ${params.tenantId}
-      `;
-    }
-    if (
-      userInTenant &&
-      "rowCount" in userInTenant &&
-      userInTenant.rowCount === 0
-    ) {
-      return responder(null, { status: 404 });
-    }
-    if (userInTenant && "name" in userInTenant) {
-      return handleFailure(req, userInTenant as ErrorResultSet);
-    }
-    const user = userInTenant?.rows[0] ?? {};
-    if (!user) {
-      return responder(null, { status: 404 });
-    }
-
-    const users = await sql`
-      UPDATE users.tenant_users
-      SET
-        deleted = ${formatTime()}
-      WHERE
-        user_id = ${String(user.user_id)}
-        AND tenant_id = ${params.tenantId}
-    `;
-    if (users && "rows" in users) {
-      return responder(null, { status: 204 });
-    } else {
-      return responder(null, { status: 404 });
-    }
-  }
-
-  return responder(null, { status: 401 });
-}
 
 /**
  * @swagger
@@ -138,7 +16,7 @@ export async function DELETE(
  *     tags:
  *     - users
  *     summary: update a user
- *     description: updates a user
+ *     description: Updates a user, provided the authorized user is in the same tenant as that user
  *     operationId: updateTenantUser
  *     parameters:
  *       - name: database
@@ -184,45 +62,49 @@ export async function PUT(
   const [session] = await auth(req);
   const responder = ResponseLogger(req);
   if (session && session?.user?.id) {
-    if (!params.userId) {
+    const { userId, tenantId } = params;
+    if (!userId) {
       return handleFailure(req, undefined, "userId is required.");
     }
-    if (!params.tenantId) {
+    if (!tenantId) {
       return handleFailure(req, undefined, "tenantId is required.");
     }
     const sql = await queryByReq(req);
-    const userInTenant = await sql`
+    const [, , userInTenant] = await sql`
+      ${addContext({ tenantId })};
+
+      ${addContext({ userId: session.user.id })};
+
       SELECT
         COUNT(*)
       FROM
         users.tenant_users
       WHERE
-        user_id = ${session.user.id}
-        AND tenant_id = ${params.tenantId}
+        user_id = ${userId}
+        AND tenant_id = ${tenantId}
+        AND deleted IS NULL
     `;
     if (
       userInTenant &&
       "rowCount" in userInTenant &&
-      userInTenant.rowCount === 0
+      (Number(userInTenant.rows[0]?.count) ?? 0) === 0
     ) {
       return responder(null, { status: 404 });
     }
     const body = await req.json();
-    const [userData] = await Promise.all([
-      await sql`
-        SELECT
-          id,
-          email,
-          name,
-          family_name AS "familyName",
-          given_name AS "givenName",
-          picture
-        FROM
-          users.users
-        WHERE
-          id = ${params.userId}
-      `,
-    ]);
+    const [userData] = await sql`
+      SELECT
+        id,
+        email,
+        name,
+        family_name AS "familyName",
+        given_name AS "givenName",
+        picture
+      FROM
+        users.users
+      WHERE
+        id = ${userId}
+    `;
     if (userData && "rows" in userData) {
       if (userData.rowCount === 0) {
         return responder(null, { status: 404 });
@@ -234,7 +116,7 @@ export async function PUT(
         givenName: string;
         picture: string;
       };
-      const updatedUser = await sql`
+      const [updatedUser] = await sql`
         UPDATE users.users
         SET
           name = ${body?.name ?? user.name},
@@ -242,7 +124,7 @@ export async function PUT(
           given_name = ${body.givenName ?? user.givenName},
           picture = ${body.picture ?? user.picture}
         WHERE
-          id = ${params.userId}
+          id = ${userId}
         RETURNING
           id,
           email,
