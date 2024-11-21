@@ -41,7 +41,7 @@ const getDatabase = (config?: Partial<DbCreds>, req?: Request) => {
   if (req) {
     const _url = new URL(req.url);
     // /v2/databases/[database]
-    return _url.pathname.split("/")[3];
+    return _url.pathname.split("/")[2];
   }
 };
 

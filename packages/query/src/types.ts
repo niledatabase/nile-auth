@@ -9,3 +9,17 @@ export type LoggerType = {
   info: LogType;
   error: LogType;
 };
+
+export type ErrorResultSet = {
+  cmd: string;
+  code: string;
+  file: string;
+  length: number;
+  line: string;
+  message: string;
+  name: "error";
+  position: string;
+  routine: string;
+  severity: "ERROR";
+  lineNumber: string;
+};
