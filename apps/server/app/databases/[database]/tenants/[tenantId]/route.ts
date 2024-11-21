@@ -90,7 +90,7 @@ export async function PUT(
       return handleFailure(req, tenants as ErrorResultSet);
     }
 
-    if (tenants && "rowCount" in tenants) {
+    if (tenants && "rowCount" in tenants && tenants.rowCount > 0) {
       return responder(JSON.stringify(tenants.rows[0]));
     } else {
       return responder(null, { status: 404 });
