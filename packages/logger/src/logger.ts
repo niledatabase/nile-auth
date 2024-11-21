@@ -121,13 +121,35 @@ type ResponderFn = (
   detail?: Record<string, string | Record<string, string>>,
 ) => Response;
 
-export function ResponseLogger(req: Request): ResponderFn {
+export function ResponseLogger(req: Request, event: EventEnum): ResponderFn {
   return function Responder(body, init, detail): Response {
     const url = new URL(req.url);
+    logger.defaultMeta = { event };
     info(`[${req.method ?? "GET"}] ${url.pathname}`, { ...detail, init });
     if (!(body instanceof Response)) {
       return new Response(body, init);
     }
     return body;
   };
+}
+
+export enum EventEnum {
+  CREATE_USER = "CREATE_USER",
+  GET_DB_INFO = "GET_DB_INFO",
+  ME = "ME",
+  NILE_AUTH = "NILE_AUTH",
+  LOGIN = "LOGIN",
+  SIGN_UP = "SIGN_UP",
+  CREATE_TENANT = "CREATE_TENANT",
+  UPDATE_TENANT = "UPDATE_TENANT",
+  DELETE_TENANT = "DELETE_TENANT",
+  LIST_TENANT = "LIST_TENANT",
+  LIST_TENANTS = "LIST_TENANTS",
+  LIST_USERS = "LIST_USERS",
+  LIST_TENANT_USERS = "LIST_TENANT_USERS",
+  CREATE_TENANT_USER = "CREATE_TENANT_USER",
+  UPDATE_TENANT_USER = "UPDATE_TENANT_USER",
+  LINK_USER = "LINK_USER",
+  UNLINK_USER = "UNLINK_USER",
+  QUERY = "QUERY",
 }

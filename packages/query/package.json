@@ -4,7 +4,9 @@
   "private": true,
   "exports": {
     ".": "./src/query.ts",
-    "./getDbInfo": "./src/getDbInfo.ts"
+    "./getDbInfo": "./src/getDbInfo.ts",
+    "./context": "./src/context.ts",
+    "./utils": "./src/utils.ts"
   },
   "scripts": {
     "test": "jest",
