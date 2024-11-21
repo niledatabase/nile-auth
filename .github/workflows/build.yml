@@ -6,7 +6,7 @@ concurrency:
 on:
   push:
     branches:
-      - '**'
+      - "**"
 
 env:
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
@@ -14,7 +14,27 @@ env:
   AWS_REGION: us-west-2
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "yarn"
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: test
+        run: yarn test
   docker:
+    needs: test
     runs-on: ubuntu-latest-4core
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
@@ -95,7 +115,7 @@ jobs:
 
       - uses: azure/setup-helm@v4
         with:
-          version: '3.16.2'
+          version: "3.16.2"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
