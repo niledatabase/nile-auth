@@ -21,6 +21,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^20.11.24",
     "@types/pg": "^8",
+    "@types/pg-format": "^1",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
@@ -28,6 +29,7 @@
   },
   "dependencies": {
     "@nile-auth/logger": "*",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "pg-format": "^1.0.4"
   }
 }
