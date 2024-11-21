@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import * as handlers from "../auth/[...nextauth]/route";
-import { Logger } from "@nile-auth/logger";
+import { EventEnum, Logger } from "@nile-auth/logger";
 import {
   getCallbackCookie,
   getCookie,
@@ -8,7 +8,7 @@ import {
   getSecureCookies,
 } from "@nile-auth/core/cookies";
 import { getCsrfCookie, getCsrfParts } from "@nile-auth/core/csrf";
-const { debug, error } = Logger("login");
+const log = Logger(EventEnum.LOGIN);
 
 const routes = {
   PROVIDERS: "/auth/providers",
@@ -31,12 +31,12 @@ export async function login(
     "niledb-origin": ORIGIN,
   };
 
-  debug("Obtaining csrf");
+  log.debug("Obtaining csrf");
   const [csrfToken] = getCsrfParts(getCsrfCookie(req)) ?? [];
 
   const signInUrl = req.url.replace("signup", "callback/credentials");
 
-  debug(`Attempting sign in with email ${email} ${signInUrl}`);
+  log.debug(`Attempting sign in with email ${email} ${signInUrl}`);
 
   const useSecureCookies = getSecureCookies(req);
   const callbackCookie = getCookie(
@@ -76,9 +76,9 @@ export async function login(
   const [, token] =
     /((__Secure-)?nile\.session-token=.+?);/.exec(authCookie) ?? [];
   if (!token) {
-    error("Unable to obtain auth token", { authCookie });
+    log.error("Unable to obtain auth token", { authCookie });
     throw new Error("Server login failed");
   }
-  debug("Server login successful", { authCookie, csrfCookie });
+  log.debug("Server login successful", { authCookie, csrfCookie });
   return loginRes.headers;
 }

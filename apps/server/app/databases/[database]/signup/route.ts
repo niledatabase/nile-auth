@@ -1,6 +1,14 @@
+import { EventEnum, ResponseLogger } from "@nile-auth/logger";
+import { NextRequest } from "next/server";
+
+import { POST as USER_POST } from "../users/route";
+
+import { login } from "./login";
+import { validCsrfToken } from "@nile-auth/core/csrf";
+import { Logger } from "@nile-auth/logger";
 /**
  * @swagger
- * /v2/databases/{database}/signup:
+ * /databases/{database}/signup:
  *   post:
  *     tags:
  *     - users
@@ -46,19 +54,11 @@
  *         content: {}
  */
 
-import { ResponseLogger } from "@nile-auth/logger";
-import { NextRequest } from "next/server";
-
-import { POST as USER_POST } from "../users/route";
-
-import { login } from "./login";
-import { validCsrfToken } from "@nile-auth/core/csrf";
-
 export async function POST(
   req: NextRequest,
   { params }: { params: { database: string; nextauth: string[] } },
 ) {
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.SIGN_UP);
   const [hasValidToken] = await validCsrfToken(
     req,
     process.env.NEXTAUTH_SECRET,

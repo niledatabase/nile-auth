@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 
 import NileAuth from "@nile-auth/core";
-import { Logger, ResponseLogger } from "@nile-auth/logger";
+import { EventEnum, Logger, ResponseLogger } from "@nile-auth/logger";
 
-const { error } = Logger("[next-auth]");
+const log = Logger(EventEnum.NILE_AUTH);
 
 function serializeHeaders(headers: Headers) {
   const serializedHeaders: Record<string, string> = {};
@@ -17,7 +17,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { database: string; nextauth: string[] } },
 ) {
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.NILE_AUTH);
   try {
     const res = await NileAuth(req, { params });
 
@@ -28,7 +28,7 @@ export async function GET(
     };
 
     if (res.status > 303) {
-      error(res);
+      log.error(res);
     }
     if (res.status === 302) {
       const location = res.headers.get("location");
@@ -50,7 +50,7 @@ export async function GET(
     }
   } catch (e) {
     if (e instanceof Error) {
-      error("Failure occurred in nextauth post", {
+      log.error("Failure occurred in nextauth post", {
         error: e.message,
         stack: e.stack,
       });
@@ -63,7 +63,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { database: string; nextauth: string[] } },
 ) {
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.NILE_AUTH);
   try {
     const body = req.clone();
 
@@ -76,7 +76,7 @@ export async function POST(
     };
 
     if (res.status > 303) {
-      error(res);
+      log.error(res);
     }
 
     if (res.status === 302) {
@@ -99,7 +99,7 @@ export async function POST(
     }
   } catch (e) {
     if (e instanceof Error) {
-      error("Failure occurred in nextauth post", {
+      log.error("Failure occurred in nextauth post", {
         error: e.message,
         stack: e.stack,
       });

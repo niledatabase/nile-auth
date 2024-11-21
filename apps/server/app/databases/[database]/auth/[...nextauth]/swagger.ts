@@ -1,7 +1,7 @@
 /**
  * this is wrong, but its better than 0
  * @swagger
- * /v2/databases/{database}/auth/signin:
+ * /databases/{database}/auth/signin:
  *   get:
  *     tags:
  *     - auth
@@ -58,7 +58,7 @@
  *                 error:
  *                   type: string
  *                   example: Unauthorized
- * /v2/databases/{database}/auth/signout:
+ * /databases/{database}/auth/signout:
  *   post:
  *     tags:
  *       - auth
@@ -77,7 +77,7 @@
  *                 message:
  *                   type: string
  *                   example: Signed out
- * /v2/databases/{database}/auth/session:
+ * /databases/{database}/auth/session:
  *   get:
  *     tags:
  *       - auth
@@ -121,7 +121,7 @@
  *                 error:
  *                   type: string
  *                   example: Unauthorized
- * /v2/databases/{database}/auth/csrf:
+ * /databases/{database}/auth/csrf:
  *   get:
  *     tags:
  *       - auth
@@ -140,7 +140,7 @@
  *                 csrfToken:
  *                   type: string
  *                   example: abc123
- * /v2/databases/{database}/auth/providers:
+ * /databases/{database}/auth/providers:
  *   get:
  *     tags:
  *       - auth
@@ -167,7 +167,7 @@
  *                   type:
  *                     type: string
  *                     example: oauth
- * /v2/databases/{database}/auth/callback/{provider}:
+ * /databases/{database}/auth/callback/{provider}:
  *   post:
  *     tags:
  *       - auth
@@ -208,7 +208,7 @@
  *                 error:
  *                   type: string
  *                   example: Unauthorized
- * /v2/databases/{database}/auth/session/token:
+ * /databases/{database}/auth/session/token:
  *   post:
  *     tags:
  *       - auth

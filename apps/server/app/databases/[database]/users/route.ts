@@ -1,12 +1,12 @@
 import { handleFailure, queryByReq } from "@nile-auth/query";
-import { ResponseLogger } from "@nile-auth/logger";
+import { Logger, EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 import { ErrorResultSet } from "@nile-auth/query";
 
 /**
  *
  * @swagger
- * /v2/databases/{database}/users:
+ * /databases/{database}/users:
  *   post:
  *     tags:
  *       - users
@@ -52,7 +52,7 @@ import { ErrorResultSet } from "@nile-auth/query";
  *         content: {}
  */
 export async function POST(req: NextRequest) {
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.CREATE_USER);
   const body = await req.json();
   const sql = await queryByReq(req);
   if (!body.email) {

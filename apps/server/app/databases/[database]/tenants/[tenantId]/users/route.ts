@@ -5,14 +5,14 @@ import {
   handleFailure,
   queryByReq,
 } from "@nile-auth/query";
-import { ResponseLogger } from "@nile-auth/logger";
+import { EventEnum, Logger, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 
 import { ErrorResultSet } from "@nile-auth/query";
 
 /**
  * @swagger
- * /v2/databases/{database}/tenants/{tenantId}/users:
+ * /databases/{database}/tenants/{tenantId}/users:
  *   get:
  *     tags:
  *     - users
@@ -57,7 +57,7 @@ export async function GET(
   { params }: { params: { database?: string; tenantId?: string } },
 ) {
   const [session] = await auth(req);
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.LIST_TENANT_USERS);
   if (session && session?.user?.id) {
     const { tenantId } = params;
     if (!tenantId) {
@@ -100,7 +100,7 @@ export async function GET(
 /**
  *
  * @swagger
- * /v2/databases/{database}/tenants/{tenantId}/users:
+ * /databases/{database}/tenants/{tenantId}/users:
  *   post:
  *     tags:
  *       - users
@@ -150,7 +150,7 @@ export async function POST(
   { params }: { params: { database?: string; tenantId?: string } },
 ) {
   const [session] = await auth(req);
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.CREATE_TENANT_USER);
   if (session && session?.user?.id) {
     const { tenantId } = params ?? {};
     if (!tenantId) {

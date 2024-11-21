@@ -6,12 +6,12 @@ import {
   addContext,
   ErrorResultSet,
 } from "@nile-auth/query";
-import { ResponseLogger } from "@nile-auth/logger";
+import { Logger, EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 
 /**
  * @swagger
- * /v2/databases/{database}/tenants/{tenantId}/users/{userId}:
+ * /databases/{database}/tenants/{tenantId}/users/{userId}:
  *   put:
  *     tags:
  *     - users
@@ -60,7 +60,7 @@ export async function PUT(
   { params }: { params: { userId?: string; tenantId?: string } },
 ) {
   const [session] = await auth(req);
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.UPDATE_TENANT_USER);
   if (session && session?.user?.id) {
     const { userId, tenantId } = params;
     if (!userId) {

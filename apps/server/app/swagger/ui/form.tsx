@@ -129,10 +129,10 @@ export function Form() {
             e.stopPropagation();
             e.preventDefault();
             // doing this manually, @niledatabase/react handles this automatically
-            await fetch(`/v2/databases/${form.database}/auth/csrf`, {
+            await fetch(`/databases/${form.database}/auth/csrf`, {
               headers: { "niledb-origin": window.location.origin },
             });
-            await fetch(`/v2/databases/${form.database}/signup`, {
+            await fetch(`/databases/${form.database}/signup`, {
               method: "POST",
               body: JSON.stringify(form),
               headers: { "niledb-origin": window.location.origin },

@@ -1,11 +1,11 @@
 import { auth } from "@nile-auth/core";
 import { handleFailure, queryByReq, ErrorResultSet } from "@nile-auth/query";
-import { ResponseLogger } from "@nile-auth/logger";
+import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 
 /**
  * @swagger
- * /v2/databases/{database}/me:
+ * /databases/{database}/me:
  *   get:
  *     tags:
  *     - users
@@ -42,7 +42,7 @@ import { NextRequest } from "next/server";
  *     - sessionCookie: []
  */
 export async function GET(req: NextRequest) {
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.ME);
   const [session] = await auth(req);
   if (session && session?.user?.id) {
     const sql = await queryByReq(req);

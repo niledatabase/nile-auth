@@ -1,4 +1,4 @@
-import { Logger } from "@nile-auth/logger";
+import { EventEnum, Logger } from "@nile-auth/logger";
 import { ResponseLogger } from "@nile-auth/logger";
 import { Pool } from "pg";
 import { handleQuery } from "./handleQuery";
@@ -158,7 +158,7 @@ export function handleFailure(
   pgData?: ErrorResultSet,
   msg?: string,
 ) {
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.QUERY);
   if (pgData && "code" in pgData) {
     if (pgData.code === ErrorCodes.unique_violation) {
       return responder(`${msg} already exists.`, { status: 400 });

@@ -29,14 +29,10 @@ spec:
         resources:
 {{ toYaml .Values.resources | indent 12 }}
         env:
-          - name: DISABLE_LOGGING
-            value: "true"
+          - name: BASE_PATH
+            value: "{{ .Values.basePath }}"
           - name: NEXTAUTH_SECRET
             value: "{{ .Values.nextauthSecret }}"
-          - name: SENTRY_AUTH_TOKEN
-            value: "{{ .Values.sentry.authToken }}"
-          - name: SENTRY_DSN
-            value: "{{ .Values.sentry.dsn }}"
           - name: NILEDB_HOST
             value: "{{ .Values.niledbHostname }}"
           - name: NILEDB_USER

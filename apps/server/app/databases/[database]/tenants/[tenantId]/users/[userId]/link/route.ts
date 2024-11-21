@@ -1,5 +1,5 @@
 import { auth } from "@nile-auth/core";
-import { ResponseLogger } from "@nile-auth/logger";
+import { Logger, EventEnum, ResponseLogger } from "@nile-auth/logger";
 import {
   addContext,
   ErrorResultSet,
@@ -12,7 +12,7 @@ import { NextRequest } from "next/server";
 /**
  *
  * @swagger
- * /v2/databases/{database}/tenants/{tenantId}/users/{userId}/link:
+ * /databases/{database}/tenants/{tenantId}/users/{userId}/link:
  *   put:
  *     tags:
  *       - users
@@ -64,7 +64,7 @@ export async function PUT(
   }: { params: { database?: string; tenantId?: string; userId?: string } },
 ) {
   const [session] = await auth(req);
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.LINK_USER);
   if (session && session?.user?.id) {
     const { tenantId, userId } = params ?? {};
     if (!tenantId) {
@@ -188,7 +188,7 @@ export async function PUT(
 
 /**
  * @swagger
- * /v2/databases/{database}/tenants/{tenantId}/users/{userId}/link:
+ * /databases/{database}/tenants/{tenantId}/users/{userId}/link:
  *   delete:
  *     tags:
  *     - users
@@ -229,7 +229,7 @@ export async function DELETE(
   { params }: { params: { userId?: string; tenantId: string } },
 ) {
   const [session] = await auth(req);
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.UNLINK_USER);
   if (session && session?.user?.id) {
     if (!params.userId) {
       return handleFailure(req, undefined, "userId is required.");

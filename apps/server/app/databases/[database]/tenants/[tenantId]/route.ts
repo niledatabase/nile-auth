@@ -6,13 +6,12 @@ import {
   queryByReq,
   addContext,
 } from "@nile-auth/query";
-import { ResponseLogger } from "@nile-auth/logger";
+import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 
 import { NextRequest } from "next/server";
-
 /**
  * @swagger
- * /v2/databases/{database}/tenants/{tenantId}:
+ * /databases/{database}/tenants/{tenantId}:
  *   put:
  *     tags:
  *     - tenants
@@ -69,7 +68,7 @@ export async function PUT(
   { params }: { params: { database?: string; tenantId?: string } },
 ) {
   const [session] = await auth(req);
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.UPDATE_TENANT);
   if (session && session?.user?.id) {
     const { tenantId } = params;
     if (!tenantId) {
@@ -121,7 +120,7 @@ export async function PUT(
 
 /**
  * @swagger
- * /v2/databases/{database}/tenants/{tenantId}:
+ * /databases/{database}/tenants/{tenantId}:
  *   delete:
  *     tags:
  *     - tenants
@@ -162,7 +161,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { database?: string; tenantId?: string } },
 ) {
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.DELETE_TENANT);
   const [session] = await auth(req);
   if (session && session?.user?.id) {
     if (!params.tenantId) {
@@ -210,7 +209,7 @@ export async function DELETE(
 }
 /**
  * @swagger
- * /v2/databases/{database}/tenants/{tenantId}:
+ * /databases/{database}/tenants/{tenantId}:
  *   get:
  *     tags:
  *     - tenants
@@ -255,7 +254,7 @@ export async function GET(
   { params }: { params: { database?: string; tenantId?: string } },
 ) {
   const [session] = await auth(req);
-  const responder = ResponseLogger(req);
+  const responder = ResponseLogger(req, EventEnum.LIST_TENANT);
   if (session && session?.user?.id) {
     if (!params.tenantId) {
       return handleFailure(req, undefined, "tenantId is required.");
