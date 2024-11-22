@@ -112,6 +112,13 @@ export async function queryByReq(req: Request) {
         }
       }
     }
+    if (usesContext) {
+      // unset it for the next query. Later, make this smarter so a single request handles this well, or convert the `ClientManager` to use pools
+      if (text[text.length - 1] !== ";") {
+        text += ";";
+      }
+      text += `RESET nile.user_id; RESET nile.tenant_id;`;
+    }
     const json = {
       text,
       values: values as string[],

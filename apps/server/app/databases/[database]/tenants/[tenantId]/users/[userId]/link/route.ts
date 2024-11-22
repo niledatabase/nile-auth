@@ -240,10 +240,29 @@ export async function DELETE(
     const { tenantId, userId } = params;
     const sql = await queryByReq(req);
 
-    const [, , users] = await sql`
+    const [, , principalInTenant] = await sql`
       ${addContext({ tenantId })};
 
       ${addContext({ userId: session.user.id })};
+
+      SELECT
+        COUNT(*)
+      FROM
+        users.tenant_users
+      WHERE
+        deleted IS NULL
+    `;
+    if (
+      principalInTenant &&
+      "rowCount" in principalInTenant &&
+      (Number(principalInTenant.rows[0]?.count) ?? 0) === 0
+    ) {
+      return responder(null, { status: 404 });
+    }
+    const [, , users] = await sql`
+      ${addContext({ tenantId })};
+
+      ${addContext({ userId })};
 
       UPDATE users.tenant_users
       SET

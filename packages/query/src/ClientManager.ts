@@ -11,7 +11,7 @@ export const getServerId = (config: ClientConfig) => {
   return makeServerId(config);
 };
 export const makeServerId = (config: ClientConfig) => {
-  return Buffer.from(JSON.stringify(config), "base64").toString();
+  return Buffer.from(JSON.stringify(config)).toString("base64");
 };
 
 export default class ClientManager {

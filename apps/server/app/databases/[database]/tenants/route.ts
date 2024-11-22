@@ -5,6 +5,7 @@ import { NextRequest } from "next/server";
 
 import { ErrorResultSet } from "@nile-auth/query";
 import { handleFailure } from "@nile-auth/query/utils";
+import { addContext } from "@nile-auth/query/context";
 /**
  * @swagger
  * /databases/{database}/tenants:

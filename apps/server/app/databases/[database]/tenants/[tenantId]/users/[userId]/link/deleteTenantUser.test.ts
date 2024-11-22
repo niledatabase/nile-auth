@@ -90,7 +90,8 @@ describe("mark a user deleted", () => {
       },
     });
     expect(runCommands).toEqual([
-      ":SET nile.tenant_id = 'whatever'; :SET nile.user_id = 'some-uuid'; UPDATE users.tenant_users SET deleted = undefined WHERE user_id = 019073f4-75a6-72b9-a379-5ed38ca0d01a",
+      ":SET nile.tenant_id = 'whatever'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET nile.tenant_id = 'whatever'; :SET nile.user_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; UPDATE users.tenant_users SET deleted = undefined WHERE user_id = 019073f4-75a6-72b9-a379-5ed38ca0d01a",
     ]);
   });
   it("deletes a user", async () => {
@@ -141,10 +142,10 @@ describe("mark a user deleted", () => {
         tenantId: "whatever",
       },
     });
-    expect(runCommands.length).toEqual(1);
 
-    expect(runCommands[0]).toEqual(
-      ":SET nile.tenant_id = 'whatever'; :SET nile.user_id = 'some-uuid'; UPDATE users.tenant_users SET deleted = undefined WHERE user_id = 019073f4-75a6-72b9-a379-5ed38ca0d01a",
-    );
+    expect(runCommands).toEqual([
+      ":SET nile.tenant_id = 'whatever'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET nile.tenant_id = 'whatever'; :SET nile.user_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; UPDATE users.tenant_users SET deleted = undefined WHERE user_id = 019073f4-75a6-72b9-a379-5ed38ca0d01a",
+    ]);
   });
 });

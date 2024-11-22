@@ -74,14 +74,37 @@ export async function PUT(
     const sql = await queryByReq(req);
 
     const body = await req.json();
-    const [, , tenants] = await sql`
+    if (!body.name) {
+      return handleFailure(req, undefined, "name is required");
+    }
+
+    const [, , userInTenant] = await sql`
       ${addContext({ tenantId })};
 
       ${addContext({ userId: session.user.id })};
 
+      SELECT
+        COUNT(*)
+      FROM
+        users.tenant_users
+      WHERE
+        deleted IS NULL
+    `;
+
+    if (
+      userInTenant &&
+      "rowCount" in userInTenant &&
+      (Number(userInTenant.rows[0]?.count) ?? 0) === 0
+    ) {
+      return responder(null, { status: 404 });
+    }
+
+    const [tenants] = await sql`
       UPDATE tenants
       SET
         name = ${body.name}
+      WHERE
+        id = ${tenantId}
       RETURNING
         *;
     `;
@@ -152,23 +175,43 @@ export async function DELETE(
     }
 
     const sql = await queryByReq(req);
-
-    const [, , tenants] = await sql`
+    const [, , userInTenant] = await sql`
       ${addContext({ tenantId })};
 
       ${addContext({ userId: session.user.id })};
 
+      SELECT
+        COUNT(*)
+      FROM
+        users.tenant_users
+      WHERE
+        deleted IS NULL
+    `;
+
+    console.log(userInTenant);
+    if (
+      userInTenant &&
+      "rowCount" in userInTenant &&
+      (Number(userInTenant.rows[0]?.count) ?? 0) === 0
+    ) {
+      return responder(null, { status: 404 });
+    }
+
+    const [tenants] = await sql`
       UPDATE tenants
       SET
         deleted = ${formatTime()}
+      WHERE
+        id = ${tenantId}
     `;
 
+    console.log(tenants);
     if (tenants && "name" in tenants) {
       return handleFailure(req, tenants as ErrorResultSet);
     }
 
     if (tenants && "rowCount" in tenants) {
-      return responder(JSON.stringify(tenants.rows[0]));
+      return responder(null, { status: 204 });
     } else {
       return responder(null, { status: 404 });
     }
@@ -232,7 +275,7 @@ export async function GET(
 
     const sql = await queryByReq(req);
 
-    const [tenants] = await sql`
+    const [, , tenants] = await sql`
       ${addContext({ tenantId })};
 
       ${addContext({ userId: session.user.id })};
@@ -243,6 +286,7 @@ export async function GET(
         tenants;
     `;
 
+    console.log(tenants);
     if (tenants && "name" in tenants) {
       return handleFailure(req, tenants as ErrorResultSet);
     }
