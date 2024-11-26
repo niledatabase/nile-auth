@@ -19,7 +19,7 @@ const tenants = ["019073f4-75a6-72b9-a379-5ed38ca0d01a"];
 
 let runCommands: string[] = [];
 
-jest.mock("../../../../../../packages/query/src/query", () => {
+jest.mock("../../../../../../../packages/query/src/query", () => {
   return {
     handleFailure: jest.fn(),
     queryByReq: async function handler() {
@@ -58,7 +58,7 @@ jest.mock("../../../../../../packages/query/src/query", () => {
   };
 });
 
-jest.mock("../../../../../../packages/core/src/auth", () => ({
+jest.mock("../../../../../../../packages/core/src/auth", () => ({
   __esModule: true,
   auth: () => [
     {

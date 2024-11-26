@@ -38,7 +38,7 @@ const tenantUsers = [
 ];
 
 let runCommands: string[] = [];
-jest.mock("../../../../../../packages/query/src/query", () => {
+jest.mock("../../../../../../../packages/query/src/query", () => {
   return {
     handleFailure: jest.fn(),
     queryByReq: async function handler() {
@@ -84,7 +84,7 @@ jest.mock("../../../../../../packages/query/src/query", () => {
   };
 });
 
-jest.mock("../../../../../../packages/core/src/auth", () => ({
+jest.mock("../../../../../../../packages/core/src/auth", () => ({
   __esModule: true,
   auth: () => [
     {

@@ -1,16 +1,16 @@
 import { NextRequest } from "next/server";
 
-import { auth } from "../../../../../../../../../../packages/core/src/auth";
+import { auth } from "../../../../../../../../../../../packages/core/src/auth";
 import { queryByReq, formatTime } from "@nile-auth/query";
 
 import { DELETE } from "./route";
 
-jest.mock("../../../../../../../../../../packages/query/src/query", () => ({
+jest.mock("../../../../../../../../../../../packages/query/src/query", () => ({
   handleFailure: jest.fn(),
   queryByReq: jest.fn(),
   formatTime: jest.fn(),
 }));
-jest.mock("../../../../../../../../../../packages/core/src/auth", () => ({
+jest.mock("../../../../../../../../../../../packages/core/src/auth", () => ({
   auth: jest.fn(),
 }));
 const user = [

@@ -5,7 +5,7 @@ import { queryByReq } from "@nile-auth/query";
 
 import { PUT } from "./route";
 
-jest.mock("../../../../../../../packages/query/src/query", () => ({
+jest.mock("../../../../../../../../packages/query/src/query", () => ({
   handleFailure: jest.fn(),
   queryByReq: jest.fn(),
 }));
