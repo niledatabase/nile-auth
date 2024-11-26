@@ -98,11 +98,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const [user] = newUser.rows ?? [];
+
+  if (!user || !user?.id) {
+    return responder(null, { status: 404 });
+  }
+
   const sps = new URL(req.url).searchParams;
   let tenantId = sps.get("tenantId");
   const newTenantName = sps.get("newTenantName");
 
-  const user = newUser.rows[0] as { id: string };
   if (newTenantName) {
     const [tenant] = await sql`
       INSERT INTO
