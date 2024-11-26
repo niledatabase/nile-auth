@@ -1,6 +1,7 @@
 import { Logger } from "@nile-auth/logger";
 
 import { executeCommand } from "./executeCommand";
+import { ResultSet } from "./query";
 export const API_TIMEOUT = 95 * 1000; // this number needs to be reflected in vercel.json too
 
 const { error, info, warn, debug } = Logger("[@nile-auth/query]");
@@ -23,17 +24,13 @@ export async function handleQuery({
   database: string;
   rowMode?: "array" | "none";
   apiTimeout?: number;
-}) {
+}): Promise<ResultSet[]> {
   if (process.env.NILEDB_PORT !== "7432") {
     if (
       !host ||
       (host === "localhost" && process.env.NODE_ENV === "production")
     ) {
       error("Server is misconfigured, cannot connect to niledatabase");
-      return new Response(
-        "Server is misconfigured, cannot connect to niledatabase",
-        { status: 500 },
-      );
     }
   }
   const data = await within(
@@ -60,16 +57,16 @@ export async function handleQuery({
 
   if (!data) {
     warn("query did not return any data");
-    return new Response(null, { status: 408 });
+    return [];
   }
   debug("query returned");
-  return new Response(JSON.stringify(data), { status: 200 });
+  return data as ResultSet[];
 }
 
 async function within(fn: () => Promise<unknown>, duration: number) {
   try {
     const id = setTimeout(() => {
-      error("Connection to khnum failed.");
+      error("Connection to niledb failed.");
       throw new Error("timeout reached");
     }, duration);
 
@@ -86,6 +83,6 @@ async function within(fn: () => Promise<unknown>, duration: number) {
       error(e.toString());
     }
   } catch (e: unknown) {
-    return null;
+    return [null];
   }
 }

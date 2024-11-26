@@ -18,6 +18,7 @@ nextauthSecret: ""
 niledbHostname: "khnum.nile.svc.cluster.local"
 niledbUser: ""
 niledbPassword: ""
+basePath: "/v2"
 
 datadog:
   env: ""

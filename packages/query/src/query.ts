@@ -1,8 +1,9 @@
 import { Logger } from "@nile-auth/logger";
-import { ResponseLogger } from "@nile-auth/logger";
 import { Pool } from "pg";
 import { handleQuery } from "./handleQuery";
 import getDbInfo from "./getDbInfo";
+import { fixPrepare } from "./context";
+import { ErrorResultSet as ErrorSet } from "./types";
 export { formatTime } from "./formatTime";
 const { debug } = Logger("adaptor sql");
 
@@ -18,19 +19,6 @@ export enum Commands {
   set = "SET",
 }
 
-export type ErrorResultSet = {
-  cmd: string;
-  code: string;
-  file: string;
-  length: number;
-  line: string;
-  message: string;
-  name: "error";
-  position: string;
-  routine: string;
-  severity: "ERROR";
-  lineNumber: string;
-};
 export type ValidResultSet<T = Record<string, string>[]> = {
   command: Commands;
   rowCount: number;
@@ -48,7 +36,7 @@ export type ValidResultSet<T = Record<string, string>[]> = {
 export type ResultSet<T = Record<string, string>[]> =
   | null
   | Record<string, never>
-  | ErrorResultSet
+  | ErrorSet
   | ValidResultSet<T>;
 
 export type Primitive = string | number | boolean | string[] | Date | null;
@@ -102,62 +90,56 @@ export async function queryByReq(req: Request) {
   return async function sqlTemplate(
     strings: TemplateStringsArray,
     ...values: Primitive[]
-  ): Promise<ResultSet> {
+  ): Promise<ResultSet[]> {
     let text = strings[0] ?? "";
 
+    const [initial] = values;
+    const usesContext = String(initial).startsWith(":");
+    let removed = 0;
     for (let i = 1; i < strings.length; i++) {
-      text += `$${i}${strings[i] ?? ""}`;
+      // context is always first, I suppose
+      if (String(values[0]).startsWith(":")) {
+        // we have a context, so we need to "manually" parse all the values so pgnode actually works
+        text += `${String(values[0]).slice(1)}${strings[i] ?? ""}`;
+        values.splice(0, 1);
+        removed++;
+      } else {
+        if (usesContext) {
+          text += `${fixPrepare(null, String(values[0]))}${strings[i] ?? ""}`;
+          values.splice(0, 1);
+        } else {
+          text += `$${i - removed}${strings[i] ?? ""}`;
+        }
+      }
+    }
+    if (usesContext) {
+      // unset it for the next query. Later, make this smarter so a single request handles this well, or convert the `ClientManager` to use pools
+      if (text[text.length - 1] !== ";") {
+        text += ";";
+      }
+      text += `RESET nile.user_id; RESET nile.tenant_id;`;
     }
     const json = {
       text,
       values: values as string[],
     };
     if (!dbInfo) {
-      return {
-        name: "error",
-        message: "unable to connect to the database",
-      } as ErrorResultSet;
+      return [
+        {
+          name: "error",
+          message: "unable to connect to the database",
+        } as ErrorSet,
+      ];
     } else {
       const data = await handleQuery({
         json,
         ...dbInfo,
         rowMode: "none",
       });
-
       debug(text.replace(/(\n\s+)/g, " ").trim());
-      const body = await new Response(data.body).json();
-      return body[0];
+      return data;
     }
   };
 }
 
-// https://www.postgresql.org/docs/current/errcodes-appendix.html
-enum ErrorCodes {
-  unique_violation = "23505",
-  syntax_error = "42601",
-}
-export function handleFailure(
-  req: Request,
-  pgData?: ErrorResultSet,
-  msg?: string,
-) {
-  const responder = ResponseLogger(req);
-  if (pgData && "code" in pgData) {
-    if (pgData.code === ErrorCodes.unique_violation) {
-      return responder(`${msg} already exists.`, { status: 400 });
-    }
-    if (pgData.code === ErrorCodes.syntax_error) {
-      return responder(`Invalid syntax: ${pgData.message}`, {
-        status: 400,
-      });
-    }
-    if ("message" in pgData && pgData.severity === "ERROR") {
-      return responder(`An error has occurred: ${pgData.message}`, {
-        status: 400,
-      });
-    }
-    return responder(`An error has occurred: ${msg}`, { status: 400 });
-  }
-
-  return responder(`${msg}`, { status: 400 });
-}
+export type { ErrorResultSet } from "./types";
