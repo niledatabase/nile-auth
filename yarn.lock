@@ -1508,7 +1508,7 @@ __metadata:
     "@types/swagger-ui-react": "npm:^4.18.3"
     "@types/uuid": "npm:^10"
     bcryptjs: "npm:^2.4.3"
-    cookie: "npm:^1.0.1"
+    cookie: "npm:^1.0.2"
     dotenv: "npm:^16.4.5"
     jest: "npm:^29.7.0"
     jest-environment-jsdom: "npm:^29.7.0"
@@ -4387,10 +4387,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "cookie@npm:1.0.1"
-  checksum: 10c0/80afdcad7fe9cab7a0ea1802629f6f4cf9ff957e9489daa7a813e3ac4ca842b0e5ab3f8e6a6ddc1f3f5c771b81c229afd6f0f3c083025d68c48d214ea8fb1097
+"cookie@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "cookie@npm:1.0.2"
+  checksum: 10c0/fd25fe79e8fbcfcaf6aa61cd081c55d144eeeba755206c058682257cb38c4bd6795c6620de3f064c740695bb65b7949ebb1db7a95e4636efb8357a335ad3f54b
   languageName: node
   linkType: hard
 
