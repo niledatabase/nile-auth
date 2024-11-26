@@ -1,17 +1,17 @@
 import { NextRequest } from "next/server";
-
-import { auth } from "../../../../../../../../packages/core/src/auth";
+import { auth } from "../../../../../../../../../../packages/core/src/auth";
 import { queryByReq } from "@nile-auth/query";
 
-import { POST } from "./route";
+import { PUT } from "./route";
 
-jest.mock("../../../../../../../../packages/query/src/query", () => ({
+jest.mock("../../../../../../../../../../packages/query/src/query", () => ({
   handleFailure: jest.fn(),
   queryByReq: jest.fn(),
 }));
-jest.mock("../../../../../../../../packages/core/src/auth", () => ({
+jest.mock("../../../../../../../../../../packages/core/src/auth", () => ({
   auth: jest.fn(),
 }));
+
 const user = [
   {
     id: "0190b7cd-661a-76d4-ba6e-6ae2c383e3c1",
@@ -39,7 +39,7 @@ const tenantUsers = [
   },
 ];
 
-describe("create users", () => {
+describe("update tenant user", () => {
   it("404s if the user is not in the tenant", async () => {
     const runCommands: string[] = [];
     // @ts-expect-error - test
@@ -80,15 +80,19 @@ describe("create users", () => {
     const req = {
       url: "http://localhost",
     };
-    const res = await POST(req as NextRequest, {
-      params: { tenantId: "tenantId" },
+    const res = await PUT(req as NextRequest, {
+      params: {
+        userId: "0190b7cd-661a-76d4-ba6e-6ae2c383e3c1",
+        tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a",
+      },
     });
     expect(res.status).toEqual(404);
     expect(runCommands).toEqual([
-      ":SET nile.tenant_id = 'tenantId'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
     ]);
   });
-  it("returns a created user", async () => {
+
+  it("returns an updated user", async () => {
     const runCommands: string[] = [];
     // @ts-expect-error - test
     queryByReq.mockReturnValueOnce(async function sql(
@@ -106,9 +110,6 @@ describe("create users", () => {
       text = text.replace(/(\n\s+)/g, " ").trim();
       runCommands.push(text);
 
-      if (text.includes("auth.credentials")) {
-        return [];
-      }
       if (text.includes("COUNT(*)")) {
         return [
           null,
@@ -119,18 +120,18 @@ describe("create users", () => {
           },
         ];
       }
-      if (text.includes("users.users")) {
-        return [
-          {
-            rows: user,
-            rowCount: 1,
-          },
-        ];
-      }
       if (text.includes("users.tenant_users")) {
         return [
           {
             rows: tenantUsers,
+            rowCount: 1,
+          },
+        ];
+      }
+      if (text.includes("users.users")) {
+        return [
+          {
+            rows: user,
             rowCount: 1,
           },
         ];
@@ -149,7 +150,6 @@ describe("create users", () => {
       async json() {
         return {
           email: "test@test.com",
-          password: "password",
           name: "test@test.com",
           familyName: "test@test.com",
           givenName: "test@test.com",
@@ -158,15 +158,18 @@ describe("create users", () => {
         };
       },
     };
-    const res = await POST(req as NextRequest, {
-      params: { tenantId: "tenantId" },
+    const res = await PUT(req as NextRequest, {
+      params: {
+        userId: "0190b7cd-661a-76d4-ba6e-6ae2c383e3c1",
+        tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a",
+      },
     });
-    expect(res.status).toEqual(201);
+    expect(res.status).toEqual(200);
     expect(runCommands).toEqual([
-      ":SET nile.tenant_id = 'tenantId'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
-      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated',
-      "INSERT INTO users.tenant_users (tenant_id, user_id, email) VALUES ( tenantId, 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, test@test.com )",
-      "INSERT INTO auth.credentials (user_id, method, provider, payload) VALUES ( 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, 'EMAIL_PASSWORD', 'nile', jsonb_build_object( 'crypt', 'crypt-bf/8', 'hash', public.crypt ( password, public.gen_salt ('bf', 8) ), 'email', test@test.com::text ) )",
+      ":SET nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET nile.user_id = '0190b7cd-661a-76d4-ba6e-6ae2c383e3c1'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
+      'SELECT id, email, name, family_name AS "familyName", given_name AS "givenName", picture FROM users.users WHERE id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1',
+      'UPDATE users.users SET name = test@test.com, family_name = test@test.com, given_name = test@test.com, picture = test@test.com WHERE id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1 RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated',
     ]);
   });
 });
