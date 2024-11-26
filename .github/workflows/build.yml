@@ -57,7 +57,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_BRANCHES: main
-          WITH_V: false
+          WITH_V: true
           PRERELEASE: true
 
       - name: Extract Docker metadata
