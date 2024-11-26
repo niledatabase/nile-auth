@@ -59,6 +59,7 @@ jobs:
           RELEASE_BRANCHES: main
           WITH_V: true
           PRERELEASE: true
+          CUSTOM_TAG: "0.14.0"
 
       - name: Extract Docker metadata
         id: meta
