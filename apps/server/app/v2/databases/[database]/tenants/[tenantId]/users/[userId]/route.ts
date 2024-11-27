@@ -7,7 +7,7 @@ import { handleFailure } from "@nile-auth/query/utils";
 
 /**
  * @swagger
- * /databases/{database}/tenants/{tenantId}/users/{userId}:
+ * /v2/databases/{database}/tenants/{tenantId}/users/{userId}:
  *   put:
  *     tags:
  *     - users

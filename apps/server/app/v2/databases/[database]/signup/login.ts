@@ -8,7 +8,6 @@ import {
   getSecureCookies,
 } from "@nile-auth/core/cookies";
 import { getCsrfCookie, getCsrfParts } from "@nile-auth/core/csrf";
-const log = Logger(EventEnum.LOGIN);
 
 const routes = {
   PROVIDERS: "/auth/providers",
@@ -31,12 +30,9 @@ export async function login(
     "niledb-origin": ORIGIN,
   };
 
-  log.debug("Obtaining csrf");
   const [csrfToken] = getCsrfParts(getCsrfCookie(req)) ?? [];
 
   const signInUrl = req.url.replace("signup", "callback/credentials");
-
-  log.debug(`Attempting sign in with email ${email} ${signInUrl}`);
 
   const useSecureCookies = getSecureCookies(req);
   const callbackCookie = getCookie(
@@ -76,9 +72,7 @@ export async function login(
   const [, token] =
     /((__Secure-)?nile\.session-token=.+?);/.exec(authCookie) ?? [];
   if (!token) {
-    log.error("Unable to obtain auth token", { authCookie });
     throw new Error("Server login failed");
   }
-  log.debug("Server login successful", { authCookie, csrfCookie });
   return loginRes.headers;
 }

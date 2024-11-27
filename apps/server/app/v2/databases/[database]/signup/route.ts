@@ -8,7 +8,7 @@ import { validCsrfToken } from "@nile-auth/core/csrf";
 import { Logger } from "@nile-auth/logger";
 /**
  * @swagger
- * /databases/{database}/signup:
+ * /v2/databases/{database}/signup:
  *   post:
  *     tags:
  *     - users

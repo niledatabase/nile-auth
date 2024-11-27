@@ -7,7 +7,7 @@ import { handleFailure } from "@nile-auth/query/utils";
 import { addContext } from "@nile-auth/query/context";
 /**
  * @swagger
- * /databases/{database}/tenants/{tenantId}:
+ * /v2/databases/{database}/tenants/{tenantId}:
  *   put:
  *     tags:
  *     - tenants
@@ -125,7 +125,7 @@ export async function PUT(
 
 /**
  * @swagger
- * /databases/{database}/tenants/{tenantId}:
+ * /v2/databases/{database}/tenants/{tenantId}:
  *   delete:
  *     tags:
  *     - tenants
@@ -188,7 +188,6 @@ export async function DELETE(
         deleted IS NULL
     `;
 
-    console.log(userInTenant);
     if (
       userInTenant &&
       "rowCount" in userInTenant &&
@@ -205,7 +204,6 @@ export async function DELETE(
         id = ${tenantId}
     `;
 
-    console.log(tenants);
     if (tenants && "name" in tenants) {
       return handleFailure(req, tenants as ErrorResultSet);
     }
@@ -221,7 +219,7 @@ export async function DELETE(
 }
 /**
  * @swagger
- * /databases/{database}/tenants/{tenantId}:
+ * /v2/databases/{database}/tenants/{tenantId}:
  *   get:
  *     tags:
  *     - tenants
@@ -286,7 +284,6 @@ export async function GET(
         tenants;
     `;
 
-    console.log(tenants);
     if (tenants && "name" in tenants) {
       return handleFailure(req, tenants as ErrorResultSet);
     }

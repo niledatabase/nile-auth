@@ -59,7 +59,7 @@ jobs:
           RELEASE_BRANCHES: main
           WITH_V: false
           PRERELEASE: true
-          CUSTOM_TAG: "0.15.0"
+          CUSTOM_TAG: "0.16.0"
 
       - name: Extract Docker metadata
         id: meta

@@ -5,7 +5,7 @@ import getDbInfo from "./getDbInfo";
 import { fixPrepare } from "./context";
 import { ErrorResultSet as ErrorSet } from "./types";
 export { formatTime } from "./formatTime";
-const { debug } = Logger("adaptor sql");
+const { debug, error } = Logger("adaptor sql");
 
 export enum Commands {
   insert = "INSERT",
@@ -52,21 +52,20 @@ export function query(pool: Pool) {
     }
     const client = await pool.connect().catch((e) => {
       // eslint-disable-next-line no-console
-      console.error(e);
       // eslint-disable-next-line no-console
-      console.error(
+      error(
         "[nile-auth][error][CONNECTION FAILED]",
         "Unable to connect to Nile. Double check your database configuration.",
+        { stack: e.stack, message: e.message },
       );
     });
     // @ts-expect-error - allows for null args in function, but not in query
     // return { text, values };
     const result = await client.query(text, values).catch((e) => {
       // eslint-disable-next-line no-console
-      console.error(
-        "[nile-auth][error][QUERY FAILED]",
-        "Unable to run query on database.",
-        e,
+      error(
+        "[nile-auth][error][QUERY FAILED]Unable to run query on database.",
+        { stack: e.stack, message: e.message },
       );
     });
     debug("[SQL]", {

@@ -6,7 +6,7 @@ import { handleFailure } from "@nile-auth/query/utils";
 
 /**
  * @swagger
- * /databases/{database}/me:
+ * /v2/databases/{database}/me:
  *   get:
  *     tags:
  *     - users
@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * @swagger
- * /databases/{database}/me:
+ * /v2/databases/{database}/me:
  *   put:
  *     tags:
  *     - users

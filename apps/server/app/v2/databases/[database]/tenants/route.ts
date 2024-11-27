@@ -8,7 +8,7 @@ import { handleFailure } from "@nile-auth/query/utils";
 import { addContext } from "@nile-auth/query/context";
 /**
  * @swagger
- * /databases/{database}/tenants:
+ * /v2/databases/{database}/tenants:
  *   post:
  *     tags:
  *     - tenants

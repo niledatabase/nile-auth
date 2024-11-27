@@ -8,7 +8,7 @@ import { NextRequest } from "next/server";
 /**
  *
  * @swagger
- * /databases/{database}/tenants/{tenantId}/users/{userId}/link:
+ * /v2/databases/{database}/tenants/{tenantId}/users/{userId}/link:
  *   put:
  *     tags:
  *       - users
@@ -187,7 +187,7 @@ export async function PUT(
 
 /**
  * @swagger
- * /databases/{database}/tenants/{tenantId}/users/{userId}/link:
+ * /v2/databases/{database}/tenants/{tenantId}/users/{userId}/link:
  *   delete:
  *     tags:
  *     - users

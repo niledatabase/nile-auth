@@ -9,7 +9,7 @@ import { addContext } from "@nile-auth/query/context";
 
 /**
  * @swagger
- * /databases/{database}/tenants/{tenantId}/users:
+ * /v2/databases/{database}/tenants/{tenantId}/users:
  *   get:
  *     tags:
  *     - users
@@ -98,7 +98,7 @@ export async function GET(
 /**
  *
  * @swagger
- * /databases/{database}/tenants/{tenantId}/users:
+ * /v2/databases/{database}/tenants/{tenantId}/users:
  *   post:
  *     tags:
  *       - users
