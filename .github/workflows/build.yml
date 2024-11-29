@@ -51,15 +51,12 @@ jobs:
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Bump version and push tag
-        uses: anothrNick/github-tag-action@v1
+      - uses: niledatabase/bump-git-tag-action@v0.0.15
         id: tag
+        with:
+          main-branch: main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_BRANCHES: main
-          WITH_V: false
-          PRERELEASE: true
-          CUSTOM_TAG: "0.16.0"
 
       - name: Extract Docker metadata
         id: meta
