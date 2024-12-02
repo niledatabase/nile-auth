@@ -1,11 +1,10 @@
 import { auth } from "@nile-auth/core";
 import { queryByReq } from "@nile-auth/query";
-import { Logger, EventEnum, ResponseLogger } from "@nile-auth/logger";
+import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 
 import { ErrorResultSet } from "@nile-auth/query";
 import { handleFailure } from "@nile-auth/query/utils";
-import { addContext } from "@nile-auth/query/context";
 /**
  * @swagger
  * /v2/databases/{database}/tenants:
@@ -56,8 +55,8 @@ import { addContext } from "@nile-auth/query/context";
  *     - sessionCookie: []
  */
 export async function POST(req: NextRequest) {
-  const responder = ResponseLogger(req, EventEnum.CREATE_TENANT);
   const [session] = await auth(req);
+  const responder = ResponseLogger(req, EventEnum.CREATE_TENANT);
   if (session && session?.user?.id) {
     const body = await req.json();
     const sql = await queryByReq(req);

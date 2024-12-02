@@ -28,6 +28,10 @@ const getHost = (config?: Partial<DbCreds>) => {
   if (process.env.NILEDB_HOST) {
     return process.env.NILEDB_HOST;
   }
+  if (process.env.NILEDB_POSTGRES_URL) {
+    const pgUrl = new URL(process.env.NILEDB_POSTGRES_URL);
+    return pgUrl.hostname;
+  }
   return config?.host;
 };
 

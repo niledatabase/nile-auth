@@ -3,7 +3,7 @@ export enum EventEnum {
   GET_DB_INFO = "GET_DB_INFO",
   ME = "ME",
   NILE_AUTH = "NILE_AUTH",
-  LOGIN = "LOGIN",
+  SIGN_IN = "SIGN_IN",
   SIGN_UP = "SIGN_UP",
   CREATE_TENANT = "CREATE_TENANT",
   UPDATE_TENANT = "UPDATE_TENANT",

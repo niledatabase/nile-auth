@@ -129,7 +129,7 @@ export function ResponseLogger(req: Request, event: EventEnum): ResponderFn {
     const url = new URL(req.url);
     logger.defaultMeta = { event };
     info(`[${req.method ?? "GET"}] ${url.pathname}`, { ...detail, init });
-    tinybird(req, event);
+    tinybird({ req, event, body, detail });
     if (!(body instanceof Response)) {
       return new Response(body, init);
     }
