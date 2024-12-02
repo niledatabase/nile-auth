@@ -5,7 +5,6 @@ import { POST as USER_POST } from "../users/route";
 
 import { login } from "./login";
 import { validCsrfToken } from "@nile-auth/core/csrf";
-import { Logger } from "@nile-auth/logger";
 /**
  * @swagger
  * /v2/databases/{database}/signup:
@@ -84,10 +83,17 @@ export async function POST(
   }
 
   const userCreate = await USER_POST(req);
-  if (userCreate.status > 201) {
-    return responder(await userCreate.text(), { status: userCreate.status });
-  }
+  if (userCreate) {
+    if (userCreate.status > 201) {
+      return responder(await userCreate.text(), { status: userCreate.status });
+    }
 
-  const headers = await login(cloned, { params });
-  return responder(await userCreate.text(), { headers });
+    try {
+      const headers = await login(cloned, { params });
+      return responder(await userCreate.text(), { headers }, { ...swagBody });
+    } catch (e) {
+      // need to log
+    }
+  }
+  return responder(null, { status: 404 });
 }

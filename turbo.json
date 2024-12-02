@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": ["NILEDB_NAME", "NILEDB_HOST", "NILEDB_USER", "NILEDB_PASSWORD", "NILEDB_PORT", "NODE_ENV", "LOG_LEVEL", "NEXTAUTH_URL", "POOL_TIMEOUT", "BASE_PATH", "NEXTAUTH_SECRET"],
+  "globalEnv": ["TINYBIRD_URL", "TINYBIRD_TOKEN", "NILEDB_POSTGRES_URL", "NILEDB_NAME", "NILEDB_HOST", "NILEDB_USER", "NILEDB_PASSWORD", "NILEDB_PORT", "NODE_ENV", "LOG_LEVEL", "NEXTAUTH_URL", "POOL_TIMEOUT", "BASE_PATH", "NEXTAUTH_SECRET"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

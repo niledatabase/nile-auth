@@ -29,8 +29,10 @@ spec:
         resources:
 {{ toYaml .Values.resources | indent 12 }}
         env:
-          - name: BASE_PATH
-            value: "{{ .Values.basePath }}"
+          - name: TINYBIRD_TOKEN
+            value: "{{ .Values.tinyBirdToken }}"
+          - name: TINYBIRD_URL
+            value: "{{ .Values.tinyBirdUrl }}"
           - name: NEXTAUTH_SECRET
             value: "{{ .Values.nextauthSecret }}"
           - name: NILEDB_HOST

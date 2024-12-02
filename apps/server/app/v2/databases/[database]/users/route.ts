@@ -181,8 +181,7 @@ export async function POST(req: NextRequest) {
   }
 
   if ("rowCount" in newUser && newUser.rowCount === 1) {
-    responder(`[${req.method}] ${req.url}`);
-    return new Response(
+    return responder(
       JSON.stringify({
         ...newUser.rows[0],
         tenants: tenantId ? [tenantId] : [],

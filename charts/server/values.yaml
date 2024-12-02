@@ -18,7 +18,8 @@ nextauthSecret: ""
 niledbHostname: "khnum.nile.svc.cluster.local"
 niledbUser: ""
 niledbPassword: ""
-basePath: "/v2"
+tinyBirdToken: ""
+tinyBirdUrl: ""
 
 datadog:
   env: ""
