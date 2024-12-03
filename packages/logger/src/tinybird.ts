@@ -34,6 +34,15 @@ function mapEvent({
     if (typeof body.email === "string") {
       email = body.email;
     }
+  } else if (detail && typeof detail.body === "string") {
+    try {
+      const json = JSON.parse(detail.body);
+      if (typeof json.email === "string") {
+        email = json.email;
+      }
+    } catch (e) {
+      // do nothing
+    }
   } else if (typeof detail?.email === "string") {
     email = detail?.email;
   }
