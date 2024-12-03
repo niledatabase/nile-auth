@@ -25,15 +25,29 @@ function mapEvent({
     }
   }
   const params = new URLSearchParams(detail?.body);
+  let email = "UNKNOWN";
+  const paramEmail = params.get("email");
+
+  if (paramEmail) {
+    email = paramEmail;
+  } else if (body && typeof body === "object" && "email" in body) {
+    if (typeof body.email === "string") {
+      email = body.email;
+    }
+  } else if (typeof detail?.email === "string") {
+    email = detail?.email;
+  }
+
   if (url.pathname.endsWith("/auth/callback/credentials")) {
     return {
       event: EventEnum.SIGN_IN,
-      email: params.get("email") ?? "UNKNOWN",
+      email,
     };
   }
+
   switch (event) {
     case EventEnum.SIGN_UP:
-      return { event, email: String(detail?.email) ?? "UNKNOWN" };
+      return { event, email };
     default:
       return null;
   }
@@ -60,6 +74,7 @@ export async function tinybird({
       timestamp: new Date().toISOString(),
       ...remaining,
     };
+
     await fetch(process.env.TINYBIRD_URL, {
       method: "POST",
       body: JSON.stringify(payload),
