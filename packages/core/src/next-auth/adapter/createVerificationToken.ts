@@ -11,7 +11,7 @@ export function createVerificationToken(pool: Pool) {
     const sql = await query(pool);
     await sql`
       INSERT INTO
-        verification_token (identifier, expires_at, token)
+        auth.verification_tokens (identifier, expires, token)
       VALUES
         (
           ${identifier},
