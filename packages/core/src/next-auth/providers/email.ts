@@ -46,7 +46,17 @@ export default function Email(provider: Provider, pool: Pool) {
           throw new Error(`Email(s) (${failed.join(", ")}) could not be sent`);
         }
       } catch (e) {
-        error(e);
+        if (
+          typeof e === "object" &&
+          e &&
+          "responseCode" in e &&
+          e.responseCode !== 421
+        ) {
+          error(e);
+        }
+        if (e instanceof Error) {
+          throw new Error(e.message);
+        }
       }
     },
   });

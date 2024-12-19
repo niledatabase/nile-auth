@@ -164,7 +164,7 @@ describe("create users", () => {
     expect(res.status).toEqual(201);
     expect(runCommands).toEqual([
       ":SET nile.tenant_id = 'tenantId'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
-      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated',
+      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated, email_verified AS "emailVerified"',
       "INSERT INTO users.tenant_users (tenant_id, user_id, email) VALUES ( tenantId, 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, test@test.com )",
       "INSERT INTO auth.credentials (user_id, method, provider, payload) VALUES ( 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, 'EMAIL_PASSWORD', 'nile', jsonb_build_object( 'crypt', 'crypt-bf/8', 'hash', public.crypt ( password, public.gen_salt ('bf', 8) ), 'email', test@test.com::text ) )",
     ]);

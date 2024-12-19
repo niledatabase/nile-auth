@@ -103,6 +103,9 @@
  *           type: string
  *         picture:
  *           type: string
+ *         emailVerified:
+ *           type: string
+ *           format: date-time
  *         created:
  *           type: string
  *           format: date-time
@@ -125,6 +128,9 @@
  *         picture:
  *           type: string
  *         created:
+ *           type: string
+ *           format: date-time
+ *         emailVerified:
  *           type: string
  *           format: date-time
  *         updated:

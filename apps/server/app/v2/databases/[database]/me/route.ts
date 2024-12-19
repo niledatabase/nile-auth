@@ -57,7 +57,8 @@ export async function GET(req: NextRequest) {
           given_name AS "givenName",
           picture,
           created,
-          updated
+          updated,
+          email_verified AS "emailVerified"
         FROM
           users.users
         WHERE
@@ -149,7 +150,8 @@ export async function PUT(req: NextRequest) {
           given_name AS "givenName",
           picture,
           created,
-          updated
+          updated,
+          email_verified AS "emailVerified"
         FROM
           users.users
         WHERE
@@ -200,7 +202,8 @@ export async function PUT(req: NextRequest) {
         given_name AS "givenName",
         picture,
         created,
-        updated
+        updated,
+        email_verified AS "emailVerified"
     `;
 
     if (
