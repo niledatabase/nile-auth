@@ -39,17 +39,6 @@ const users = [
     emailVerified: null,
   },
 ];
-const tenantUsers = [
-  {
-    tenant_id: "019073f4-75a6-72b9-a379-5ed38ca0d01a",
-    user_id: "0190b7cd-661a-76d4-ba6e-6ae2c383e3c1",
-    created: "2024-07-15T23:10:09.971Z",
-    updated: "2024-07-15T23:10:09.971Z",
-    deleted: null,
-    roles: null,
-    email: "no@no.com",
-  },
-];
 
 describe("list tenant users", () => {
   it("404s if the user is not in the tenant", async () => {

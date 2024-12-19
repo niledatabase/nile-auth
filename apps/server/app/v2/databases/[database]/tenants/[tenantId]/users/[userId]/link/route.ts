@@ -1,5 +1,5 @@
 import { auth } from "@nile-auth/core";
-import { Logger, EventEnum, ResponseLogger } from "@nile-auth/logger";
+import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { ErrorResultSet, formatTime, queryByReq } from "@nile-auth/query";
 import { addContext } from "@nile-auth/query/context";
 import { handleFailure } from "@nile-auth/query/utils";

@@ -3,6 +3,6 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "include": ["src", "../query/src/query.ts", "jest.config.js", "../query/src/getDbInfo.ts"],
+  "include": ["src", "../query/src/query.ts", "./jest.config.js", "../query/src/getDbInfo.ts"],
   "exclude": ["node_modules", "dist"]
 }

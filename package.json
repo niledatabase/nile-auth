@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "eslint": "^9.13.0",
+    "eslint-plugin-turbo": "^2.3.3",
     "prettier": "^3.2.5",
     "prettier-plugin-embed": "^0.4.15",
     "prettier-plugin-sql": "^0.18.1",

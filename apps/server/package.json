@@ -8,7 +8,7 @@
     "build:spec": "yarn next-swagger-doc-cli openapi/next-swagger-doc.json && mv public/swagger.json openapi",
     "build:client": "yarn openapi-generator-cli generate -i openapi/swagger.json -g typescript-fetch -o openapi/region-rest --additional-properties=ngVersion=6.1.7,supportsES6=true,npmVersion=6.9.0,withInterfaces=true,typescriptThreePlus=true",
     "start": "next start -p 3001",
-    "lint": "next lint",
+    "lint": "eslint . --max-warnings 0",
     "test": "jest"
   },
   "dependencies": {
@@ -50,6 +50,7 @@
     "@types/react-dom": "^18.2.19",
     "@types/swagger-ui-react": "^4.18.3",
     "@types/uuid": "^10",
+    "eslint": "^8.51.1",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "next-swagger-doc": "^0.4.0",

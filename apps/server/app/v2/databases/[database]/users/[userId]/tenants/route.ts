@@ -1,6 +1,6 @@
 import { auth } from "@nile-auth/core";
 import { ErrorResultSet, queryByReq } from "@nile-auth/query";
-import { ResponseLogger, EventEnum, Logger } from "@nile-auth/logger";
+import { ResponseLogger, EventEnum } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 import { handleFailure } from "@nile-auth/query/utils";
 

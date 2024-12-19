@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { auth } from "../../../../../../../../../../../packages/core/src/auth";
-import { queryByReq, formatTime } from "@nile-auth/query";
+import { queryByReq } from "@nile-auth/query";
 
 import { DELETE } from "./route";
 
@@ -13,20 +13,6 @@ jest.mock("../../../../../../../../../../../packages/query/src/query", () => ({
 jest.mock("../../../../../../../../../../../packages/core/src/auth", () => ({
   auth: jest.fn(),
 }));
-const user = [
-  {
-    id: "0190b7cd-661a-76d4-ba6e-6ae2c383e3c1",
-    created: "2024-07-15T23:10:09.945Z",
-    updated: "2024-07-15T23:10:09.945Z",
-    deleted: null,
-    name: null,
-    familyName: null,
-    givenName: null,
-    email: "no@no.com",
-    picture: null,
-    emailVerified: null,
-  },
-];
 const tenantUsers = [
   {
     tenant_id: "019073f4-75a6-72b9-a379-5ed38ca0d01a",
