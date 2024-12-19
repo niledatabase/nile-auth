@@ -12,13 +12,13 @@ export function useVerificationToken(pool: Pool) {
   }) {
     const sql = await query(pool);
     const result = await sql`
-      DELETE FROM verification_token
+      DELETE FROM auth.verification_tokens
       WHERE
         identifier = ${identifier}
         AND token = ${token}
       RETURNING
         identifier,
-        expires_at,
+        expires,
         token
     `;
     if (result && "rows" in result) {

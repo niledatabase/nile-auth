@@ -71,7 +71,8 @@ export async function GET(
         name,
         family_name AS "familyName",
         given_name AS "givenName",
-        picture
+        picture,
+        email_verified AS "emailVerified"
       FROM
         users.users u
         JOIN users.tenant_users tu ON u.id = tu.user_id
@@ -214,7 +215,8 @@ export async function POST(
         given_name AS "givenName",
         picture,
         created,
-        updated
+        updated,
+        email_verified AS "emailVerified"
     `;
     if (!newUser) {
       return responder(null, { status: 404 });

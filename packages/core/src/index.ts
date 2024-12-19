@@ -40,15 +40,43 @@ export default async function NileAuth(
       opts as unknown as NextAuthOptions,
     );
 
+    console.log(handler, "this is the handler");
     return handler;
   } catch (e) {
     if (e instanceof Error) {
-      error("error occurred in NileAuth impl", {
-        message: e.message,
-        stack: e.stack,
-      });
+      const [, code, message] = /\[(.*)\]: (.*)/.exec(e.message) ?? [];
+      // some extra noise we (probably) don't need to log due to configuration problems
+      if (code !== "SIGNIN_EMAIL_ERROR") {
+        error("error occurred in NileAuth impl", {
+          message: e.message,
+          stack: e.stack,
+        });
+      }
+      if (message) {
+        return new Response(
+          JSON.stringify({
+            url: `${origin}?${new URLSearchParams({ error: message }).toString()}`,
+          }),
+          {
+            status: 400,
+          },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          url: `${origin}?${new URLSearchParams({ error: e.message }).toString()}`,
+        }),
+        {
+          status: 400,
+        },
+      );
     }
   }
-  return new Response(null, { status: 500 });
+  return new Response(
+    JSON.stringify({
+      url: `${origin}?${new URLSearchParams({ error: "An unexpected exception has occurred" }).toString()}`,
+    }),
+    { status: 500 },
+  );
 }
 export { auth } from "./auth";
