@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Credentials from "./credentials";
+import Email from "./email";
 
 function filler(obj: Record<string, string>) {
   return {
@@ -16,6 +18,7 @@ function filler(obj: Record<string, string>) {
 }
 export function Form() {
   const [form, setForm] = useState(filler({}));
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -25,8 +28,20 @@ export function Form() {
 
   return (
     <div>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          setVisible(!visible);
+        }}
+      >
+        {visible ? "hide" : "show"} override vars
+      </button>
+
       <div className="form-content">
-        <div className="form-wrapper">
+        <div
+          className="form-wrapper"
+          style={{ display: visible ? "flex" : "none" }}
+        >
           <div style={{ marginBottom: "1rem" }}>
             Obtain these credentials from{" "}
             <a href="https://console.thenile.dev">console.thenile.dev</a>
@@ -90,94 +105,8 @@ export function Form() {
             name="port"
           />
         </div>
-        <div className="form-wrapper">
-          <div style={{ marginBottom: "1rem" }}>
-            Submitting this form will create a new user for your database, based
-            on the credentials provided by{" "}
-            <a href="https://console.thenile.dev">console.thenile.dev</a>
-          </div>
-
-          <label>User email</label>
-          <input
-            name="email"
-            value={form.email}
-            onChange={(e) =>
-              setForm((state) => ({
-                ...state,
-                email: e.target.value,
-              }))
-            }
-          />
-          <label>User password</label>
-          <input
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={(e) =>
-              setForm((state) => ({
-                ...state,
-                password: e.target.value,
-              }))
-            }
-          />
-        </div>
-      </div>
-      <div>
-        <button
-          style={{ marginTop: "1rem" }}
-          onClick={async (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            // doing this manually, @niledatabase/react handles this automatically
-            await fetch(`/v2/databases/${form.database}/auth/csrf`, {
-              headers: { "niledb-origin": window.location.origin },
-            });
-            await fetch(`/v2/databases/${form.database}/signup`, {
-              method: "POST",
-              body: JSON.stringify(form),
-              headers: { "niledb-origin": window.location.origin },
-            });
-            window.location.search = new URLSearchParams(form).toString();
-          }}
-        >
-          Sign up
-        </button>
-        <button
-          style={{ marginTop: "1rem", marginLeft: "1rem" }}
-          onClick={async (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            // doing this manually, @niledatabase/react handles this automatically
-            const token = await fetch(
-              `/v2/databases/${form.database}/auth/csrf`,
-              {
-                headers: { "niledb-origin": window.location.origin },
-              },
-            );
-
-            const { csrfToken } = await token.json();
-
-            await fetch(
-              `/v2/databases/${form.database}/auth/callback/credentials`,
-              {
-                method: "POST",
-                body: new URLSearchParams({
-                  ...form,
-                  csrfToken,
-                  callbackUrl: window.location.href,
-                  json: "true",
-                }),
-                headers: {
-                  "niledb-origin": window.location.origin,
-                  "Content-Type": "application/x-www-form-urlencoded",
-                },
-              },
-            );
-            window.location.search = new URLSearchParams(form).toString();
-          }}
-        >
-          Sign in
-        </button>
+        <Credentials form={form} setForm={setForm} />
+        <Email form={form} setForm={setForm} />
       </div>
     </div>
   );

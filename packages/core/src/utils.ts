@@ -155,6 +155,9 @@ export function buildOptionsFromReq(req: Request, cfg?: AuthOptions) {
         code: string,
         meta: Error | { error: Error; [key: string]: unknown },
       ) => {
+        if ("error" in meta && meta.error instanceof Error) {
+          throw new Error(`[${code}]: ${meta.error.message}`);
+        }
         error(code, meta);
       },
       debug: (code: string, meta: { [key: string]: unknown }) => {

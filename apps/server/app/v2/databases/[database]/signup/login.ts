@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import * as handlers from "../auth/[...nextauth]/route";
-import { EventEnum, Logger } from "@nile-auth/logger";
 import {
   getCallbackCookie,
   getCookie,

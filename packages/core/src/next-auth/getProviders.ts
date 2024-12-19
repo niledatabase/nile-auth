@@ -5,8 +5,9 @@ import GoogleProvider from "next-auth/providers/google";
 import { query } from "@nile-auth/query";
 import { DbCreds } from "@nile-auth/query/getDbInfo";
 import { Logger } from "@nile-auth/logger";
+import EmailProvider from "./providers/email";
 
-import { ProviderNames } from "../types";
+import { Provider, ProviderNames } from "../types";
 
 import CredentialProvider from "./providers/CredentialProvider";
 
@@ -19,20 +20,6 @@ type RelyingParty = {
   client_id: string;
   client_secret: string;
   enabled: string;
-};
-
-type Provider = {
-  id: string;
-  name: ProviderNames;
-  auth_type: "SOCIAL" | "SSO";
-  created: string;
-  updated: string;
-  deleted: string;
-  enabled: boolean;
-  config_url: boolean;
-  redirect_url: boolean;
-  config: boolean;
-  ttl_sec: boolean;
 };
 
 const { error, debug } = Logger("[providers]");
@@ -71,6 +58,12 @@ export async function getProviders(params: DbCreds) {
   ) {
     const configuredProviders = providers?.rows
       .map((provider: Provider) => {
+        if (provider.name === ProviderNames.Email) {
+          if (provider.enabled) {
+            enabledProviders.push("Email auth enabled");
+          }
+          return EmailProvider(provider, pool);
+        }
         if (provider.name === ProviderNames.Credentials) {
           if (provider.enabled) {
             enabledProviders.push("Password auth enabled");

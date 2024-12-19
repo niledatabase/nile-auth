@@ -20,6 +20,7 @@
     "@types/eslint": "^8.56.5",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.11.24",
+    "@types/nodemailer": "^6",
     "@types/pg": "^8",
     "@types/react": "^18.2.61",
     "@types/react-dom": "^18.2.19",
@@ -33,6 +34,7 @@
     "@nile-auth/query": "*",
     "bcryptjs": "^2.4.3",
     "next-auth": "^4.24.8",
+    "nodemailer": "^6.9.16",
     "pg": "^8.13.1"
   }
 }

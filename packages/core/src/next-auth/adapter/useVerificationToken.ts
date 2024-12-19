@@ -1,6 +1,6 @@
 import { Pool } from "pg";
 
-import { query } from "@nile-auth/query";
+import { formatTime, query } from "@nile-auth/query";
 
 export function useVerificationToken(pool: Pool) {
   return async function useVerificationToken({
@@ -12,14 +12,21 @@ export function useVerificationToken(pool: Pool) {
   }) {
     const sql = await query(pool);
     const result = await sql`
-      DELETE FROM verification_token
+      DELETE FROM auth.verification_tokens
       WHERE
         identifier = ${identifier}
         AND token = ${token}
       RETURNING
         identifier,
-        expires_at,
+        expires,
         token
+    `;
+    await sql`
+      UPDATE users.users
+      SET
+        email_verified = ${formatTime()}
+      WHERE
+        email = ${identifier}
     `;
     if (result && "rows" in result) {
       return result.rowCount !== 0 ? result.rows[0] : null;
