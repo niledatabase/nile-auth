@@ -55,7 +55,6 @@ export default function Email({ form, setForm }: { form: any; setForm: any }) {
                 `/v2/databases/${form.database}/auth/csrf`,
               );
               const { csrfToken } = await csrf.json();
-              console.log(csrfToken);
               // doing this manually, @niledatabase/react handles this automatically
               await fetch(`/v2/databases/${form.database}/auth/signin/email`, {
                 method: "POST",

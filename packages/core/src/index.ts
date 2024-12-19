@@ -40,7 +40,6 @@ export default async function NileAuth(
       opts as unknown as NextAuthOptions,
     );
 
-    console.log(handler, "this is the handler");
     return handler;
   } catch (e) {
     if (e instanceof Error) {
