@@ -47,7 +47,10 @@ function mapEvent({
     email = detail?.email;
   }
 
-  if (url.pathname.endsWith("/auth/callback/credentials")) {
+  const emailSignIn = url.pathname.endsWith("/auth/callback/email");
+  const credSignIn = url.pathname.endsWith("/auth/callback/credentials");
+
+  if (credSignIn || emailSignIn) {
     return {
       event: EventEnum.SIGN_IN,
       email,
