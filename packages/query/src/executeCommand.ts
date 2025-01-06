@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { QueryResult } from "pg";
 
 import ClientManager from "./ClientManager";

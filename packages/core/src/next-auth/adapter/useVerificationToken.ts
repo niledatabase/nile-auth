@@ -1,6 +1,6 @@
 import { Pool } from "pg";
 
-import { formatTime, query } from "@nile-auth/query";
+import { query } from "@nile-auth/query";
 
 export function useVerificationToken(pool: Pool) {
   return async function useVerificationToken({
@@ -21,13 +21,7 @@ export function useVerificationToken(pool: Pool) {
         expires,
         token
     `;
-    await sql`
-      UPDATE users.users
-      SET
-        email_verified = ${formatTime()}
-      WHERE
-        email = ${identifier}
-    `;
+
     if (result && "rows" in result) {
       return result.rowCount !== 0 ? result.rows[0] : null;
     }

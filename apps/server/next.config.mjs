@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 /** @type {import('next').NextConfig} */
-const path = require('path')
+
+import path from "node:path";
+
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',

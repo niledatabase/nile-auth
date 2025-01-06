@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export default function Email({ form, setForm }: { form: any; setForm: any }) {
   if (form.provider !== "email") {
     return (

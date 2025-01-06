@@ -83,6 +83,8 @@ async function within(fn: () => Promise<unknown>, duration: number) {
       error(e.toString());
     }
   } catch (e: unknown) {
+    //@ts-expect-error - anything, I guess
+    error(e.toString());
     return [null];
   }
 }

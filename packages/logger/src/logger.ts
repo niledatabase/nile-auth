@@ -32,6 +32,7 @@ const devFormat = format.combine(
           "silly",
           `\n[${timestamp}] ${level}: ${key}: ${JSON.stringify(JSON.parse(String(meta[key])), null, 2)}`,
         );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (e) {
         // do nothing
       }
@@ -59,6 +60,7 @@ export class UnknownError extends Error {
     // Support passing error or string
     super((error as Error)?.message ?? error);
     this.name = "UnknownError";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.code = (error as any).code;
     if (error instanceof Error) {
       this.stack = error.stack;
@@ -76,6 +78,7 @@ export class UnknownError extends Error {
 function hasErrorProperty(
   x: unknown,
 ): x is { error: Error; [key: string]: unknown } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return !!(x as any)?.error;
 }
 
@@ -104,6 +107,7 @@ const logger = createLogger({
 export function Logger(endpoint: string) {
   logger.defaultMeta = { endpoint };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const error = (...msg: any) => {
     const metadata = formatError(msg);
     logger.error(msg[0], { endpoint, error: msg, ...metadata });

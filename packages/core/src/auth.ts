@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getToken } from "next-auth/jwt";
 import { Logger } from "@nile-auth/logger";
 import { getSecureCookies } from "./next-auth/cookies";

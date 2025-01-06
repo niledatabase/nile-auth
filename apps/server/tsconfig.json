@@ -14,7 +14,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "jest.config.js",
-    "next.config.js"
+    "next.config.mjs"
 , "../../packages/api/src/routes/me/me.test.ts"  ],
   "exclude": ["node_modules"]
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Logger } from "@nile-auth/logger";
 import NextAuth, { AuthOptions as NextAuthOptions } from "next-auth";
 

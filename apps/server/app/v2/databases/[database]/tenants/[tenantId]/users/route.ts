@@ -178,6 +178,7 @@ export async function POST(
     let body;
     try {
       body = await req.json();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       /*noop*/
     }

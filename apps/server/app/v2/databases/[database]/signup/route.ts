@@ -91,6 +91,7 @@ export async function POST(
     try {
       const headers = await login(cloned, { params });
       return responder(await userCreate.text(), { headers }, { ...swagBody });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       // need to log
     }
