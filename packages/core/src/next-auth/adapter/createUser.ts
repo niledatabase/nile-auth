@@ -2,13 +2,13 @@ import { Pool } from "pg";
 import { AdapterUser } from "next-auth/adapters";
 
 import { NileUser, convertUser } from "./converter";
-import { query } from "@nile-auth/query";
+import { formatTime, query } from "@nile-auth/query";
 
 export function createUser(pool: Pool) {
   return async function createUser(
     user: Omit<AdapterUser, "id">,
   ): Promise<AdapterUser> {
-    const { name, email, image } = user;
+    const { name, email, image, emailVerified } = user;
     // it is possible that a user has already been "created", they just used a different provider.
     // Unless they have actually verified their email (which getUserByEmail handles), treat them as a "new" user for that provider, removing the old one
     const sql = query(pool);
@@ -42,12 +42,22 @@ export function createUser(pool: Pool) {
     } else {
       const result = await sql`
         INSERT INTO
-          users.users (name, email, picture)
+          (
+            name,
+            email,
+            picture,
+            email_verified,
+            created,
+            updated
+          )
         VALUES
           (
             ${name ? name : null},
             ${email},
-            ${image ? image : null}
+            ${image ? image : null},
+            ${emailVerified ? emailVerified : null},
+            ${formatTime()},
+            ${formatTime()}
           )
         RETURNING
           id,
