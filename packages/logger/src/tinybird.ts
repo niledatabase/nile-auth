@@ -25,7 +25,7 @@ function mapEvent({
     }
   }
   const params = new URLSearchParams(detail?.body);
-  let email = "UNKNOWN";
+  let email = url.searchParams.get("email") ?? "UNKNOWN";
   const paramEmail = params.get("email");
 
   if (paramEmail) {
