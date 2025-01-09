@@ -42,7 +42,7 @@ export function createUser(pool: Pool) {
     } else {
       const result = await sql`
         INSERT INTO
-          (
+          users.users (
             name,
             email,
             picture,
@@ -63,7 +63,7 @@ export function createUser(pool: Pool) {
           id,
           name,
           email,
-          picture
+          picture;
       `;
       if (result && "rowCount" in result) {
         return convertUser(

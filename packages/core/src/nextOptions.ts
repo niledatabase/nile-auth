@@ -9,9 +9,9 @@ import { defaultCookies, getSecureCookies } from "./next-auth/cookies";
 const { error } = Logger("[next-auth-options]");
 
 export async function nextOptions(req: Request, dbInfo: DbInfo) {
-  const [providers, useJwt] = await getProviders(dbInfo).catch((e) => {
+  const [providers] = await getProviders(dbInfo).catch((e) => {
     error(e);
-    return [[], false];
+    return [[]];
   });
 
   const useSecureCookies = getSecureCookies(req);
@@ -25,10 +25,11 @@ export async function nextOptions(req: Request, dbInfo: DbInfo) {
     options.useSecureCookies = useSecureCookies;
   }
 
-  if (useJwt) {
+  const url = new URL(req.url);
+  if (url.pathname.endsWith("/credentials")) {
     options.session = {
       strategy: "jwt",
     };
   }
-  return [options, useJwt];
+  return [options];
 }

@@ -29,8 +29,14 @@ export default async function NileAuth(
   const origin = req.headers.get("niledb-origin");
   process.env.NEXTAUTH_URL = String(origin);
 
-  const [options, useJwt] = await nextOptions(req, dbInfo);
-  const cfg = { ...options, ...dbInfo, useJwt, ...config };
+  const [options] = await nextOptions(req, dbInfo);
+  if (!options?.providers) {
+    return new Response(
+      "No providers have been configured. Check the database.",
+      { status: 400 },
+    );
+  }
+  const cfg: AuthOptions = { ...options, ...dbInfo, ...config };
   const opts = buildOptionsFromReq(req, cfg);
 
   try {

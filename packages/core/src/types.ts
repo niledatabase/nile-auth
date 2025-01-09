@@ -1,9 +1,6 @@
 import { AuthOptions as NextAuthOptions } from "next-auth";
 
-export type AuthOptions = NextAuthOptions &
-  DbInfo & {
-    useJwt?: boolean;
-  };
+export type AuthOptions = NextAuthOptions & DbInfo;
 export type DbInfo = {
   host: string;
   database: string;
@@ -13,12 +10,16 @@ export type DbInfo = {
 };
 
 export enum ProviderNames {
+  Azure = "azure",
+  Credentials = "Credentials", // keep as caps, legacy
+  Discord = "discord",
+  Email = "Email", // keeps as caps, legacy
+  Github = "github",
   Google = "google",
-  Unknown = "unknown",
-  Github = "Github",
-  GoogleBeta = "Google",
-  Credentials = "Credentials",
-  Email = "Email",
+  HubSpot = "hubSpot",
+  LinkedIn = "linkedIn",
+  Slack = "slack",
+  X = "x (twitter)",
 }
 
 export type Provider = {

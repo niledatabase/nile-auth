@@ -15,8 +15,8 @@ describe("nile-auth", () => {
       password: "",
       port: 0,
     });
-    expect(config.useSecureCookies).toEqual(true);
-    expect(config.cookies.sessionToken.name).toEqual(
+    expect(config?.useSecureCookies).toEqual(true);
+    expect(config?.cookies?.sessionToken?.name).toEqual(
       "__Secure-nile.session-token",
     );
   });

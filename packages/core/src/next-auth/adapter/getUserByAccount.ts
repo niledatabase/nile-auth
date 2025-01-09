@@ -19,6 +19,8 @@ export function getUserByAccount(pool: Pool) {
       WHERE
         c.provider = ${provider}
         AND c.provider_account_id = ${providerAccountId}
+        AND c.deleted IS NULL
+        AND u.deleted IS NULL
     `;
 
     if (result && "rows" in result) {
