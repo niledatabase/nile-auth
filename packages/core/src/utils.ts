@@ -97,7 +97,7 @@ async function handleRefreshTokens(
       const partyCast = party as PartyResultSet;
       const params: Params = { party: partyCast, sql, creds };
 
-      if (creds.provider === ProviderNames.GoogleBeta) {
+      if (creds.provider === ProviderNames.Google) {
         await handleGoogleRefresh(params);
       } else if (creds.provider === ProviderNames.Github) {
         await handleGithubRefresh(params);

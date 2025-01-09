@@ -30,7 +30,7 @@ const devFormat = format.combine(
         }
         return colorizer.colorize(
           "silly",
-          `\n[${timestamp}] ${level}: ${key}: ${JSON.stringify(JSON.parse(meta[key]), null, 2)}`,
+          `\n[${timestamp}] ${level}: ${key}: ${JSON.stringify(JSON.parse(String(meta[key])), null, 2)}`,
         );
       } catch (e) {
         // do nothing

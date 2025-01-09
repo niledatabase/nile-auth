@@ -51,21 +51,16 @@ export function query(pool: Pool) {
       text += `$${i}${strings[i] ?? ""}`;
     }
     const client = await pool.connect().catch((e) => {
-      // eslint-disable-next-line no-console
-      // eslint-disable-next-line no-console
       error(
-        "[nile-auth][error][CONNECTION FAILED]",
-        "Unable to connect to Nile. Double check your database configuration.",
+        "[nile-auth][error][CONNECTION FAILED] Unable to connect to Nile. Double check your database configuration.",
         { stack: e.stack, message: e.message },
       );
     });
     // @ts-expect-error - allows for null args in function, but not in query
-    // return { text, values };
     const result = await client.query(text, values).catch((e) => {
-      // eslint-disable-next-line no-console
       error(
-        "[nile-auth][error][QUERY FAILED]Unable to run query on database.",
-        { stack: e.stack, message: e.message },
+        "[nile-auth][error][QUERY FAILED] Unable to run query on database.",
+        { stack: e.stack, message: e.message, text, values },
       );
     });
     debug("[SQL]", {

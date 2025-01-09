@@ -30,6 +30,7 @@ export async function GET(
     if (res.status > 303) {
       log.error(res);
     }
+
     if (res.status === 302) {
       const location = res.headers.get("location");
       const cookies = res.headers.get("set-cookie");
