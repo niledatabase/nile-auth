@@ -3,16 +3,39 @@ import { UpdateDatabaseParams } from "./types";
 export async function updateDatabase({
   sql,
   responseTokens,
-  creds,
+  user,
+  provider,
 }: UpdateDatabaseParams) {
-  await sql`
-    UPDATE auth.credentials
-    SET
-      access_token = ${responseTokens.access_token},
-      expires_at = ${Math.floor(Date.now() / 1000 + responseTokens.expires_in)},
-      refresh_token = ${responseTokens.refresh_token ?? creds.refresh_token}
+  const cred = await sql`
+    SELECT
+      *
+    FROM
+      auth.credentials
     WHERE
-      provider = ${creds.provider}
-      AND provider_account_id = ${creds.provider_account_id}
+      user_id = ${user.id}
+      AND provider = ${provider.name}
   `;
+  if (cred && "rows" in cred) {
+    const existingPayload: void | JSON = cred?.rows?.[0]
+      ?.payload as unknown as JSON;
+    const fullPayload = {
+      ...(existingPayload ? existingPayload : {}),
+      access_token: responseTokens.access_token,
+      expires_at: Math.floor(Date.now() / 1000 + responseTokens.expires_in),
+      refresh_token: responseTokens.refresh_token,
+    };
+    const payload = JSON.stringify(fullPayload);
+
+    // if we have an access token response, update, else leave it alone
+    if ("access_token" in responseTokens) {
+      await sql`
+        UPDATE auth.credentials
+        SET
+          payload = ${payload}
+        WHERE
+          provider = ${provider.name}
+          AND user_id = ${user.id}
+      `;
+    }
+  }
 }

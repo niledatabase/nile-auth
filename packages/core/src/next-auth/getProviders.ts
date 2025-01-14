@@ -13,11 +13,13 @@ import LinkedInProvider, {
 import SlackProvider from "next-auth/providers/slack";
 import TwitterProvider from "next-auth/providers/twitter";
 
-import { query } from "@nile-auth/query";
+import { query, ResultSet, sqlTemplate } from "@nile-auth/query";
 import { DbCreds } from "@nile-auth/query/getDbInfo";
 import { Logger } from "@nile-auth/logger";
 
 import { Provider, ProviderNames } from "../types";
+import { addContext } from "@nile-auth/query/context";
+import { Provider as NextAuthProvider } from "next-auth/providers/index";
 
 type RelyingParty = {
   id: string;
@@ -28,29 +30,52 @@ type RelyingParty = {
   client_id: string;
   client_secret: string;
   enabled: string;
+  config: Record<string, string>;
 };
 
 const { error, debug } = Logger("[providers]");
 
-export async function getProviders(params: DbCreds) {
+export async function getProviders(
+  params: DbCreds,
+  tenantId?: null | string,
+): Promise<[null | NextAuthProvider[]]> {
   const pool = new Pool(params);
 
   const enabledProviders: string[] = [];
-  const sql = await query(pool);
+  const sql = await sqlTemplate(params);
   // do some pg here, to get providers
-  const [providers, credentials] = await Promise.all([
-    await sql`
+  const [[providers], [credentials], [, tenantProviders]] = await Promise.all([
+    (await sql`
       SELECT
         *
       FROM
         auth.oidc_providers
-    `,
-    await sql`
+      WHERE
+        enabled = TRUE
+        AND deleted IS NULL
+    `) as unknown as Promise<ResultSet<Provider[]>[]>,
+    (await sql`
       SELECT
         *
       FROM
         auth.oidc_relying_parties
-    `,
+      WHERE
+        enabled = TRUE
+        AND deleted IS NULL
+    `) as unknown as Promise<ResultSet<RelyingParty[]>[]>,
+    tenantId
+      ? await sql`
+          ${addContext({ tenantId })};
+
+          SELECT
+            *
+          FROM
+            auth.tenant_oidc_relying_parties
+        `
+      : ([] as unknown as Promise<
+          ResultSet<{ provider_name: string; enabled: boolean }[]>[]
+        >),
+    ,
   ]);
 
   if (providers && "rowCount" in providers && providers.rowCount === 0) {
@@ -64,11 +89,24 @@ export async function getProviders(params: DbCreds) {
     "rows" in credentials
   ) {
     const configuredProviders = providers?.rows
-      .map((provider: Provider) => {
+      .filter((provider: Provider) => {
         if (!provider.enabled) {
           return;
         }
+        if (tenantProviders && "rows" in tenantProviders) {
+          const tenantOverride = tenantProviders.rows.find(
+            (p) => p.provider_name === provider.name,
+          );
+          if (tenantOverride && "enabled" in tenantOverride) {
+            if (tenantOverride.enabled === false) {
+              return;
+            }
+          }
+        }
 
+        return provider;
+      })
+      .map((provider: Provider) => {
         enabledProviders.push(provider.name);
 
         // special providers that need some kind of customization
@@ -155,9 +193,11 @@ export async function getProviders(params: DbCreds) {
     if (configuredProviders.length === 0) {
       error("No providers configured");
     } else {
-      debug(`${enabledProviders.join(", ")} enabled for ${params.database}`);
+      debug(
+        `${enabledProviders.join(", ")} enabled on ${params.database} ${tenantId ? `for tenant ${tenantId}` : ""}`,
+      );
     }
-    return [configuredProviders];
+    return [configuredProviders as NextAuthProvider[]];
   }
   return [null];
 }
