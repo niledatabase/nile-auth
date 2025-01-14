@@ -4,7 +4,7 @@ import { AdapterUser, AdapterSession } from "next-auth/adapters";
 import { convertUser, convertSession, NileSession } from "./converter";
 import { query } from "@nile-auth/query";
 
-export function getSessionAndUser(pool: Pool) {
+export function getSessionAndUser(pool: Pool, tenantId?: null | string) {
   return async function getSessionAndUser(
     sessionToken: string | undefined,
   ): Promise<{
@@ -38,7 +38,9 @@ export function getSessionAndUser(pool: Pool) {
           users.users
         WHERE
           id = ${session.userId}
+          AND DELETED IS NULL
       `;
+      // I think we need to check the user automatically? or per tenant maybe
       if (users && "rowCount" in users && users.rowCount === 0) {
         return null;
       }

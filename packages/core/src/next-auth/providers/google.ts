@@ -5,6 +5,8 @@ export default async function handleGoogleRefresh({
   party,
   sql,
   creds,
+  user,
+  provider,
 }: Params) {
   const partyRow = party.rows[0];
   if (partyRow) {
@@ -19,6 +21,6 @@ export default async function handleGoogleRefresh({
       method: "POST",
     });
     const responseTokens = await response.json();
-    await updateDatabase({ sql, responseTokens, creds });
+    await updateDatabase({ sql, responseTokens, user, provider });
   }
 }

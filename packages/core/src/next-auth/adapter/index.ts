@@ -18,6 +18,7 @@ import { formatTime, query } from "@nile-auth/query";
 
 export default function NileAdapter(
   options: AuthOptions & { user: string; password: string; port: number },
+  tenantId?: null | string,
 ): Adapter {
   const poolConfig = {
     host: options.host,
@@ -37,7 +38,7 @@ export default function NileAdapter(
     updateUser: updateUser(pool),
     linkAccount: linkAccount(pool),
     createSession: createSession(pool),
-    getSessionAndUser: getSessionAndUser(pool),
+    getSessionAndUser: getSessionAndUser(pool, tenantId),
     updateSession: updateSession(pool),
 
     async unlinkAccount(partialAccount: {
