@@ -38,6 +38,7 @@ export function getSessionAndUser(pool: Pool) {
           users.users
         WHERE
           id = ${session.userId}
+          AND DELETED IS NULL
       `;
       if (users && "rowCount" in users && users.rowCount === 0) {
         return null;

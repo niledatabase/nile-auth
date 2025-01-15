@@ -1,10 +1,15 @@
 import { Primitive, ResultSet, ValidResultSet } from "@nile-auth/query";
+import { User } from "next-auth";
+import { Provider } from "../../types";
 
 export type Creds = {
   provider: string;
   provider_account_id: string;
-  refresh_token: string;
-  expires_at: string;
+  payload: {
+    access_token: string;
+    refresh_token: string;
+    expires_at: string;
+  };
 };
 
 export type PartyResultSet = ValidResultSet<
@@ -19,7 +24,9 @@ export type Params = {
     ...values: Primitive[]
   ) => Promise<ResultSet>;
   party: PartyResultSet;
-  creds: Creds;
+  creds: { refresh_token: string };
+  provider: Provider;
+  user: User;
 };
 
 export type UpdateDatabaseParams = {
@@ -27,7 +34,8 @@ export type UpdateDatabaseParams = {
     strings: TemplateStringsArray,
     ...values: Primitive[]
   ) => Promise<ResultSet>;
-  creds: Creds;
+  provider: Provider;
+  user: User;
   responseTokens: {
     expires_in: number;
     access_token: string;

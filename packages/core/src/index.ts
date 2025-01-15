@@ -27,16 +27,17 @@ export default async function NileAuth(
   }
 
   const origin = req.headers.get("niledb-origin");
+  const tenantId = req.headers.get("niledb-tenant-id");
   process.env.NEXTAUTH_URL = String(origin);
 
-  const [options] = await nextOptions(req, dbInfo);
+  const [options] = await nextOptions(req, dbInfo, tenantId);
   if (!options?.providers) {
     return new Response(
       "No providers have been configured. Check the database.",
       { status: 400 },
     );
   }
-  const cfg: AuthOptions = { ...options, ...dbInfo, ...config };
+  const cfg: AuthOptions = { ...options, ...dbInfo, ...config } as AuthOptions;
   const opts = buildOptionsFromReq(req, cfg);
 
   try {

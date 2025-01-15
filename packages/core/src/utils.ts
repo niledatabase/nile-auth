@@ -46,21 +46,25 @@ async function handleRefreshTokens(
   const pool = new Pool(dbInfo);
   const sql = await query(pool);
   const data = await sql`
-    "select * from auth.credentials where user_id = ${params.user.id}",
+    SELECT
+      *
+    FROM
+      auth.credentials
+    WHERE
+      user_id = ${params.user.id}
   `;
 
   if (data && !("rowCount" in data)) {
     return params.session;
   }
 
-  const creds = data?.rows[0] as Creds;
+  const creds = data?.rows[0];
 
   if (!creds) {
     return params.session;
   }
 
-  const providerName =
-    creds.provider === "google" ? "Google (beta)" : creds.provider;
+  const providerName = creds.provider;
 
   if (!providerName) {
     return params.session;
@@ -90,17 +94,27 @@ async function handleRefreshTokens(
       auth.oidc_relying_parties
     WHERE
       provider = ${partyId}
+    WHERE
+      deleted IS NULL
   `;
-  const expires = creds.expires_at ? parseInt(creds.expires_at, 10) : 0;
+  const expires = creds.payload.expires_at
+    ? parseInt(creds.payload.expires_at, 10)
+    : 0;
   if (party && "rows" in party) {
     if (expires * 1000 < Date.now()) {
       const partyCast = party as PartyResultSet;
-      const params: Params = { party: partyCast, sql, creds };
+      const args: Params = {
+        user: params.user,
+        party: partyCast,
+        sql,
+        creds: creds.payload,
+        provider: provider.rows[0],
+      };
 
       if (creds.provider === ProviderNames.Google) {
-        await handleGoogleRefresh(params);
+        await handleGoogleRefresh(args);
       } else if (creds.provider === ProviderNames.Github) {
-        await handleGithubRefresh(params);
+        await handleGithubRefresh(args);
       }
     }
   }

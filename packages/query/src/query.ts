@@ -1,7 +1,7 @@
 import { Logger } from "@nile-auth/logger";
 import { Pool } from "pg";
 import { handleQuery } from "./handleQuery";
-import getDbInfo from "./getDbInfo";
+import getDbInfo, { DbCreds } from "./getDbInfo";
 import { fixPrepare } from "./context";
 import { ErrorResultSet as ErrorSet } from "./types";
 export { formatTime } from "./formatTime";
@@ -81,6 +81,10 @@ export function query(pool: Pool) {
  */
 export async function queryByReq(req: Request) {
   const dbInfo = getDbInfo(undefined, req);
+  return sqlTemplate(dbInfo);
+}
+
+export function sqlTemplate(dbInfo: DbCreds) {
   return async function sqlTemplate(
     strings: TemplateStringsArray,
     ...values: Primitive[]
@@ -135,5 +139,4 @@ export async function queryByReq(req: Request) {
     }
   };
 }
-
 export type { ErrorResultSet } from "./types";
