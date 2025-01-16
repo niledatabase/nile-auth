@@ -6,6 +6,7 @@ enum ErrorCodes {
   unique_violation = "23505",
   syntax_error = "42601",
   invalid_param = "22023",
+  ECONNREFUSED = "ECONNREFUSED",
 }
 export function handleFailure(
   req: Request,
@@ -13,7 +14,12 @@ export function handleFailure(
   msg?: string,
 ) {
   const responder = ResponseLogger(req, EventEnum.QUERY);
+  console.log(pgData);
   if (pgData && "code" in pgData) {
+    if (pgData.code === ErrorCodes.ECONNREFUSED) {
+      return responder(`Connection refused to the database.`, { status: 400 });
+    }
+
     if (pgData.code === ErrorCodes.unique_violation) {
       return responder(`${msg} already exists.`, { status: 400 });
     }
