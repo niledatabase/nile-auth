@@ -30,7 +30,7 @@ export async function executeCommand(params: {
   };
   const timerClient = await clientManager.getClient(clientProps);
   if (timerClient.hasError) {
-    return timerClient.hasError;
+    return [timerClient.hasError] as unknown as QueryResult[];
   }
   const client = timerClient.getClient();
 

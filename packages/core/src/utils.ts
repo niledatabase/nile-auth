@@ -94,8 +94,7 @@ async function handleRefreshTokens(
       auth.oidc_relying_parties
     WHERE
       provider = ${partyId}
-    WHERE
-      deleted IS NULL
+      AND deleted IS NULL
   `;
   const expires = creds.payload.expires_at
     ? parseInt(creds.payload.expires_at, 10)
