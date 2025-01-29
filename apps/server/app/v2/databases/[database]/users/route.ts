@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       body.email,
     );
   if (!validEmail) {
-    return handleFailure(req, undefined, "Invalid email address");
+    return handleFailure(responder, undefined, "Invalid email address");
   }
   const [newUser] = await sql`
     INSERT INTO
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
   }
   if ("name" in newUser) {
     return handleFailure(
-      req,
+      responder,
       newUser as ErrorResultSet,
       `User with email ${body.email}`,
     );
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
     `;
     if (!tenantUser) {
       return handleFailure(
-        req,
+        responder,
         {} as ErrorResultSet,
         `Unable to add user ${user.id} to tenant ${tenantId}.`,
       );
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
 
     if ("name" in tenantUser) {
       return handleFailure(
-        req,
+        responder,
         tenantUser as ErrorResultSet,
         `Unable to add user ${user.id} to tenant ${tenantId}`,
       );
@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
     `;
     if (credentials && "name" in credentials) {
       return handleFailure(
-        req,
+        responder,
         credentials as ErrorResultSet,
         `Unable to save credentials.`,
       );
@@ -189,6 +189,10 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     );
   } else {
-    return handleFailure(req, {} as ErrorResultSet, "Unable to create user.");
+    return handleFailure(
+      responder,
+      {} as ErrorResultSet,
+      "Unable to create user.",
+    );
   }
 }

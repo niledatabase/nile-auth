@@ -70,13 +70,13 @@ export async function POST(req: NextRequest) {
         AND deleted IS NULL
     `;
     if (!userRows || (userRows && "name" in userRows)) {
-      return handleFailure(req, userRows as ErrorResultSet);
+      return handleFailure(responder, userRows as ErrorResultSet);
     }
     const [user] = userRows.rows;
 
     const [tenants] = await sql`
       INSERT INTO
-        tenants (name)
+        public.tenants (name)
       VALUES
         (${body.name})
       RETURNING
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     `;
 
     if (!tenants || (tenants && "name" in tenants)) {
-      return handleFailure(req, tenants as ErrorResultSet);
+      return handleFailure(responder, tenants as ErrorResultSet);
     }
 
     const { id: tenantId } = tenants.rows[0] ?? {};
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
       `;
       if (!tenantUser) {
         return handleFailure(
-          req,
+          responder,
           {} as ErrorResultSet,
           `Unable to add user ${user.id} to tenant ${tenantId}.`,
         );

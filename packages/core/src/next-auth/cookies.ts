@@ -1,5 +1,22 @@
 import { CookieOption, CookiesOptions } from "next-auth";
 
+// this cookie does not go through next-auth
+export function getPasswordResetCookie(
+  useSecureCookies: boolean,
+): CookieOption {
+  const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+  return {
+    name: `${cookiePrefix}nile.reset`,
+    options: {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: useSecureCookies,
+      "max-age": 14400, // 4 hours in seconds
+    },
+  };
+}
+
 export function getCallbackCookie(useSecureCookies: boolean): CookieOption {
   const cookiePrefix = useSecureCookies ? "__Secure-" : "";
   return {
@@ -12,6 +29,7 @@ export function getCallbackCookie(useSecureCookies: boolean): CookieOption {
     },
   };
 }
+
 export function getCsrfTokenCookie(useSecureCookies: boolean): CookieOption {
   const cookiePrefix = useSecureCookies ? "__Secure-" : "";
   return {
@@ -88,18 +106,18 @@ export function defaultCookies(
 }
 
 export function getSecureCookies(req: Request): boolean {
-  const secureCookies = req.headers.get("niledb-useSecureCookies");
+  const secureCookies = req.headers?.get("niledb-useSecureCookies");
 
   if (secureCookies != null) {
     return Boolean(secureCookies);
   }
 
-  const origin = req.headers.get("niledb-origin");
+  const origin = req.headers?.get("niledb-origin");
   return Boolean(String(origin).startsWith("https://"));
 }
 
-export function getCookie(cookieKey: void | string, headers: Headers) {
-  const cookie = headers.get("cookie")?.split("; ");
+export function getCookie(cookieKey: void | string, headers: void | Headers) {
+  const cookie = headers?.get("cookie")?.split("; ");
   const _cookies: Record<string, string> = {};
   if (cookie) {
     for (const parts of cookie) {

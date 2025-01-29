@@ -118,7 +118,7 @@ export function Logger(endpoint: string) {
 
 const { info } = Logger("response logger");
 
-type ResponderFn = (
+export type ResponderFn = (
   body?: Response | BodyInit | null | undefined,
   init?: ResponseInit | undefined,
   detail?: Record<string, string | Record<string, string>>,

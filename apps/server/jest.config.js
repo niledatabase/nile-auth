@@ -2,6 +2,7 @@
 // jest.config.js
 
 process.env.DISABLE_LOGGING = true;
+process.env.NEXTAUTH_SECRET = 'super_secret';
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',

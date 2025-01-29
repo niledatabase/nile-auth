@@ -1,5 +1,6 @@
-import { EventEnum, ResponseLogger } from "@nile-auth/logger";
+import { EventEnum, ResponseLogger, ResponderFn } from "@nile-auth/logger";
 import { ErrorResultSet } from "./types";
+import { ResultSet } from "./query";
 
 // https://www.postgresql.org/docs/current/errcodes-appendix.html
 enum ErrorCodes {
@@ -9,12 +10,10 @@ enum ErrorCodes {
   ECONNREFUSED = "ECONNREFUSED",
 }
 export function handleFailure(
-  req: Request,
-  pgData?: ErrorResultSet,
+  responder: ResponderFn,
+  pgData?: ErrorResultSet | Pick<ErrorResultSet, "code">,
   msg?: string,
 ) {
-  const responder = ResponseLogger(req, EventEnum.QUERY);
-  console.log(pgData);
   if (pgData && "code" in pgData) {
     if (pgData.code === ErrorCodes.ECONNREFUSED) {
       return responder(`Connection refused to the database.`, { status: 400 });
@@ -25,11 +24,11 @@ export function handleFailure(
     }
 
     if (pgData.code === ErrorCodes.invalid_param) {
-      if (pgData.message.includes("not found"))
+      if ("message" in pgData && pgData.message.includes("not found"))
         return responder("Resource not found", { status: 404 });
     }
 
-    if (pgData.code === ErrorCodes.syntax_error) {
+    if ("message" in pgData && pgData.code === ErrorCodes.syntax_error) {
       return responder(`Invalid syntax: ${pgData.message}`, {
         status: 400,
       });

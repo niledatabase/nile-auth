@@ -64,7 +64,7 @@ export async function PUT(
   if (session && session?.user?.id) {
     const { tenantId, userId } = params ?? {};
     if (!tenantId) {
-      return handleFailure(req, undefined, "tenantId is required.");
+      return handleFailure(responder, undefined, "tenantId is required.");
     }
     const sql = await queryByReq(req);
 
@@ -87,7 +87,7 @@ export async function PUT(
       return responder(null, { status: 404 });
     }
     if ("name" in newUser) {
-      return handleFailure(req, newUser as ErrorResultSet);
+      return handleFailure(responder, newUser as ErrorResultSet);
     }
     const user = newUser.rows[0] as { id: string; email: string };
     // would be good to consolidate these into a single `client` at some point
@@ -105,7 +105,7 @@ export async function PUT(
     `;
 
     if (exists && "name" in exists) {
-      return handleFailure(req, exists as ErrorResultSet);
+      return handleFailure(responder, exists as ErrorResultSet);
     }
 
     if (exists && "rowCount" in exists && exists.rowCount > 0) {
@@ -120,7 +120,7 @@ export async function PUT(
       `;
       if (!tenantUser) {
         return handleFailure(
-          req,
+          responder,
           {} as ErrorResultSet,
           `Unable to add user ${user.id} to tenant ${tenantId}.`,
         );
@@ -128,7 +128,7 @@ export async function PUT(
 
       if ("name" in tenantUser) {
         return handleFailure(
-          req,
+          responder,
           tenantUser as ErrorResultSet,
           `Unable to add user ${user.id} to tenant ${tenantId}`,
         );
@@ -138,7 +138,7 @@ export async function PUT(
         return new Response(JSON.stringify(user), { status: 201 });
       } else {
         return handleFailure(
-          req,
+          responder,
           {} as ErrorResultSet,
           "Unable to add user to tenant.",
         );
@@ -156,7 +156,7 @@ export async function PUT(
       `;
       if (!tenantUser) {
         return handleFailure(
-          req,
+          responder,
           {} as ErrorResultSet,
           `Unable to add user ${user.id} to tenant ${tenantId}.`,
         );
@@ -164,7 +164,7 @@ export async function PUT(
 
       if ("name" in tenantUser) {
         return handleFailure(
-          req,
+          responder,
           tenantUser as ErrorResultSet,
           `Unable to add user ${user.id} to tenant ${tenantId}`,
         );
@@ -174,7 +174,7 @@ export async function PUT(
         return responder(JSON.stringify(user), { status: 201 });
       } else {
         return handleFailure(
-          req,
+          responder,
           {} as ErrorResultSet,
           "Unable to create user.",
         );
@@ -231,10 +231,10 @@ export async function DELETE(
   const responder = ResponseLogger(req, EventEnum.UNLINK_USER);
   if (session && session?.user?.id) {
     if (!params.userId) {
-      return handleFailure(req, undefined, "userId is required.");
+      return handleFailure(responder, undefined, "userId is required.");
     }
     if (!params.tenantId) {
-      return handleFailure(req, undefined, "tenantId is required.");
+      return handleFailure(responder, undefined, "tenantId is required.");
     }
 
     const { tenantId, userId } = params;
