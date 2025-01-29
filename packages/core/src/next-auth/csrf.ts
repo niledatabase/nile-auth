@@ -15,7 +15,7 @@ export function getCsrfCookie(req: Request): string | null | undefined {
   const csrfCookie = getCsrfTokenCookie(useSecureCookies);
   return getCookie(csrfCookie.name, headers);
 }
-export function getCsrfParts(cookie: undefined | null | string) {
+export function getCookieParts(cookie: undefined | null | string) {
   if (cookie) {
     return decodeURIComponent(cookie).split("|");
   }
@@ -26,7 +26,7 @@ export async function validCsrfToken(
   secret: undefined | string,
 ): Promise<[isTokenValid: boolean, token: void | string]> {
   const token = getCsrfCookie(req);
-  const [csrfToken, csrfTokenHash] = getCsrfParts(token) ?? [];
+  const [csrfToken, csrfTokenHash] = getCookieParts(token) ?? [];
   const expectedCsrfTokenHash = await createHash(`${csrfToken}${secret}`);
   return [csrfTokenHash === expectedCsrfTokenHash, csrfToken];
 }

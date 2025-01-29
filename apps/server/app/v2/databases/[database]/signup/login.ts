@@ -6,7 +6,7 @@ import {
   getCsrfTokenCookie,
   getSecureCookies,
 } from "@nile-auth/core/cookies";
-import { getCsrfCookie, getCsrfParts } from "@nile-auth/core/csrf";
+import { getCsrfCookie, getCookieParts } from "@nile-auth/core/csrf";
 
 const routes = {
   PROVIDERS: "/auth/providers",
@@ -29,7 +29,7 @@ export async function login(
     "niledb-origin": ORIGIN,
   };
 
-  const [csrfToken] = getCsrfParts(getCsrfCookie(req)) ?? [];
+  const [csrfToken] = getCookieParts(getCsrfCookie(req)) ?? [];
 
   const signInUrl = req.url.replace("signup", "callback/credentials");
 

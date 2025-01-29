@@ -85,7 +85,7 @@ describe("me", () => {
 
     expect(runCommands).toEqual([
       'SELECT id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated, email_verified AS "emailVerified" FROM users.users WHERE id = some-uuid AND deleted IS NULL',
-      "SELECT DISTINCT t.id FROM tenants t JOIN tenant_users tu ON t.id = tu.tenant_id WHERE tu.user_id = some-uuid AND tu.deleted IS NULL AND t.deleted IS NULL",
+      "SELECT DISTINCT t.id FROM public.tenants t JOIN users.tenant_users tu ON t.id = tu.tenant_id WHERE tu.user_id = some-uuid AND tu.deleted IS NULL AND t.deleted IS NULL",
     ]);
   });
 });

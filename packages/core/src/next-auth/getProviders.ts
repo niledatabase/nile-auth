@@ -64,16 +64,16 @@ export async function getProviders(
         AND deleted IS NULL
     `) as unknown as Promise<ResultSet<RelyingParty[]>[]>,
     tenantId
-      ? await sql`
+      ? ((await sql`
           ${addContext({ tenantId })};
 
           SELECT
             *
           FROM
             auth.tenant_oidc_relying_parties
-        `
+        `) as [null, ResultSet<{ provider_name: string; enabled: boolean }[]>])
       : ([] as unknown as Promise<
-          ResultSet<{ provider_name: string; enabled: boolean }[]>[]
+          [null, ResultSet<{ provider_name: string; enabled: boolean }[]>]
         >),
     ,
   ]);
@@ -106,13 +106,13 @@ export async function getProviders(
 
         return provider;
       })
-      .map((provider: Provider) => {
+      .map(async (provider: Provider) => {
         enabledProviders.push(provider.name);
 
         // special providers that need some kind of customization
         switch (provider.name) {
           case ProviderNames.Email:
-            return EmailProvider(provider, pool);
+            return await EmailProvider(provider, params);
           case ProviderNames.Credentials:
             return CredentialProvider({ pool });
         }
@@ -190,14 +190,16 @@ export async function getProviders(
         }
       })
       .filter(Boolean);
-    if (configuredProviders.length === 0) {
+    const ps = await Promise.all(configuredProviders);
+    if (ps.length === 0) {
       error("No providers configured");
     } else {
       debug(
         `${enabledProviders.join(", ")} enabled on ${params.database} ${tenantId ? `for tenant ${tenantId}` : ""}`,
       );
     }
-    return [configuredProviders as NextAuthProvider[]];
+
+    return [ps as NextAuthProvider[]];
   }
   return [null];
 }

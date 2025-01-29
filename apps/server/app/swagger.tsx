@@ -26,10 +26,32 @@
  *          type: string
  *        description: the name of the provider (credentials, google, etc)
  *   schemas:
+ *     PasswordTokenPayload:
+ *       type: object
+ *       required:
+ *         - callbackURL
+ *         - email
+ *       properties:
+ *         callbackURL:
+ *           type: string
+ *         email:
+ *           type: string
+ *         redirectURL:
+ *           type: string
+ *     ResetPassword:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *         password:
+ *           type: string
  *     CreateUser:
  *       required:
- *       - email
- *       - password
+ *         - email
+ *         - password
  *       type: object
  *       properties:
  *         email:

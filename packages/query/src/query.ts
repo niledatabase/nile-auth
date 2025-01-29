@@ -1,9 +1,10 @@
-import { Logger } from "@nile-auth/logger";
+import { Logger, ResponderFn } from "@nile-auth/logger";
 import { Pool } from "pg";
 import { handleQuery } from "./handleQuery";
 import getDbInfo, { DbCreds } from "./getDbInfo";
 import { fixPrepare } from "./context";
-import { ErrorResultSet as ErrorSet } from "./types";
+import { ErrorResultSet, ErrorResultSet as ErrorSet } from "./types";
+import { handleFailure } from "./utils";
 export { formatTime } from "./formatTime";
 const { debug, error } = Logger("adaptor sql");
 
@@ -40,11 +41,13 @@ export type ResultSet<T = Record<string, string>[]> =
   | ValidResultSet<T>;
 
 export type Primitive = string | number | boolean | string[] | Date | null;
-export function query(pool: Pool) {
-  return async function sqlTemplate(
-    strings: TemplateStringsArray,
-    ...values: Primitive[]
-  ): Promise<ResultSet<any>> {
+export type SqlTemplateFn = (
+  strings: TemplateStringsArray,
+  ...values: Primitive[]
+) => Promise<ResultSet<any>>;
+
+export function query(pool: Pool): SqlTemplateFn {
+  return async function sqlTemplate(strings, ...values) {
     let text = strings[0] ?? "";
 
     for (let i = 1; i < strings.length; i++) {
@@ -79,16 +82,44 @@ export function query(pool: Pool) {
  * @param params database and credentials for that database
  * @returns the response based on the query, or a Response for an error to return back to the client
  */
-export async function queryByReq(req: Request) {
+export async function queryByReq(req: Request, responder?: ResponderFn) {
   const dbInfo = getDbInfo(undefined, req);
-  return sqlTemplate(dbInfo);
-}
-
-export function sqlTemplate(dbInfo: DbCreds) {
-  return async function sqlTemplate(
+  return sqlTemplate(dbInfo, responder) as <T = Record<string, any>>(
     strings: TemplateStringsArray,
     ...values: Primitive[]
-  ): Promise<ResultSet[]> {
+  ) => Promise<ResultSet[]>;
+}
+type Params = {
+  req?: Request;
+  responder?: ResponderFn;
+  creds?: DbCreds;
+};
+export async function queryBySingle({ req, responder, creds }: Params) {
+  const dbInfo = getDbInfo(creds, req);
+  return sqlTemplate(dbInfo, responder) as <T = Record<string, any>>(
+    strings: TemplateStringsArray,
+    ...values: Primitive[]
+  ) => Promise<{ rows: T[]; error?: Response }>;
+}
+
+export async function queryByInfo(creds?: DbCreds, req?: Request) {
+  const dbInfo = getDbInfo(creds, req);
+  return sqlTemplate(dbInfo) as <T = ResultSet[]>(
+    strings: TemplateStringsArray,
+    ...values: Primitive[]
+  ) => Promise<T>;
+}
+
+export type TemplateType = <T = ResultSet<Record<string, string>[]>>(
+  strings: TemplateStringsArray,
+  ...values: Primitive[]
+) => Promise<T[]>;
+
+export function sqlTemplate(dbInfo: DbCreds, responder?: ResponderFn) {
+  return async function sqlTemplate<T = ResultSet>(
+    strings: TemplateStringsArray,
+    ...values: Primitive[]
+  ): Promise<ResultSet[] | { rows: T[]; error?: Response }> {
     let text = strings[0] ?? "";
 
     const [initial] = values;
@@ -121,8 +152,9 @@ export function sqlTemplate(dbInfo: DbCreds) {
       text,
       values: values as string[],
     };
+    let res;
     if (!dbInfo) {
-      return [
+      res = [
         {
           name: "error",
           message: "unable to connect to the database",
@@ -135,8 +167,46 @@ export function sqlTemplate(dbInfo: DbCreds) {
         rowMode: "none",
       });
       debug(text.replace(/(\n\s+)/g, " ").trim());
-      return data;
+      res = data;
+    }
+
+    if (responder) {
+      const [single] = res;
+      return getRows<T>(single, responder);
+    } else {
+      return res;
     }
   };
 }
 export type { ErrorResultSet } from "./types";
+
+/**
+ *
+ * Safe usage of this function requires handling `error` in every impl
+ * @param res response from pg
+ * @param responder a logging function
+ * @returns handles a query that is expected to return data. If there can be null data, don't use this and manually handle the cases.
+ */
+export function getRows<T = Record<string, any>>(
+  res: ResultSet | undefined,
+  responder: ResponderFn,
+): { rows: T[]; error?: Response } {
+  let rows: T[] = [];
+  let error: Response | undefined;
+
+  if (!res || !("rows" in res) || res.rows.length === 0) {
+    error = responder(null, { status: 404 });
+  } else if ("name" in res) {
+    error = handleFailure(responder, res as unknown as ErrorResultSet);
+  } else {
+    rows = res.rows as T[];
+  }
+
+  return { rows, error };
+}
+
+export function getRow<T = Record<string, any>>(res: ResultSet | undefined) {
+  if (res && "rows" in res) {
+    return res.rows[0] as T;
+  }
+}

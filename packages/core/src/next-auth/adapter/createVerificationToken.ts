@@ -7,8 +7,9 @@ export function createVerificationToken(pool: Pool) {
   return async function (
     verificationToken: VerificationToken,
   ): Promise<VerificationToken> {
-    const { identifier, expires, token } = verificationToken;
+    const { expires, token, identifier } = verificationToken;
     const sql = await query(pool);
+
     await sql`
       INSERT INTO
         auth.verification_tokens (identifier, expires, token)

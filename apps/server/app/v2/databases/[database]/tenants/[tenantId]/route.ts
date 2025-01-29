@@ -68,14 +68,14 @@ export async function PUT(
   if (session && session?.user?.id) {
     const { tenantId } = params;
     if (!tenantId) {
-      return handleFailure(req, undefined, "tenantId is required.");
+      return handleFailure(responder, undefined, "tenantId is required.");
     }
 
     const sql = await queryByReq(req);
 
     const body = await req.json();
     if (!body.name) {
-      return handleFailure(req, undefined, "name is required");
+      return handleFailure(responder, undefined, "name is required");
     }
 
     const [, , userInTenant] = await sql`
@@ -100,7 +100,7 @@ export async function PUT(
     }
 
     const [tenants] = await sql`
-      UPDATE tenants
+      UPDATE public.tenants
       SET
         name = ${body.name}
       WHERE
@@ -110,7 +110,7 @@ export async function PUT(
     `;
 
     if (tenants && "name" in tenants) {
-      return handleFailure(req, tenants as ErrorResultSet);
+      return handleFailure(responder, tenants as ErrorResultSet);
     }
 
     if (tenants && "rowCount" in tenants && tenants.rowCount > 0) {
@@ -171,7 +171,7 @@ export async function DELETE(
   if (session && session?.user?.id) {
     const { tenantId } = params;
     if (!tenantId) {
-      return handleFailure(req, undefined, "tenantId is required.");
+      return handleFailure(responder, undefined, "tenantId is required.");
     }
 
     const sql = await queryByReq(req);
@@ -197,7 +197,7 @@ export async function DELETE(
     }
 
     const [tenants] = await sql`
-      UPDATE tenants
+      UPDATE public.tenants
       SET
         deleted = ${formatTime()}
       WHERE
@@ -205,7 +205,7 @@ export async function DELETE(
     `;
 
     if (tenants && "name" in tenants) {
-      return handleFailure(req, tenants as ErrorResultSet);
+      return handleFailure(responder, tenants as ErrorResultSet);
     }
 
     if (tenants && "rowCount" in tenants) {
@@ -268,7 +268,7 @@ export async function GET(
   if (session && session?.user?.id) {
     const { tenantId } = params;
     if (!params.tenantId) {
-      return handleFailure(req, undefined, "tenantId is required.");
+      return handleFailure(responder, undefined, "tenantId is required.");
     }
 
     const sql = await queryByReq(req);
@@ -281,11 +281,11 @@ export async function GET(
       SELECT
         *
       FROM
-        tenants;
+        public.tenants;
     `;
 
     if (tenants && "name" in tenants) {
-      return handleFailure(req, tenants as ErrorResultSet);
+      return handleFailure(responder, tenants as ErrorResultSet);
     }
 
     if (tenants && "rowCount" in tenants) {

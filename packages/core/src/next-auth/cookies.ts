@@ -1,5 +1,22 @@
 import { CookieOption, CookiesOptions } from "next-auth";
 
+// this cookie does not go through next-auth
+export function getPasswordResetCookie(
+  useSecureCookies: boolean,
+): CookieOption {
+  const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+  return {
+    name: `${cookiePrefix}nile.reset`,
+    options: {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: useSecureCookies,
+      "max-age": 14400, // 4 hours in seconds
+    },
+  };
+}
+
 export function getCallbackCookie(useSecureCookies: boolean): CookieOption {
   const cookiePrefix = useSecureCookies ? "__Secure-" : "";
   return {
@@ -12,6 +29,7 @@ export function getCallbackCookie(useSecureCookies: boolean): CookieOption {
     },
   };
 }
+
 export function getCsrfTokenCookie(useSecureCookies: boolean): CookieOption {
   const cookiePrefix = useSecureCookies ? "__Secure-" : "";
   return {
