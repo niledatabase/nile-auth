@@ -58,7 +58,7 @@ export async function GET(
   if (session && session?.user?.id) {
     const { tenantId } = params;
     if (!tenantId) {
-      return handleFailure(req, undefined, "tenantId is required.");
+      return handleFailure(responder, undefined, "tenantId is required.");
     }
     const sql = await queryByReq(req);
 
@@ -82,7 +82,7 @@ export async function GET(
     `;
 
     if (users && "name" in users) {
-      const fail = handleFailure(req, users as ErrorResultSet);
+      const fail = handleFailure(responder, users as ErrorResultSet);
       return fail;
     }
 
@@ -153,7 +153,7 @@ export async function POST(
   if (session && session?.user?.id) {
     const { tenantId } = params ?? {};
     if (!tenantId) {
-      return handleFailure(req, undefined, "tenantId is required.");
+      return handleFailure(responder, undefined, "tenantId is required.");
     }
     const sql = await queryByReq(req);
     const [, , userInTenant] = await sql`
@@ -183,14 +183,14 @@ export async function POST(
     }
     if (!body) {
       return handleFailure(
-        req,
+        responder,
         {} as ErrorResultSet,
         "Missing body from request",
       );
     }
     if (!body.email || !body.password) {
       return handleFailure(
-        req,
+        responder,
         {} as ErrorResultSet,
         "Email and password are required.",
       );
@@ -223,7 +223,7 @@ export async function POST(
     }
     if ("name" in newUser) {
       return handleFailure(
-        req,
+        responder,
         newUser as ErrorResultSet,
         `User with email ${body.email}`,
       );
@@ -241,7 +241,7 @@ export async function POST(
     `;
     if (!tenantUser) {
       return handleFailure(
-        req,
+        responder,
         {} as ErrorResultSet,
         `Unable to add user ${user.id} to tenant ${tenantId}.`,
       );
@@ -249,7 +249,7 @@ export async function POST(
 
     if ("name" in tenantUser) {
       return handleFailure(
-        req,
+        responder,
         tenantUser as ErrorResultSet,
         `Unable to add user ${user.id} to tenant ${tenantId}`,
       );
@@ -279,7 +279,7 @@ export async function POST(
       `;
       if (credentials && "name" in credentials) {
         return handleFailure(
-          req,
+          responder,
           credentials as ErrorResultSet,
           `Unable to save credentials.`,
         );
@@ -288,7 +288,11 @@ export async function POST(
     if ("rowCount" in newUser && newUser.rowCount === 1) {
       return responder(JSON.stringify(user), { status: 201 });
     } else {
-      return handleFailure(req, {} as ErrorResultSet, "Unable to create user.");
+      return handleFailure(
+        responder,
+        {} as ErrorResultSet,
+        "Unable to create user.",
+      );
     }
   }
 

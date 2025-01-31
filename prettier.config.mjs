@@ -5,7 +5,7 @@ const prettierConfig = {
 
 /** @type {import('prettier-plugin-embed').PrettierPluginEmbedOptions} */
 const prettierPluginEmbedConfig = {
-  embeddedSqlTags: ['sql'],
+  embeddedSqlTags: ['sql', 'sqlOne', 'sqlMany'],
 }
 
 /** @type {import('prettier-plugin-sql').SqlBaseOptions} */

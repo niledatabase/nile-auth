@@ -69,8 +69,8 @@ export async function GET(req: NextRequest) {
         SELECT DISTINCT
           t.id
         FROM
-          tenants t
-          JOIN tenant_users tu ON t.id = tu.tenant_id
+          public.tenants t
+          JOIN users.tenant_users tu ON t.id = tu.tenant_id
         WHERE
           tu.user_id = ${session.user.id}
           AND tu.deleted IS NULL
@@ -79,11 +79,11 @@ export async function GET(req: NextRequest) {
     ]);
 
     if (tenants && "name" in tenants) {
-      return handleFailure(req, tenants as ErrorResultSet);
+      return handleFailure(responder, tenants as ErrorResultSet);
     }
 
     if (user && "name" in user) {
-      return handleFailure(req, user as ErrorResultSet);
+      return handleFailure(responder, user as ErrorResultSet);
     }
 
     if (user && "rowCount" in user && user.rowCount === 1) {
@@ -162,8 +162,8 @@ export async function PUT(req: NextRequest) {
         SELECT DISTINCT
           t.id
         FROM
-          tenants t
-          JOIN tenant_users tu ON t.id = tu.tenant_id
+          public.tenants t
+          JOIN users.tenant_users tu ON t.id = tu.tenant_id
         WHERE
           tu.user_id = ${session.user.id}
           AND tu.deleted IS NULL
@@ -172,11 +172,11 @@ export async function PUT(req: NextRequest) {
     ]);
 
     if (tenants && "name" in tenants) {
-      return handleFailure(req, tenants as ErrorResultSet);
+      return handleFailure(responder, tenants as ErrorResultSet);
     }
 
     if (userRows && "name" in userRows) {
-      return handleFailure(req, userRows as ErrorResultSet);
+      return handleFailure(responder, userRows as ErrorResultSet);
     }
     const body = await req.json();
     const user = userRows?.rows[0] as {

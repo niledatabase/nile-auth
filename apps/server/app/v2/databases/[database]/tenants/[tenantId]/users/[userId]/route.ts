@@ -60,10 +60,10 @@ export async function PUT(
   if (session && session?.user?.id) {
     const { userId, tenantId } = params;
     if (!userId) {
-      return handleFailure(req, undefined, "userId is required.");
+      return handleFailure(responder, undefined, "userId is required.");
     }
     if (!tenantId) {
-      return handleFailure(req, undefined, "tenantId is required.");
+      return handleFailure(responder, undefined, "tenantId is required.");
     }
     const sql = await queryByReq(req);
     const [, , principalInTenant] = await sql`
@@ -155,7 +155,7 @@ export async function PUT(
       }
       if (updatedUser && "name" in updatedUser) {
         return handleFailure(
-          req,
+          responder,
           updatedUser as ErrorResultSet,
           `User with email ${body.email}`,
         );
