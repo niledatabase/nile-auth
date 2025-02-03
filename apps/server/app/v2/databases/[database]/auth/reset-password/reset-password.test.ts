@@ -50,6 +50,7 @@ describe("generatePasswordToken", () => {
       });
       text = text.replace(/(\n\s+)/g, " ").trim();
       runCommands.push(text);
+      return [];
     });
     // @ts-expect-error - test
     queryBySingle.mockReturnValueOnce(async function sql(

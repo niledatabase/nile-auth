@@ -20,7 +20,7 @@ describe("email provider", () => {
     });
   });
 
-  it("replaces email vars", () => {
+  it("replaces email vars if they exist (sender is special)", () => {
     const payload = {
       email: "email@email.com",
       template: {

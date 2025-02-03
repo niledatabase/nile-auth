@@ -5,7 +5,7 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { queryByInfo } from "@nile-auth/query";
 import { Logger } from "@nile-auth/logger";
 import { DbCreds } from "@nile-auth/query/getDbInfo";
-const { error, debug } = Logger("emailProvider");
+const { info, error, debug } = Logger("emailProvider");
 
 export type Variable = { name: string; value?: string };
 export default async function Email(provider: Provider, creds: DbCreds) {
@@ -175,6 +175,13 @@ export function generateEmailBody(params: {
   if (possibleSender && !from) {
     from = possibleSender?.value;
   }
+
+  // if you accidentally deleted this, we should save you from the generic
+  from = replaceVars(
+    String(template?.sender ? template?.sender : "${sender}"),
+    params.variables,
+  );
+
   if (!from || !validSender(from, params.variables, template)) {
     from = "noreply@thenile.dev";
   }
@@ -217,9 +224,9 @@ function validSender(
     email,
   );
   if (!validEmail) {
-    error("Attempted to send email with invalid sender", {
+    info("Attempted to send email with invalid sender", {
       email,
-      vars,
+      template_variables: vars,
       template,
     });
   }
