@@ -63,7 +63,10 @@ export default async function Email(provider: Provider, creds: DbCreds) {
     );
   }
   const replacedFrom = replaceVars(String(template.sender), variables);
-  const initialFrom = replacedFrom ? replacedFrom : "noreply@thenile.dev";
+  const initialFrom =
+    replacedFrom && validSender(replacedFrom)
+      ? replacedFrom
+      : "noreply@thenile.dev";
 
   return EmailProvider({
     server: server.server,
@@ -175,7 +178,7 @@ export function generateEmailBody(params: {
   if (!from) {
     from = template?.sender;
   }
-  if (!from) {
+  if (!from || !validSender(from)) {
     from = "noreply@thenile.dev";
   }
 
@@ -206,4 +209,14 @@ function replaceVars(html: string, replacers: Variable[]) {
   }
 
   return processedHtml;
+}
+
+function validSender(email: string) {
+  const validEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(
+    email,
+  );
+  if (!validEmail) {
+    error("Attempted to send email with invalid sender", { email });
+  }
+  return validEmail;
 }
