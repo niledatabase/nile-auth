@@ -6,7 +6,7 @@ export async function getSpec() {
       openapi: "3.0.0",
       info: {
         title: "Nile auth API",
-        version: "0.1",
+        version: "2.0.1",
       },
     },
   });

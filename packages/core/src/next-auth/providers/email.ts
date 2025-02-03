@@ -62,15 +62,16 @@ export default async function Email(provider: Provider, creds: DbCreds) {
       "Template for sending email invite is missing from database.",
     );
   }
-  const from = replaceVars(String(template.sender), variables);
+  const initialFrom =
+    replaceVars(String(template.sender), variables) ?? "noreply@thenile.dev";
 
   return EmailProvider({
     server: server.server,
-    from,
+    from: initialFrom,
     sendVerificationRequest: async function sendVerificationRequest(params) {
       const { identifier, url } = params;
 
-      const { body, subject } = await generateEmailBody({
+      const { body, subject, from } = await generateEmailBody({
         email: identifier,
         template: template as unknown as Template,
         variables,
@@ -84,7 +85,7 @@ export default async function Email(provider: Provider, creds: DbCreds) {
         body,
         url: String(server.server),
         to: identifier,
-        from,
+        from: from ? from : initialFrom,
         subject,
       });
     },
