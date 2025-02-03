@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
   await sendEmail({
     body,
     to: user.email,
-    from,
+    from: from ? from : "noreply@thenile.dev",
     subject,
     url: String(server?.server),
   });
