@@ -13,7 +13,7 @@ import LinkedInProvider, {
 import SlackProvider from "next-auth/providers/slack";
 import TwitterProvider from "next-auth/providers/twitter";
 
-import { query, ResultSet, sqlTemplate } from "@nile-auth/query";
+import { ResultSet, sqlTemplate } from "@nile-auth/query";
 import { DbCreds } from "@nile-auth/query/getDbInfo";
 import { Logger } from "@nile-auth/logger";
 

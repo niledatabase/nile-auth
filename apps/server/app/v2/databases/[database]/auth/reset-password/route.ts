@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
   const sqlOne = await queryBySingle({ req, responder });
   const sqlMany = await queryByReq(req);
 
-  const variables = await sqlMany`
+  const [variables] = await sqlMany`
     SELECT
       *
     FROM
