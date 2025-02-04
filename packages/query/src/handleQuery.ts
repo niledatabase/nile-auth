@@ -4,7 +4,7 @@ import { executeCommand } from "./executeCommand";
 import { ResultSet } from "./query";
 export const API_TIMEOUT = 95 * 1000; // this number needs to be reflected in vercel.json too
 
-const { error, info, warn, debug } = Logger("[@nile-auth/query]");
+const { error, info, warn, debug } = Logger("@nile-auth/query");
 
 export async function handleQuery({
   json,

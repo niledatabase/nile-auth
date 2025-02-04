@@ -100,6 +100,7 @@ const logger = createLogger({
   transports: [new transports.Console()],
   exceptionHandlers: [new transports.Console()],
 });
+logger.setMaxListeners(15);
 
 export function Logger(endpoint: string) {
   logger.defaultMeta = { endpoint };
@@ -116,8 +117,6 @@ export function Logger(endpoint: string) {
   return { info, warn, debug, error, silly };
 }
 
-const { info } = Logger("response logger");
-
 export type ResponderFn = (
   body?: Response | BodyInit | null | undefined,
   init?: ResponseInit | undefined,
@@ -128,7 +127,10 @@ export function ResponseLogger(req: Request, event: EventEnum): ResponderFn {
   return function Responder(body, init, detail): Response {
     const url = new URL(req.url);
     logger.defaultMeta = { event };
-    info(`[${req.method ?? "GET"}] ${url.pathname}`, { ...detail, init });
+    logger.info(`[${req.method ?? "GET"}] ${url.pathname}`, {
+      ...detail,
+      init,
+    });
     tinybird({ req, event, body, detail });
     if (!(body instanceof Response)) {
       return new Response(body, init);
