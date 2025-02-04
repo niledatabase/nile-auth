@@ -11,7 +11,7 @@ import { AuthOptions, ProviderNames } from "./types";
 import { query } from "@nile-auth/query";
 import handleGoogleRefresh from "./next-auth/providers/google";
 import handleGithubRefresh from "./next-auth/providers/github";
-import { Creds, Params, PartyResultSet } from "./next-auth/providers/types";
+import { Params, PartyResultSet } from "./next-auth/providers/types";
 
 const { info, error, debug, warn } = Logger("nile-auth/RouteWrapper");
 
