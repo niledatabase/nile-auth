@@ -44,39 +44,48 @@ export async function getProviders(
   const enabledProviders: string[] = [];
   const sql = await sqlTemplate(params);
   // do some pg here, to get providers
-  const [[providers], [credentials], [, tenantProviders]] = await Promise.all([
-    (await sql`
-      SELECT
-        *
-      FROM
-        auth.oidc_providers
-      WHERE
-        enabled = TRUE
-        AND deleted IS NULL
-    `) as unknown as Promise<ResultSet<Provider[]>[]>,
-    (await sql`
-      SELECT
-        *
-      FROM
-        auth.oidc_relying_parties
-      WHERE
-        enabled = TRUE
-        AND deleted IS NULL
-    `) as unknown as Promise<ResultSet<RelyingParty[]>[]>,
-    tenantId
-      ? ((await sql`
-          ${addContext({ tenantId })};
+  const queries = [];
 
-          SELECT
-            *
-          FROM
-            auth.tenant_oidc_relying_parties
-        `) as [null, ResultSet<{ provider_name: string; enabled: boolean }[]>])
-      : ([] as unknown as Promise<
-          [null, ResultSet<{ provider_name: string; enabled: boolean }[]>]
-        >),
-    ,
-  ]);
+  queries.push(sql`
+    SELECT
+      *
+    FROM
+      auth.oidc_providers
+    WHERE
+      enabled = TRUE
+      AND deleted IS NULL
+  `);
+
+  queries.push(sql`
+    SELECT
+      *
+    FROM
+      auth.oidc_relying_parties
+    WHERE
+      enabled = TRUE
+      AND deleted IS NULL
+  `);
+
+  if (tenantId) {
+    queries.push(sql`
+      ${addContext({ tenantId })};
+
+      SELECT
+        *
+      FROM
+        auth.tenant_oidc_relying_parties
+    `);
+  } else {
+    // for the destructure below
+    queries.push([]);
+  }
+  const [[providers], [credentials], [, tenantProviders]] = await Promise.all(
+    queries as [
+      Promise<ResultSet<Provider[]>[]>,
+      Promise<ResultSet<RelyingParty[]>[]>,
+      [null, ResultSet<{ provider_name: string; enabled: boolean }[]>],
+    ],
+  );
 
   if (providers && "rowCount" in providers && providers.rowCount === 0) {
     error("No providers are configured.");
@@ -107,13 +116,18 @@ export async function getProviders(
         return provider;
       })
       .map(async (provider: Provider) => {
-        enabledProviders.push(provider.name);
-
         // special providers that need some kind of customization
         switch (provider.name) {
           case ProviderNames.Email:
-            return await EmailProvider(provider, params);
+            // eslint-disable-next-line no-case-declarations
+            const ep = await EmailProvider(provider, params);
+            if (ep) {
+              enabledProviders.push(provider.name);
+              return ep;
+            }
+            return false;
           case ProviderNames.Credentials:
+            enabledProviders.push(provider.name);
             return CredentialProvider({ pool });
         }
 
