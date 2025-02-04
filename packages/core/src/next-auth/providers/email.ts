@@ -2,14 +2,57 @@ import EmailProvider from "next-auth/providers/email";
 import { Provider } from "../../types";
 import { createTransport } from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
-import { queryByInfo } from "@nile-auth/query";
+import { queryByInfo, ResultSet } from "@nile-auth/query";
 import { Logger } from "@nile-auth/logger";
 import { DbCreds } from "@nile-auth/query/getDbInfo";
 const { info, error, debug } = Logger("emailProvider");
 
 export type Variable = { name: string; value?: string };
+
+function isEmpty(row: ResultSet<Record<string, string>[]> | undefined) {
+  return row && "rowCount" in row && row.rowCount === 0;
+}
 export default async function Email(provider: Provider, creds: DbCreds) {
   const sql = await queryByInfo(creds);
+
+  const [[serverExist], [templateExists], [variablesExist]] = await Promise.all(
+    [
+      sql`
+        SELECT
+          1
+        FROM
+          information_schema.tables
+        WHERE
+          table_name = 'email_servers'
+          AND table_schema = 'auth'
+      `,
+      sql`
+        SELECT
+          1
+        FROM
+          information_schema.tables
+        WHERE
+          table_name = 'email_templates'
+          AND table_schema = 'auth'
+      `,
+      sql`
+        SELECT
+          1
+        FROM
+          information_schema.tables
+        WHERE
+          table_name = 'template_variables'
+          AND table_schema = 'auth'
+      `,
+    ],
+  );
+  if (
+    isEmpty(serverExist) ||
+    isEmpty(templateExists) ||
+    isEmpty(variablesExist)
+  ) {
+    return null;
+  }
 
   const [[servers], [templates], [vars]] = await Promise.all([
     sql`
