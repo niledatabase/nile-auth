@@ -56,6 +56,10 @@ export default async function NileAuth(
         error("error occurred in NileAuth impl", {
           message: e.message,
           stack: e.stack,
+          req,
+          params,
+          opts,
+          cfg,
         });
       }
       if (message) {
