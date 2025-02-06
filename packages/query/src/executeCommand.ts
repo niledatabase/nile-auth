@@ -63,7 +63,6 @@ export async function executeCommand(params: {
     });
     const stamp = Math.floor(Date.now() - start);
     debug(`Finished command in ${stamp}ms`);
-    // }
 
     if (!Array.isArray(res)) {
       return [res];

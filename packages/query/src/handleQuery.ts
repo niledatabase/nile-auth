@@ -51,9 +51,13 @@ export async function handleQuery({
           debug,
           info,
         },
+      }).catch((e) => {
+        error(e);
       }),
     apiTimeout,
-  );
+  ).catch(() => {
+    //noop, its logged below
+  });
 
   if (!data) {
     warn("query did not return any data");
