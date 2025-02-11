@@ -88,7 +88,11 @@ export async function getProviders(
   );
 
   if (providers && "rowCount" in providers && providers.rowCount === 0) {
-    error("No providers are configured.");
+    error("No providers are configured.", {
+      providers,
+      credentials,
+      tenantProviders,
+    });
   }
 
   if (

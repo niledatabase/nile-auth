@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Next.js: Debug Server",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect-brk", "../../node_modules/.bin/next", "dev"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "sourceMaps": true,
+      "smartStep": true,
+      "autoAttachChildProcesses": true,
+      "cwd": "${workspaceFolder}/apps/server"
+    },
+    {
+      "name": "Attach to Next.js Worker",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "restart": true,
+      "sourceMaps": true,
+      "smartStep": true,
+      "autoAttachChildProcesses": true
+    }
+  ]
+}
