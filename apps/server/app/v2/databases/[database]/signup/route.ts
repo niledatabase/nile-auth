@@ -71,15 +71,20 @@ export async function POST(
   // support /swagger ability to allow developers to log in
   const swagger = req.clone();
 
-  const swagBody = await swagger.json();
+  let swagBody: any = {};
+  try {
+    swagBody = await swagger.json();
 
-  // only do this if sign up has swagger values
-  if (swagBody.developerPassword) {
-    process.env.NILEDB_USER = swagBody.developerUser;
-    process.env.NILEDB_PASSWORD = swagBody.developerPassword;
-    process.env.NILEDB_NAME = swagBody.database;
-    process.env.NILEDB_HOST = swagBody.host;
-    process.env.NILEDB_PORT = swagBody.port;
+    // only do this if sign up has swagger values
+    if (swagBody.developerPassword) {
+      process.env.NILEDB_USER = swagBody.developerUser;
+      process.env.NILEDB_PASSWORD = swagBody.developerPassword;
+      process.env.NILEDB_NAME = swagBody.database;
+      process.env.NILEDB_HOST = swagBody.host;
+      process.env.NILEDB_PORT = swagBody.port;
+    }
+  } catch (e) {
+    //noop
   }
 
   const userCreate = await USER_POST(req);
