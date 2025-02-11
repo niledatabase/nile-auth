@@ -39,7 +39,6 @@ export default async function NileAuth(
   }
   const cfg: AuthOptions = { ...options, ...dbInfo, ...config } as AuthOptions;
   const opts = buildOptionsFromReq(req, cfg);
-
   try {
     const handler = await NextAuth(
       req as unknown as any, // NextApiRequest

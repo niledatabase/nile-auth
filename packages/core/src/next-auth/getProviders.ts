@@ -206,9 +206,9 @@ export async function getProviders(
               version: "2.0",
             });
         }
-      })
-      .filter(Boolean);
-    const ps = await Promise.all(configuredProviders);
+      });
+    // void providers kill next-auth
+    const ps = (await Promise.all(configuredProviders)).filter(Boolean);
     if (ps.length === 0) {
       error("No providers configured");
     } else {
