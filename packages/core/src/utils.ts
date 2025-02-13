@@ -134,7 +134,7 @@ export function buildOptionsFromReq(req: Request, cfg?: AuthOptions) {
         token.name = user.name;
         token.picture = user.image;
       }
-      debug("JWT CALLBACK");
+      debug("JWT CALLBACK", { token, user });
       return token;
     },
     session: async function session(params) {
