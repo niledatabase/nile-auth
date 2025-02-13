@@ -1,8 +1,9 @@
-import { EventEnum, ResponseLogger } from "@nile-auth/logger";
+import { Logger, EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 
 import { POST as USER_POST } from "../users/route";
 
+const { error } = Logger("signup route");
 import { login } from "./login";
 import { validCsrfToken } from "@nile-auth/core/csrf";
 /**
@@ -97,7 +98,7 @@ export async function POST(
       const headers = await login(cloned, { params });
       return responder(await userCreate.text(), { headers }, { ...swagBody });
     } catch (e) {
-      // need to log
+      error(e);
     }
   }
   return responder(null, { status: 404 });

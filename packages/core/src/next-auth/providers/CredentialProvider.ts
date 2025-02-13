@@ -67,6 +67,7 @@ export async function getUserByEmail(
       users.users
     WHERE
       email = ${email}
+      AND deleted IS NULL
   `;
   if (user && "rowCount" in user && user.rowCount > 0) {
     const u = user.rows[0];
@@ -77,6 +78,7 @@ export async function getUserByEmail(
         auth.credentials
       WHERE
         user_id = ${u.id}
+        AND deleted IS NULL
     `;
     if (creds && "rows" in creds) {
       const { payload } = creds.rows[0] as unknown as { payload: CredPayload };
