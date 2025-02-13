@@ -51,10 +51,14 @@ export async function executeCommand(params: {
       .trim();
     debug(`Starting command ${logCommand} ${_command.values?.toString()}`);
     const res = await client.query(_command).catch((e) => {
-      error("Failed command", {
-        message: e.message,
-        text: logCommand,
-      });
+      // users re-inserting isn't an error to worry about
+      if (!(e.message as string).includes("users_email_key")) {
+        error("Failed command", {
+          message: e.message,
+          text: logCommand,
+          error: e,
+        });
+      }
       const index = _command.text.indexOf(String(command.text));
       const beforeCommand = _command.text.substring(0, index);
       const lineNumber = beforeCommand.split("\n").length;
