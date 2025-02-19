@@ -2,7 +2,7 @@
  * this is wrong, but its better than 0
  * @swagger
  * /v2/databases/{database}/auth/signin:
- *   get:
+ *   post:
  *     tags:
  *     - auth
  *     summary: Sign in to the application
