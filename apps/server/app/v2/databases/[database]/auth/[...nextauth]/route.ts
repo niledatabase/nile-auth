@@ -51,7 +51,7 @@ export async function GET(
     }
   } catch (e) {
     if (e instanceof Error) {
-      log.error("Failure occurred in nextauth post", {
+      log.error("Failure occurred in nextauth get", {
         error: e.message,
         stack: e.stack,
       });
