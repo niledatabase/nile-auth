@@ -67,7 +67,7 @@ export async function POST(
 
   if (!hasValidToken) {
     // maybe make the client go get it
-    return new Response("Request blocked", { status: 400 });
+    return responder("Request blocked", { status: 400 });
   }
   // support /swagger ability to allow developers to log in
   const swagger = req.clone();
@@ -98,7 +98,12 @@ export async function POST(
       const headers = await login(cloned, { params });
       return responder(await userCreate.text(), { headers }, { ...swagBody });
     } catch (e) {
-      error(e);
+      if (e instanceof Error) {
+        error("Unable to login from sign up", {
+          message: e.message,
+          stack: e.stack,
+        });
+      }
     }
   }
   return responder(null, { status: 404 });
