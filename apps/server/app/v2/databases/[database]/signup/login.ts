@@ -7,6 +7,9 @@ import {
   getSecureCookies,
 } from "@nile-auth/core/cookies";
 import { getCsrfCookie, getCookieParts } from "@nile-auth/core/csrf";
+import { Logger } from "@nile-auth/logger";
+
+const { debug } = Logger("server side login");
 
 const routes = {
   PROVIDERS: "/auth/providers",
@@ -51,12 +54,16 @@ export async function login(
     callbackUrl: decodeURIComponent(String(callbackCookie)),
   });
 
+  const cookie = [
+    `${getCsrfTokenCookie(useSecureCookies).name}=${csrfCookie}`,
+    `${getCallbackCookie(useSecureCookies).name}=${callbackCookie}`,
+  ].join("; ");
   const postReq = new NextRequest(signInUrl, {
     method: "POST",
     headers: new Headers({
       ...baseHeaders,
       "content-type": "application/json",
-      cookie: [csrfCookie, callbackCookie].join("; "),
+      cookie,
     }),
     body,
   });
@@ -65,6 +72,13 @@ export async function login(
     params: { ...params, nextauth: ["callback", "credentials"] },
   });
   const authCookie = loginRes?.headers.get("set-cookie");
+  debug("auth cookie", {
+    signInCookie: cookie,
+    csrfCookie,
+    csrfToken,
+    useSecureCookies,
+    baseHeaders,
+  });
   if (!authCookie) {
     throw new Error("authentication failed");
   }
