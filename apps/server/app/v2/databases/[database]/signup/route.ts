@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import { POST as USER_POST } from "../users/route";
 
 const { error } = Logger("signup route");
-import { login } from "./login";
+import { login, LoginError } from "./login";
 import { validCsrfToken } from "@nile-auth/core/csrf";
 /**
  * @swagger
@@ -98,10 +98,11 @@ export async function POST(
       const headers = await login(cloned, { params });
       return responder(await userCreate.text(), { headers }, { ...swagBody });
     } catch (e) {
-      if (e instanceof Error) {
+      if (e instanceof LoginError) {
         error("Unable to login from sign up", {
           message: e.message,
           stack: e.stack,
+          details: e.details,
         });
       }
     }
