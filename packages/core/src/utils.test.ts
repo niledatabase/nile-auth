@@ -11,7 +11,7 @@ describe("buildOptionsFromReq", () => {
     process.env.NILEDB_PASSWORD = "";
     process.env.NILEDB_HOST = "";
   });
-  it("makes a good config", () => {
+  it("defaults to secure cookies", () => {
     const url = "http://localhost";
     const req = new Request(url, {
       headers: { "niledb-origin": url },
@@ -19,18 +19,18 @@ describe("buildOptionsFromReq", () => {
     const opts = getSecureCookies(req);
     expect(opts).toEqual(false);
   });
-  it("makes a good config", () => {
+  it("disables secure cookies", () => {
     const url = "http://localhost";
     const req = new Request(url, {
       headers: { "niledb-origin": url, "niledb-useSecureCookies": "yeah" },
     });
     const opts = getSecureCookies(req);
-    expect(opts).toEqual(true);
+    expect(opts).toEqual(false);
   });
-  it("makes a good config", () => {
+  it("forces secure cookies", () => {
     const url = "https://localhost";
     const req = new Request(url, {
-      headers: { "niledb-origin": url },
+      headers: { "niledb-origin": url, "niledb-useSecureCookies": "true" },
     });
     const opts = getSecureCookies(req);
     expect(opts).toEqual(true);

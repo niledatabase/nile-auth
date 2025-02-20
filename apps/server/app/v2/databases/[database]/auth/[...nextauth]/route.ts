@@ -25,6 +25,7 @@ export async function GET(
       requestHeaders: serializeHeaders(req.headers),
       responseHeaders: serializeHeaders(res.headers),
       body: await res.clone().text(),
+      nileOrigin: String(req.headers.get("niledb-origin")),
     };
 
     if (res.status > 303) {
@@ -74,6 +75,7 @@ export async function POST(
       responseHeaders: serializeHeaders(res.headers),
       body: await new Response(body.body).text(),
       href: req.nextUrl?.href ?? req.url,
+      nileOrigin: String(req.headers.get("niledb-origin")),
     };
 
     if (res.status > 303) {
