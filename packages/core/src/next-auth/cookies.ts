@@ -109,7 +109,7 @@ export function getSecureCookies(req: Request): boolean {
   const secureCookies = req.headers?.get("niledb-useSecureCookies");
 
   if (secureCookies != null) {
-    return Boolean(secureCookies);
+    return secureCookies === "true";
   }
 
   const origin = req.headers?.get("niledb-origin");

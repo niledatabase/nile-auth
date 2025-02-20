@@ -25,11 +25,15 @@ export async function login(
     throw new Error("Server side login requires a user email and password.");
   }
 
-  const ORIGIN = req.url.replace("/auth/signup", "");
-  const sessionUrl = new URL(`${ORIGIN}${routes.PROVIDERS}`);
+  const origin = req.headers.get("niledb-origin");
+  const reqUrl = new URL(req.url);
+  const updatedPath = reqUrl.pathname.replace("/auth/signup", "");
+
+  const sessionUrl = new URL(`${origin}${updatedPath}${routes.PROVIDERS}`);
+
   const baseHeaders = {
     host: sessionUrl.host,
-    "niledb-origin": ORIGIN,
+    "niledb-origin": String(origin),
   };
 
   const [csrfToken] = getCookieParts(getCsrfCookie(req)) ?? [];

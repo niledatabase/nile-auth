@@ -120,7 +120,7 @@ async function handleRefreshTokens(
   return params.session;
 }
 
-export function buildOptionsFromReq(req: Request, cfg?: AuthOptions) {
+export function buildOptions(cfg?: AuthOptions) {
   const dbInfo = getDbInfo(cfg);
   const config = cfg ? cfg : ({} as AuthOptions);
   config.adapter = Adapter({

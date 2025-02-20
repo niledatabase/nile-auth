@@ -1,7 +1,7 @@
 import { Logger } from "@nile-auth/logger";
 import NextAuth, { AuthOptions as NextAuthOptions } from "next-auth";
 
-import { buildOptionsFromReq } from "./utils";
+import { buildOptions } from "./utils";
 import { nextOptions } from "./nextOptions";
 import getDbInfo from "@nile-auth/query/getDbInfo";
 import { AuthOptions } from "./types";
@@ -38,7 +38,7 @@ export default async function NileAuth(
     );
   }
   const cfg: AuthOptions = { ...options, ...dbInfo, ...config } as AuthOptions;
-  const opts = buildOptionsFromReq(req, cfg);
+  const opts = buildOptions(cfg);
   try {
     const handler = await NextAuth(
       req as unknown as any, // NextApiRequest
