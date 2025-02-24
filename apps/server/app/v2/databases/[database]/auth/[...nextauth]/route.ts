@@ -5,10 +5,16 @@ import { EventEnum, Logger, ResponseLogger } from "@nile-auth/logger";
 
 const log = Logger(EventEnum.NILE_AUTH);
 
+// logging only, don't actually use this
 function serializeHeaders(headers: Headers) {
   const serializedHeaders: Record<string, string> = {};
   headers.forEach((value, key) => {
-    serializedHeaders[key] = value;
+    if (serializedHeaders[key]) {
+      const prev = serializedHeaders[key];
+      serializedHeaders[key] = [prev, value].join(", ");
+    } else {
+      serializedHeaders[key] = value;
+    }
   });
   return serializedHeaders;
 }
