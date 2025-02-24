@@ -55,12 +55,12 @@ export async function login(
     email,
     password,
     csrfToken,
-    callbackUrl: decodeURIComponent(String(callbackCookie)),
+    callbackUrl: decodeURIComponent(String(callbackCookie ?? origin)),
   });
 
   const cookie = [
     `${getCsrfTokenCookie(useSecureCookies).name}=${csrfCookie}`,
-    `${getCallbackCookie(useSecureCookies).name}=${callbackCookie}`,
+    `${getCallbackCookie(useSecureCookies).name}=${callbackCookie ?? origin}`,
   ].join("; ");
   const postReq = new NextRequest(signInUrl, {
     method: "POST",
