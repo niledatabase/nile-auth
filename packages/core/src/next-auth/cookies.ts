@@ -106,13 +106,13 @@ export function defaultCookies(
 }
 
 export function getSecureCookies(req: Request): boolean {
-  const secureCookies = req.headers?.get("niledb-useSecureCookies");
+  const secureCookies = req.headers?.get("nile.secure_cookies");
 
   if (secureCookies != null) {
     return secureCookies === "true";
   }
 
-  const origin = req.headers?.get("niledb-origin");
+  const origin = req.headers?.get(X_NILE_ORIGIN);
   return Boolean(String(origin).startsWith("https://"));
 }
 
@@ -135,3 +135,29 @@ export function getCookie(cookieKey: void | string, headers: void | Headers) {
   }
   return null;
 }
+
+export function setTenantCookie(req: Request, rows: Record<string, string>[]) {
+  if (!getCookie(X_NILE_TENANT_ID, req.headers)) {
+    const headers = new Headers();
+    headers.set(
+      "set-cookie",
+      `${X_NILE_TENANT_ID}=${rows[0]?.id}; Path=/; SameSite=lax`,
+    );
+    return headers;
+  } else {
+    // help the UI if a user is removed or cookies got changed poorly, doesn't actually auth anything.
+    const cookie = getCookie(X_NILE_TENANT_ID, req.headers);
+    const exists = rows.some((r) => r.id === cookie);
+    if (!exists) {
+      const headers = new Headers();
+      headers.set(
+        "set-cookie",
+        `${X_NILE_TENANT_ID}=${rows[0]?.id}; Path=/; SameSite=lax`,
+      );
+      return headers;
+    }
+  }
+}
+
+export const X_NILE_TENANT_ID = "nile.tenant_id";
+export const X_NILE_ORIGIN = "nile.origin";

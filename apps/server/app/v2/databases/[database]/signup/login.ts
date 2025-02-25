@@ -5,6 +5,7 @@ import {
   getCookie,
   getCsrfTokenCookie,
   getSecureCookies,
+  X_NILE_ORIGIN,
 } from "@nile-auth/core/cookies";
 import { getCsrfCookie, getCookieParts } from "@nile-auth/core/csrf";
 import { Logger } from "@nile-auth/logger";
@@ -25,7 +26,7 @@ export async function login(
     throw new Error("Server side login requires a user email and password.");
   }
 
-  const origin = req.headers.get("niledb-origin");
+  const origin = req.headers.get(X_NILE_ORIGIN);
   const reqUrl = new URL(req.url);
   const updatedPath = reqUrl.pathname.replace("/auth/signup", "");
 
@@ -33,7 +34,7 @@ export async function login(
 
   const baseHeaders = {
     host: sessionUrl.host,
-    "niledb-origin": String(origin),
+    [X_NILE_ORIGIN]: String(origin),
   };
 
   const [csrfToken] = getCookieParts(getCsrfCookie(req)) ?? [];

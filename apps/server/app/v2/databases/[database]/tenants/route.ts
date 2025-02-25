@@ -5,6 +5,7 @@ import { NextRequest } from "next/server";
 
 import { ErrorResultSet } from "@nile-auth/query";
 import { handleFailure } from "@nile-auth/query/utils";
+import { getCookie, setTenantCookie } from "@nile-auth/core/cookies";
 /**
  * @swagger
  * /v2/databases/{database}/tenants:
@@ -114,7 +115,8 @@ export async function POST(req: NextRequest) {
           `Unable to add user ${user.id} to tenant ${tenantId}.`,
         );
       }
-      return responder(JSON.stringify(tenants.rows[0]));
+      const headers = setTenantCookie(req, tenants.rows);
+      return responder(JSON.stringify(tenants.rows[0]), { headers });
     } else {
       return responder(null, { status: 404 });
     }
