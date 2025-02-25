@@ -5,6 +5,7 @@ import { buildOptions } from "./utils";
 import { nextOptions } from "./nextOptions";
 import getDbInfo from "@nile-auth/query/getDbInfo";
 import { AuthOptions } from "./types";
+import { X_NILE_ORIGIN, X_NILE_TENANT_ID } from "./next-auth/cookies";
 
 const { error } = Logger("[nile-auth]");
 
@@ -26,8 +27,8 @@ export default async function NileAuth(
     return new Response("database info is missing", { status: 400 });
   }
 
-  const origin = req.headers.get("niledb-origin");
-  const tenantId = req.headers.get("niledb-tenant-id");
+  const origin = req.headers.get(X_NILE_ORIGIN);
+  const tenantId = req.headers.get(X_NILE_TENANT_ID);
   process.env.NEXTAUTH_URL = String(origin);
 
   const [options] = await nextOptions(req, dbInfo, tenantId);

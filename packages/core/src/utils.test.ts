@@ -1,4 +1,4 @@
-import { getSecureCookies } from "./next-auth/cookies";
+import { getSecureCookies, X_NILE_ORIGIN } from "./next-auth/cookies";
 
 describe("buildOptionsFromReq", () => {
   beforeEach(() => {
@@ -14,7 +14,7 @@ describe("buildOptionsFromReq", () => {
   it("defaults to secure cookies", () => {
     const url = "http://localhost";
     const req = new Request(url, {
-      headers: { "niledb-origin": url },
+      headers: { [X_NILE_ORIGIN]: url },
     });
     const opts = getSecureCookies(req);
     expect(opts).toEqual(false);
@@ -22,7 +22,7 @@ describe("buildOptionsFromReq", () => {
   it("disables secure cookies", () => {
     const url = "http://localhost";
     const req = new Request(url, {
-      headers: { "niledb-origin": url, "niledb-useSecureCookies": "yeah" },
+      headers: { [X_NILE_ORIGIN]: url, "nile.secure_cookies": "yeah" },
     });
     const opts = getSecureCookies(req);
     expect(opts).toEqual(false);
@@ -30,7 +30,7 @@ describe("buildOptionsFromReq", () => {
   it("forces secure cookies", () => {
     const url = "https://localhost";
     const req = new Request(url, {
-      headers: { "niledb-origin": url, "niledb-useSecureCookies": "true" },
+      headers: { [X_NILE_ORIGIN]: url, "nile.secure_cookies": "true" },
     });
     const opts = getSecureCookies(req);
     expect(opts).toEqual(true);

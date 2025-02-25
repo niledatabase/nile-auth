@@ -6,7 +6,7 @@ jest.mock("./next-auth/getProviders", () => ({
 describe("nile-auth", () => {
   it("makes a useable next auth config", async () => {
     const req = new Request("https://somewebsite.com", {
-      headers: { "niledb-origin": "https://localhost" },
+      headers: { "nile.origin": "https://localhost" },
     });
     const [config] = await nextOptions(req, {
       host: "",

@@ -3,6 +3,7 @@ import { ErrorResultSet, queryByReq } from "@nile-auth/query";
 import { ResponseLogger, EventEnum, Logger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 import { handleFailure } from "@nile-auth/query/utils";
+import { getCookie, setTenantCookie } from "@nile-auth/core/cookies";
 
 /**
  *
@@ -64,8 +65,11 @@ export async function GET(req: NextRequest) {
     if (tenantRows && "name" in tenantRows) {
       return handleFailure(responder, tenantRows as ErrorResultSet);
     }
+
     if (tenantRows && "rowCount" in tenantRows) {
-      return responder(JSON.stringify(tenantRows.rows));
+      const headers = setTenantCookie(req, tenantRows.rows);
+
+      return responder(JSON.stringify(tenantRows.rows), { headers });
     } else {
       return responder(null, { status: 404 });
     }
