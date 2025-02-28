@@ -37,6 +37,8 @@ jobs:
       contents: read
       packages: write
       id-token: write
+    with:
+      dockerfile: 'apps/server/Dockerfile'
 
   helm:
     uses: niledatabase/workflows/.github/workflows/helm.yaml@main
