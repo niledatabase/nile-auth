@@ -5,13 +5,10 @@ concurrency:
 
 on:
   push:
-    branches:
-      - "**"
-
-env:
-  GHCR_IMAGE: ghcr.io/${{ github.repository }}
-  ECR_IMAGE: 483388953608.dkr.ecr.us-west-2.amazonaws.com/nile-auth
-  AWS_REGION: us-west-2
+    branches-ignore:
+      - 'main'
+    tags:
+      - '**'
 
 jobs:
   test:
@@ -34,108 +31,20 @@ jobs:
       - name: test
         run: yarn test
   docker:
-    needs: test
-    runs-on: ubuntu-latest-4core
-    outputs:
-      tag: ${{ steps.tag.outputs.tag }}
+    uses: niledatabase/workflows/.github/workflows/docker-multi-arch.yaml@main
+    needs: [ "test" ]
     permissions:
-      id-token: write
-      contents: write
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Setup Docker buildx
-        uses: docker/setup-buildx-action@v3
-
-      - uses: niledatabase/bump-git-tag-action@v0.0.15
-        id: tag
-        with:
-          main-branch: main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          tags: |
-            type=sha,format=short
-            type=sha,format=long
-            type=raw,value=${{ steps.tag.outputs.tag }}
-            type=raw,value=ts-{{date 'X'}}-sha-{{sha}}
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
-          images: |
-            ${{ env.GHCR_IMAGE }}
-            ${{ env.ECR_IMAGE }}
-
-      - name: Log into registry ghcr.io
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::483388953608:role/github-role-Role-MIMIOJ3EPX6V
-          role-session-name: khnum-github-action
-
-      - name: Login to ECR
-        uses: docker/login-action@v3
-        with:
-          registry: 483388953608.dkr.ecr.us-west-2.amazonaws.com
-
-      - name: Build and push Docker image
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          file: apps/server/Dockerfile
-          context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          labels: ${{ steps.meta.outputs.labels }}
-          tags: ${{ steps.meta.outputs.tags }}
-
-  helm:
-    runs-on: ubuntu-latest
-    needs: docker
-    permissions:
-      id-token: write
       contents: read
       packages: write
-    steps:
-      - uses: actions/checkout@v4
+      id-token: write
+    with:
+      dockerfile: 'apps/server/Dockerfile'
 
-      - uses: azure/setup-helm@v4
-        with:
-          version: "3.16.2"
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::483388953608:role/github-role-Role-MIMIOJ3EPX6V
-          role-session-name: khnum-github-action
-
-      - name: Helm login
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io -u $ --password-stdin
-          aws ecr get-login-password \
-            --region ${{ env.AWS_REGION }} | helm registry login \
-            --username AWS \
-            --password-stdin 483388953608.dkr.ecr.us-west-2.amazonaws.com
-
-      - name: Package helm chart
-        run: |
-          helm package --app-version '${{ needs.docker.outputs.tag }}' --version '${{ needs.docker.outputs.tag }}' ./charts/server
-
-      - name: Push helm chart
-        run: |
-          helm push nile-auth-${{ needs.docker.outputs.tag }}.tgz oci://ghcr.io/${{ github.repository_owner }}/helm-charts
-          helm push nile-auth-${{ needs.docker.outputs.tag }}.tgz oci://483388953608.dkr.ecr.us-west-2.amazonaws.com/helm-charts
+  helm:
+    uses: niledatabase/workflows/.github/workflows/helm.yaml@main
+    needs: [ "docker" ]
+    permissions:
+      contents: read
+      packages: write
+    with:
+      path: charts/server
