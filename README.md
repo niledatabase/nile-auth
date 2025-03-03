@@ -1,6 +1,9 @@
 <p align="center">
  <a href="https://thenile.dev" target="_blank"><img width="96px" src="https://www.thenile.dev/about-logo.png" /></a>
- <h2 align="center">Nile Auth</h2>
+ <h2 align="center">Nile Auth
+  <br/>
+  <img src="https://img.shields.io/npm/v/@niledatabase/server"/>
+ </h2>
   <p align="center">
   User authentication and authorization for <a href="https://thenile.dev">Nile database</a>
   <br />
@@ -15,38 +18,32 @@
  </p>
 </p>
 
-<p align="center">
-<strong>
-🚧 This project is in alpha and not yet recommended for production use. 🚧
-</strong>
-</p>
+## A Fully Hosted Multi-Tenant Authentication Solution
 
-## Using this service
+`nile-auth` is a **drop-in authentication solution** built on top of [`next-auth`](https://next-auth.js.org/), designed specifically for **multi-tenancy**. It provides a complete authentication and user management system with first-class tenant support, password authentication, email templates, and seamless JWT-based authentication.
 
-First, update `compose.yaml` with a set of developer credentials and region, which can be obtained at [here](console.thenile.dev).
+### ✨ Features
 
-```yaml
-services:
-  nile-auth-server:
-    container_name: nile-auth-server
-    build:
-      context: .
-      dockerfile: ./apps/server/Dockerfile
-    environment:
-      NODE_ENV: production
-      NEXT_TELEMETRY_DISABLED: 1
-      NILEDB_HOST: <the db region url>
-      NILEDB_USER: <UUID>
-      NILEDB_PASSWORD: <UUID>
-    ports:
-      - 3001:3001
-```
+- **Multi-Tenant Authentication** – Built-in support for managing multiple tenants effortlessly.
+- **Full `next-auth` Feature Set** – OAuth, credentials, sessions, providers, and more.
+- **User & Tenant Management** – APIs for managing users and organizations.
+- **Password Authentication** – Supports traditional username/password logins.
+- **Email Templates** – Customizable email workflows for onboarding, recovery, etc.
+- **JWT Support** – Generate and validate JWTs on the fly.
+- **PostgreSQL Backend** – Secure, scalable authentication storage.
+- **Proxy-Optimized** – Designed to work with a fronting backend service for enhanced security and flexibility.
 
-Then build/start the container.
+## 📖 Documentation
 
-```bash
-docker compose up --build
-```
+Check out our full documentation at [thenile.dev/auth](https://thenile.dev/auth) for detailed guides and API references.
+
+## 💬 Community & Support
+
+- **GitHub Issues** – Report bugs or request features in our [issue tracker](https://github.com/niledatabase/nile-auth/issues).
+- **Discord** – Join our developer community [here](https://discord.gg/niledatabase).
+- **Twitter** – Follow us [@niledatabase](https://twitter.com/niledatabase) for updates.
+
+---
 
 ## What's inside?
 
