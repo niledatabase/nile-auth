@@ -5,7 +5,7 @@ import { Logger } from "@nile-auth/logger";
 import ClientWithTimer from "./ClientWithTimer";
 import { LoggerType } from "./types";
 
-const { error, info, debug } = Logger("[client manager]");
+const { warn, error, info, debug } = Logger("[client manager]");
 
 export const getServerId = (config: ClientConfig) => {
   return makeServerId(config);
@@ -23,6 +23,7 @@ export default class ClientManager {
       debug,
       info,
       error,
+      warn,
     };
   }
 

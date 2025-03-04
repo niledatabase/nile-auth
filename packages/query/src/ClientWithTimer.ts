@@ -33,12 +33,13 @@ export default class ClientWithTimer {
     this.config = config;
     this.hasError = undefined;
     this.client.on("error", (e) => {
-      this.logger.error(e.message, { error: e });
+      this.logger.warn("Client has gone away", { error: e });
       removeSelf(id);
     });
 
+    this.logger.warn("garbage", { yes: "its something" });
     this.client.connect().catch(async (e) => {
-      this.logger.error("client connection failed", {
+      this.logger.warn("client connection failed", {
         message: e.message,
         stack: e.stack,
         ...this.config,
@@ -66,9 +67,10 @@ export default class ClientWithTimer {
           this.removeSelf(this.id);
         }, 1000);
         await this.client.end().catch((e) => {
-          this.logger.error(e);
-          // still remove, because of the next time.
-          this.logger.error("client end failed");
+          this.logger.warn("client end failed", {
+            stack: e.stack,
+            message: e.message,
+          });
           this.removeSelf(this.id);
         });
         this.logger.debug("client removing self");
@@ -86,9 +88,10 @@ export default class ClientWithTimer {
       clearTimeout(this.backupTimer);
     }
     await this.client.end().catch((e) => {
-      this.logger.error(e);
-      // still remove, because of the next time.
-      this.logger.info("client end failed");
+      this.logger.warn("client end failed", {
+        stack: e.stack,
+        message: e.message,
+      });
     });
     this.logger.debug("client ended");
   }

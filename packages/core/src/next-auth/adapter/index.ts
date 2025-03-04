@@ -15,6 +15,8 @@ import { createSession } from "./createSession";
 import { getSessionAndUser } from "./getSessionAndUser";
 import { updateSession } from "./updateSession";
 import { formatTime, query } from "@nile-auth/query";
+import { Logger } from "@nile-auth/logger";
+const { info } = Logger("[next-auth-adapter]");
 
 export default function NileAdapter(
   options: AuthOptions & { user: string; password: string; port: number },
@@ -27,6 +29,12 @@ export default function NileAdapter(
     database: options.database,
   };
   const pool = new Pool(poolConfig);
+  pool.on("error", (e: Error) => {
+    info("Unexpected error on client", {
+      stack: e.stack,
+      message: e.message,
+    });
+  });
   return {
     createVerificationToken: createVerificationToken(pool),
     useVerificationToken: useVerificationToken(pool),

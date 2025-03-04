@@ -7,7 +7,7 @@ import getDbInfo from "@nile-auth/query/getDbInfo";
 import { AuthOptions } from "./types";
 import { X_NILE_ORIGIN, X_NILE_TENANT_ID } from "./next-auth/cookies";
 
-const { error } = Logger("[nile-auth]");
+const { warn } = Logger("[nile-auth]");
 
 export * from "./types";
 
@@ -51,9 +51,8 @@ export default async function NileAuth(
   } catch (e) {
     if (e instanceof Error) {
       const [, code, message] = /\[(.*)\]: (.*)/.exec(e.message) ?? [];
-      // some extra noise we (probably) don't need to log due to configuration problems
       if (code !== "SIGNIN_EMAIL_ERROR") {
-        error("error occurred in NileAuth impl", {
+        warn("error occurred in NileAuth impl", {
           message: e.message,
           stack: e.stack,
           req,
