@@ -6,7 +6,7 @@ import { fixPrepare } from "./context";
 import { ErrorResultSet, ErrorResultSet as ErrorSet } from "./types";
 import { handleFailure } from "./utils";
 export { formatTime } from "./formatTime";
-const { debug, error } = Logger("adaptor sql");
+const { debug, error, warn } = Logger("adaptor sql");
 
 export enum Commands {
   insert = "INSERT",
@@ -59,21 +59,28 @@ export function query(pool: Pool): SqlTemplateFn {
         { stack: e.stack, message: e.message },
       );
     });
-    // @ts-expect-error - allows for null args in function, but not in query
-    const result = await client.query(text, values).catch((e) => {
-      error(
-        "[nile-auth][error][QUERY FAILED] Unable to run query on database.",
-        { stack: e.stack, message: e.message, text, values },
-      );
-    });
-    debug("[SQL]", {
-      text: text.replace(/(\n\s+)/g, " ").trim(),
-      ...(values.length ? { values } : {}),
-    });
-    if (client) {
-      await client.release();
+    try {
+      // @ts-expect-error - allows for null args in function, but not in query
+      const result = await client.query(text, values).catch((e) => {
+        warn(
+          "[nile-auth][error][QUERY FAILED] Unable to run query on database.",
+          { stack: e.stack, message: e.message, text, values },
+        );
+      });
+      debug("[SQL]", {
+        text: text.replace(/(\n\s+)/g, " ").trim(),
+        ...(values.length ? { values } : {}),
+      });
+      return result;
+    } catch (e) {
+      if (e instanceof Error) {
+        warn("Database went away", { stack: e.stack, message: e.message });
+      }
+    } finally {
+      if (client) {
+        await client.release();
+      }
     }
-    return result;
   };
 }
 

@@ -8,6 +8,7 @@ export type LoggerType = {
   debug: LogType;
   info: LogType;
   error: LogType;
+  warn: LogType;
 };
 
 export type ErrorResultSet = {

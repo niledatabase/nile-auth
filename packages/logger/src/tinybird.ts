@@ -95,7 +95,7 @@ export async function tinybird({
       },
     }).catch((e) => {
       const log = Logger("TINY_BIRD" as EventEnum);
-      log.error("Failed to post metrics", {
+      log.warn("Failed to post metrics", {
         stack: e.stack,
         message: e.message,
       });

@@ -6,7 +6,7 @@ import { DbInfo } from "./types";
 import { getProviders } from "./next-auth/getProviders";
 import { defaultCookies, getSecureCookies } from "./next-auth/cookies";
 import { Provider as NextAuthProvider } from "next-auth/providers/index";
-const { error } = Logger("[next-auth-options]");
+const { warn } = Logger("[next-auth-options]");
 
 export async function nextOptions(
   req: Request,
@@ -14,7 +14,7 @@ export async function nextOptions(
   tenantId?: null | string,
 ) {
   const [providers] = await getProviders(dbInfo, tenantId).catch((e) => {
-    error(e);
+    warn("provider fetch failed", { stack: e.stack, message: e.message });
     return [[]];
   });
 
