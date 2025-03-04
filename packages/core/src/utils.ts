@@ -44,6 +44,13 @@ async function handleRefreshTokens(
   dbInfo: DbCreds,
 ): Promise<Session | DefaultSession> {
   const pool = new Pool(dbInfo);
+  pool.on("error", (e: Error) => {
+    info("Unexpected error on client", {
+      stack: e.stack,
+      message: e.message,
+    });
+    // Handle the error appropriately here
+  });
   const sql = await query(pool);
   const data = await sql`
     SELECT

@@ -107,7 +107,11 @@ export function Logger(endpoint: string) {
 
   const error = (...msg: any) => {
     const metadata = formatError(msg);
-    logger.error(msg[0], { endpoint, error: msg, ...metadata });
+    if (typeof msg[1] === "object") {
+      logger.error(msg[0], { endpoint, ...msg[1], ...metadata });
+    } else {
+      logger.error(msg[0], { endpoint, error: msg, ...metadata });
+    }
   };
   const debug: LogType = logger.debug;
   const info: LogType = logger.info;

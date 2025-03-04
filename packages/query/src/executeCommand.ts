@@ -16,10 +16,11 @@ export async function executeCommand(params: {
     error: (...args: any) => void;
     info: (...args: any) => void;
     debug: (...args: any) => void;
+    warn: (...args: any) => void;
   };
 }): Promise<ReturnType> {
   const {
-    logger: { info, error, debug },
+    logger: { info, error, debug, warn },
     command: _command,
     ...clientProps
   } = params;
@@ -27,6 +28,7 @@ export async function executeCommand(params: {
     debug: (...args) => debug(args),
     info: (...args) => info(args),
     error: (...args) => error(args),
+    warn: (...args) => warn(args),
   };
   const timerClient = await clientManager.getClient(clientProps);
   if (timerClient.hasError) {
@@ -53,7 +55,7 @@ export async function executeCommand(params: {
     const res = await client.query(_command).catch((e) => {
       // users re-inserting isn't an error to worry about
       if (!(e.message as string).includes("users_email_key")) {
-        error("Failed command", {
+        warn("Failed command", {
           message: e.message,
           text: logCommand,
           error: e,
@@ -73,7 +75,7 @@ export async function executeCommand(params: {
     }
     return res as unknown as QueryResult[];
   } catch (e: unknown) {
-    error("Command parsing failed.", {
+    warn("Command parsing failed.", {
       message: (e as Error)?.message,
       stack: (e as Error)?.stack,
     });

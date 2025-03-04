@@ -33,13 +33,20 @@ type RelyingParty = {
   config: Record<string, string>;
 };
 
-const { error, debug } = Logger("[providers]");
+const { info, debug, warn } = Logger("[providers]");
 
 export async function getProviders(
   params: DbCreds,
   tenantId?: null | string,
 ): Promise<[null | NextAuthProvider[]]> {
   const pool = new Pool(params);
+
+  pool.on("error", (e: Error) => {
+    info("Unexpected error on client", {
+      stack: e.stack,
+      message: e.message,
+    });
+  });
 
   const enabledProviders: string[] = [];
   const sql = await sqlTemplate(params);
@@ -88,7 +95,7 @@ export async function getProviders(
   );
 
   if (providers && "rowCount" in providers && providers.rowCount === 0) {
-    error("No providers are configured.", {
+    warn("No providers are configured.", {
       providers,
       credentials,
       tenantProviders,
@@ -210,7 +217,7 @@ export async function getProviders(
     // void providers kill next-auth
     const ps = (await Promise.all(configuredProviders)).filter(Boolean);
     if (ps.length === 0) {
-      error("No providers configured");
+      warn("No providers configured. Is the database running?");
     } else {
       debug(
         `${enabledProviders.join(", ")} enabled on ${params.database} ${tenantId ? `for tenant ${tenantId}` : ""}`,

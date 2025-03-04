@@ -50,6 +50,7 @@ export async function handleQuery({
           error,
           debug,
           info,
+          warn,
         },
       }).catch((e) => {
         error(e);
@@ -70,7 +71,7 @@ export async function handleQuery({
 async function within(fn: () => Promise<unknown>, duration: number) {
   try {
     const id = setTimeout(() => {
-      error("Connection to niledb failed.");
+      warn("Connection to niledb failed.");
       throw new Error("timeout reached");
     }, duration);
 
@@ -81,10 +82,11 @@ async function within(fn: () => Promise<unknown>, duration: number) {
     } catch (e) {
       clearTimeout(id);
       if (e instanceof Error) {
-        error(e.message);
+        warn("timeout error", { message: e.message, stack: e.stack });
       }
-      //@ts-expect-error - anything, I guess
-      error(e.toString());
+      warn("Unknown error has occurred while handling a query", {
+        error: (e as Error).toString(),
+      });
     }
   } catch (e: unknown) {
     return [null];

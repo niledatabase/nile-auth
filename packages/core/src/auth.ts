@@ -4,7 +4,7 @@ import { getSecureCookies } from "./next-auth/cookies";
 
 type SessionUser = { user?: { id?: string } };
 
-const { error, debug } = Logger("[nile-auth]");
+const { warn, debug } = Logger("[nile-auth]");
 
 export async function buildFetch(
   req: Request,
@@ -53,7 +53,9 @@ export async function auth(req: Request): Promise<[void | SessionUser]> {
       return [body];
     }
   } catch (e) {
-    error(e);
+    if (e instanceof Error) {
+      warn("auth failed", { stack: e.stack, message: e.message });
+    }
     return [undefined];
   }
   return [undefined];

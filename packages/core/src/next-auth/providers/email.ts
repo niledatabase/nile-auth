@@ -5,7 +5,7 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { queryByInfo, ResultSet } from "@nile-auth/query";
 import { Logger } from "@nile-auth/logger";
 import { DbCreds } from "@nile-auth/query/getDbInfo";
-const { info, error, debug } = Logger("emailProvider");
+const { info, warn, debug } = Logger("emailProvider");
 
 export type Variable = { name: string; value?: string };
 
@@ -176,7 +176,7 @@ export async function sendEmail({
       "responseCode" in e &&
       e.responseCode !== 421
     ) {
-      error(e);
+      warn("unable to send email", { error: e });
     }
     if (e instanceof Error) {
       throw new Error(e.message);
