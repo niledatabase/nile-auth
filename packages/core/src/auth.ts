@@ -23,7 +23,7 @@ export async function buildFetch(
   });
 
   if (token) {
-    debug("token taken from request");
+    debug("token taken from request", { token });
     return [{ user: { id: String(token.id) } }];
   }
   const url = new URL(req.url);
