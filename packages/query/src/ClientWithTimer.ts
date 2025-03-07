@@ -37,7 +37,6 @@ export default class ClientWithTimer {
       removeSelf(id);
     });
 
-    this.logger.warn("garbage", { yes: "its something" });
     this.client.connect().catch(async (e) => {
       this.logger.warn("client connection failed", {
         message: e.message,

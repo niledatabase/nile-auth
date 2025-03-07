@@ -60,6 +60,9 @@ export async function POST(req: NextRequest) {
   const responder = ResponseLogger(req, EventEnum.CREATE_TENANT);
   if (session && session?.user?.id) {
     const body = await req.json();
+    if (!body.name) {
+      return handleFailure(responder, {} as ErrorResultSet, "name is required");
+    }
     const sql = await queryByReq(req);
     const [userRows] = await sql`
       SELECT

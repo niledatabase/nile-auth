@@ -139,10 +139,12 @@ export function getCookie(cookieKey: void | string, headers: void | Headers) {
 export function setTenantCookie(req: Request, rows: Record<string, string>[]) {
   if (!getCookie(X_NILE_TENANT_ID, req.headers)) {
     const headers = new Headers();
-    headers.set(
-      "set-cookie",
-      `${X_NILE_TENANT_ID}=${rows[0]?.id}; Path=/; SameSite=lax`,
-    );
+    if (rows[0]?.id) {
+      headers.set(
+        "set-cookie",
+        `${X_NILE_TENANT_ID}=${rows[0].id}; Path=/; SameSite=lax`,
+      );
+    }
     return headers;
   } else {
     // help the UI if a user is removed or cookies got changed poorly, doesn't actually auth anything.
@@ -150,10 +152,18 @@ export function setTenantCookie(req: Request, rows: Record<string, string>[]) {
     const exists = rows.some((r) => r.id === cookie);
     if (!exists) {
       const headers = new Headers();
-      headers.set(
-        "set-cookie",
-        `${X_NILE_TENANT_ID}=${rows[0]?.id}; Path=/; SameSite=lax`,
-      );
+      if (rows[0]?.id) {
+        headers.set(
+          "set-cookie",
+          `${X_NILE_TENANT_ID}=${rows[0].id}; Path=/; SameSite=lax`,
+        );
+      } else {
+        // the user doesn't have a tenant for the tenants we know, so remove the cookie
+        headers.set(
+          "set-cookie",
+          `${X_NILE_TENANT_ID}=; Path=/; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+        );
+      }
       return headers;
     }
   }
