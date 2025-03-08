@@ -1,6 +1,6 @@
 import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { queryByReq, queryBySingle } from "@nile-auth/query";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { randomString } from "@nile-auth/core/utils";
 import {
@@ -69,14 +69,15 @@ export async function POST(req: NextRequest) {
   const useSecureCookies = getSecureCookies(req);
   const callbackCookie = decodeURIComponent(
     String(getCookie(getCallbackCookie(useSecureCookies).name, req.headers)),
-  );
+  ).replace(/\/$/, "");
 
   const callback = `${callbackCookie}/api/auth/reset-password`;
 
   const json = await req.json();
 
+  console.log(json, "fffffffffffff");
   const email = json.email;
-  const callbackURL = json.callbackURL ?? callback;
+  const callbackUrl = json.callbackUrl ?? callback;
   const redirectURL = json.redirectURL ?? callbackCookie;
 
   if (typeof email !== "string" || !email) {
@@ -174,12 +175,17 @@ export async function POST(req: NextRequest) {
         ${newToken},
         ${FOUR_HOURS_FROM_NOW}
       )
+    ON CONFLICT (identifier) DO
+    UPDATE
+    SET
+      token = EXCLUDED.token,
+      expires = EXCLUDED.expires
   `;
 
   const searchParams = new URLSearchParams({
     token: newToken,
     identifier: identifier,
-    callbackURL,
+    callbackURL: callbackUrl,
   });
 
   const { from, body, subject } = await generateEmailBody({
@@ -188,7 +194,7 @@ export async function POST(req: NextRequest) {
     template: template as Template,
     variables:
       variables && "rows" in variables ? (variables.rows as Variable[]) : [],
-    url: `${redirectURL}?${searchParams.toString()}`,
+    url: `${!redirectURL.startsWith("http://") ? `${callbackCookie}${redirectURL}` : redirectURL}?${searchParams.toString()}`,
   });
 
   await sendEmail({
@@ -274,7 +280,13 @@ export async function GET(req: NextRequest) {
   `;
 
   if (error) {
-    return error;
+    // in the case of an error, always redirect
+    return responder(null, {
+      status: 307,
+      headers: {
+        Location: String(callbackURL),
+      },
+    });
   }
   if (new Date(verificationToken?.expires) > new Date()) {
     if (callbackURL) {
@@ -297,7 +309,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return new Response(null, { status: 200 });
+  return responder(null, { status: 200 });
 }
 
 function getResetCookie(req: Request): string | null | undefined {
