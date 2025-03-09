@@ -36,7 +36,14 @@ export async function GET(
     };
 
     if (res.status > 303) {
-      log.warn("Get request failed.", { details });
+      try {
+        log.warn("Failure occurred in nextauth post", { details });
+      } catch (e) {
+        // what to do about this?
+        console.warn(
+          `failure occurred in nextauth post ${JSON.stringify(details)}`,
+        );
+      }
     }
 
     if (res.status === 302) {
@@ -86,7 +93,13 @@ export async function POST(
     };
 
     if (res.status > 303) {
-      log.warn("Failure occurred in nextauth post", { details });
+      try {
+        log.warn("Failure occurred in nextauth post", { details });
+      } catch (e) {
+        console.warn(
+          `failure occurred in nextauth post ${JSON.stringify(details)}`,
+        );
+      }
     }
 
     if (res.status === 302) {

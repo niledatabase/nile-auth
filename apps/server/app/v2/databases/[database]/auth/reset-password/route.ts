@@ -75,7 +75,6 @@ export async function POST(req: NextRequest) {
 
   const json = await req.json();
 
-  console.log(json, "fffffffffffff");
   const email = json.email;
   const callbackUrl = json.callbackUrl ?? callback;
   const redirectURL = json.redirectURL ?? callbackCookie;
