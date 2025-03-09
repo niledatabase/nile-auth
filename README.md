@@ -1,6 +1,4 @@
-<p align="center">
- ![Blog post cover (3)](https://github.com/user-attachments/assets/0386172b-a040-4d1e-84d8-4939b4631e09)
-</p>
+![Blog post cover (3)](https://github.com/user-attachments/assets/0386172b-a040-4d1e-84d8-4939b4631e09)
 
 # Nile Auth
 
