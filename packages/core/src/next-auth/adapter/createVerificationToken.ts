@@ -19,6 +19,11 @@ export function createVerificationToken(pool: Pool) {
           ${expires},
           ${token}
         )
+      ON CONFLICT (identifier) DO
+      UPDATE
+      SET
+        token = EXCLUDED.token,
+        expires = EXCLUDED.expires
     `;
     return verificationToken;
   };
