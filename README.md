@@ -1,5 +1,5 @@
 <p align="center">
- <img width="1105" alt="Screenshot 2025-03-08 at 12 55 41 PM" src="https://github.com/user-attachments/assets/ddc881f6-3df7-4bf7-a9c7-175455000997" />
+ ![Blog post cover (3)](https://github.com/user-attachments/assets/0386172b-a040-4d1e-84d8-4939b4631e09)
 </p>
 
 # Nile Auth
