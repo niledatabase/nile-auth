@@ -100,7 +100,7 @@ Access a full suite of authentication features to secure your application thorou
 
 ## Self-host or let Nile manage it
 
-Choose between [self-hosting](/auth/selfhosting) for complete control or let Nile handle the management for you. And most importantly, Nile-Auth is 100% open source and will work with any PostgreSQL database. You are in control of your own user data and never have to worry about vendor lock-in.
+Choose between [self-hosting](https://www.thenile.dev/docs/auth/selfhosting) for complete control or let Nile handle the management for you. And most importantly, Nile-Auth is 100% open source and will work with any PostgreSQL database. You are in control of your own user data and never have to worry about vendor lock-in.
 
 ## Drop-in Auth UI modules
 
