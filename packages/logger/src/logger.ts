@@ -4,9 +4,7 @@ import {
   transports,
   Logger as WinstonLogger,
 } from "winston";
-import { tinybird } from "./tinybird";
 import { EventEnum } from "./types";
-export { EventEnum } from "./types";
 
 const colorizer = format.colorize();
 const level =
@@ -41,17 +39,6 @@ const devFormat = format.combine(
   }),
   format.colorize({ all: true }),
 );
-
-type LogType = (
-  message: string,
-  meta?:
-    | undefined
-    | Record<
-        string,
-        string | number | BodyInit | object | undefined | null | unknown
-      >,
-) => WinstonLogger;
-type SillyLog = (params: object) => WinstonLogger;
 
 export class UnknownError extends Error {
   code: string;
@@ -102,43 +89,32 @@ const logger = createLogger({
 });
 logger.setMaxListeners(15);
 
-export function Logger(endpoint: string) {
-  logger.defaultMeta = { endpoint };
-
-  const error = (...msg: any) => {
-    const metadata = formatError(msg);
-    if (typeof msg[1] === "object") {
-      logger.error(msg[0], { endpoint, ...msg[1], ...metadata });
-    } else {
-      logger.error(msg[0], { endpoint, error: msg, ...metadata });
-    }
-  };
-  const debug: LogType = logger.debug;
-  const info: LogType = logger.info;
-  const warn: LogType = logger.warn;
-  const silly: SillyLog = logger.silly;
-
-  return { info, warn, debug, error, silly };
-}
-
-export type ResponderFn = (
-  body?: Response | BodyInit | null | undefined,
-  init?: ResponseInit | undefined,
-  detail?: Record<string, string | Record<string, string>>,
-) => Response;
-
-export function ResponseLogger(req: Request, event: EventEnum): ResponderFn {
-  return function Responder(body, init, detail): Response {
-    const url = new URL(req.url);
-    logger.defaultMeta = { event };
-    logger.info(`[${req.method ?? "GET"}] ${url.pathname}`, {
-      ...detail,
-      init,
-    });
-    tinybird({ req, event, body, detail });
-    if (!(body instanceof Response)) {
-      return new Response(body, init);
-    }
-    return body;
+export function Logger(endpoint: string): {
+  info: (message: string, ...meta: any[]) => WinstonLogger;
+  warn: (message: string, ...meta: any[]) => WinstonLogger;
+  debug: (message: string, ...meta: any[]) => WinstonLogger;
+  error: (...msg: any) => WinstonLogger;
+  silly: (message: string, ...meta: any[]) => WinstonLogger;
+  setMetadata: (params: { event: EventEnum }) => void;
+} {
+  return {
+    info: logger.info,
+    warn: logger.warn,
+    debug: logger.debug,
+    error: (...msg: any) => {
+      const metadata = formatError(msg);
+      if (typeof msg[1] === "object") {
+        logger.error(msg[0], { endpoint, ...msg[1], ...metadata });
+      } else {
+        logger.error(msg[0], { endpoint, error: msg, ...metadata });
+      }
+      return logger;
+    },
+    silly: logger.silly.bind(logger, { endpoint }),
+    setMetadata: (params) => {
+      logger.defaultMeta = params;
+    },
   };
 }
+
+export { report } from "./report";
