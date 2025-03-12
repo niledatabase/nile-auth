@@ -1,6 +1,5 @@
-import { EventEnum, ResponseLogger, ResponderFn } from "@nile-auth/logger";
+import { ResponderFn } from "@nile-auth/logger";
 import { ErrorResultSet } from "./types";
-import { ResultSet } from "./query";
 
 // https://www.postgresql.org/docs/current/errcodes-appendix.html
 enum ErrorCodes {

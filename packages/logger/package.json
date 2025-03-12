@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    ".": "./src/logger.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
-    "generate:component": "turbo gen react-component"
+    "test": "jest"
   },
   "devDependencies": {
     "@nile-auth/eslint-config": "*",
@@ -16,9 +16,12 @@
     "@types/eslint": "^8.56.5",
     "@types/node": "^20.11.24",
     "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "dd-trace": "^5.41.1",
     "winston": "^3.15.0"
   }
 }
