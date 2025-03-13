@@ -75,6 +75,7 @@ npm run dev
 ```
 
 When you navigate to the localhost url, you should see something similar to the video below
+
 https://github.com/user-attachments/assets/ecfd0bac-76dd-46be-999f-2ab57292cfcc
 
 ---
