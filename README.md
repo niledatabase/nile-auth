@@ -68,21 +68,31 @@ export default function SignUpPage() {
 }
 ```
 
----
+### Run and Log in to your application
 
-## Purpose-built for multi-tenant apps
+```bash
+npm run dev
+```
+
+When you navigate to the localhost url, you should see something similar to the video below
+https://github.com/user-attachments/assets/ecfd0bac-76dd-46be-999f-2ab57292cfcc
+
+---
+## Why Nile Auth?
+
+### Purpose-built for multi-tenant apps
 
 Nile Auth is purpose-built for multi-tenant apps. Users belong to one or more tenants, and each tenant has its own data. Authenticated users can access data from any tenant they have access to - this access control is enforced at all layers - from the browser to the authentication service to the database itself. All authentication features can be enabled at the application level, or disabled for a specific tenant. 
 
-## User data stored in your DB
+### User data stored in your DB
 
 Keep full control of your user data by storing it directly in your own database. At Nile we believe that user information, just like tenant information, is deeply integrated with your application data and best stored in the same database. This provides security, performance and consistency across your entire stack.
 
-## Unlimited active users
+### Unlimited active users
 
 Scale your application with confidence, supporting unlimited active users at no additional cost. Some authentication services pricing depends on the number of active users, but at Nile we believe that the number of active users does not accurately reflect the value of the service. We believe that a better metric is database usage (cpu, memory, storage) and the number of **enterprise tenants** you have (as those are high value customers). Therefore we do not limit the number of active users at any pricing tier, and instead focus on aligning our pricing with your database usage and enterprise adoption.
 
-## Comprehensive auth features
+### Comprehensive auth features
 
 Access a full suite of authentication features to secure your application thoroughly. Here are some of the features you get out of the box:
 
@@ -98,11 +108,11 @@ Access a full suite of authentication features to secure your application thorou
 - **PostgreSQL Backend** – Secure, scalable authentication storage.
 - **Proxy-Optimized** – Designed to work with a fronting backend service for enhanced security and flexibility.
 
-## Self-host or let Nile manage it
+### Self-host or let Nile manage it
 
 Choose between [self-hosting](https://www.thenile.dev/docs/auth/selfhosting) for complete control or let Nile handle the management for you. And most importantly, Nile-Auth is 100% open source and will work with any PostgreSQL database. You are in control of your own user data and never have to worry about vendor lock-in.
 
-## Drop-in Auth UI modules
+### Drop-in Auth UI modules
 
 Easily integrate pre-built authentication UI modules into your application with minimal effort. Nile's open source SDK includes a beautiful and flexible React components that can be embedded in your application and customized to your liking. This includes signup, login, organization switcher, user profile, social login buttons and more.
 
