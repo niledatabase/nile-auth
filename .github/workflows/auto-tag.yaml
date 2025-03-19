@@ -12,7 +12,7 @@ concurrency:
 jobs:
   tag:
     name: Bump version and push tag
-    runs-on: ubuntu-latest
+    runs-on: public-ubuntu-x64-2-core
     permissions:
       contents: write
     steps:
