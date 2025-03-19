@@ -31,14 +31,14 @@ jobs:
       - name: test
         run: yarn test
   docker:
-    uses: niledatabase/workflows/.github/workflows/docker-multi-arch.yaml@main
+    uses: niledatabase/workflows/.github/workflows/docker-multi-arch-v2.yaml@main
     needs: [ "test" ]
     permissions:
       contents: read
       packages: write
       id-token: write
     with:
-      dockerfile: 'apps/server/Dockerfile'
+      file: 'apps/server/Dockerfile'
 
   helm:
     uses: niledatabase/workflows/.github/workflows/helm.yaml@main
