@@ -5,14 +5,10 @@ concurrency:
 
 on:
   push:
-    branches-ignore:
-      - 'main'
-    tags:
-      - '**'
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: public-ubuntu-x64-2-core
     steps:
       - uses: actions/checkout@v4
 
@@ -30,21 +26,47 @@ jobs:
 
       - name: test
         run: yarn test
-  docker:
-    uses: niledatabase/workflows/.github/workflows/docker-multi-arch.yaml@main
+  tag:
+    runs-on: public-ubuntu-x64-2-core
     needs: [ "test" ]
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    with:
-      dockerfile: 'apps/server/Dockerfile'
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
 
-  helm:
-    uses: niledatabase/workflows/.github/workflows/helm.yaml@main
-    needs: [ "docker" ]
+      - name: Bump tag
+        id: tag
+        uses: niledatabase/bump-git-tag-action@v0.0.17
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    uses: niledatabase/workflows/.github/workflows/docker-multi-arch-v2.yaml@main
+    needs: [ "tag" ]
     permissions:
       contents: read
       packages: write
     with:
-      path: charts/server
+      file: 'apps/server/Dockerfile'
+      tags: |
+        type=raw,value=${{ needs.tag.outputs.tag }}
+        type=sha
+        type=sha,format=long
+
+  publish-helm-chart:
+    name: Publish Helm Chart
+    runs-on: public-ubuntu-x64-2-core
+    needs: [ "docker", "tag" ]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Push helm chart
+        uses: niledatabase/workflows/.github/actions/helm-release@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ needs.tag.outputs.tag }}
+          path: ./charts/server
+          app_version: sha-${{ github.sha }}
