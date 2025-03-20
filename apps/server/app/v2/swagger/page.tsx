@@ -17,6 +17,7 @@ export default async function Swagger() {
         <Form />
       </form>
 
+      {/** @ts-ignore  https://github.com/swagger-api/swagger-ui/issues/10243 */}
       <SwaggerUI spec={spec} />
     </div>
   );

@@ -5,8 +5,12 @@ FROM node:20-alpine AS base
 
 FROM base AS builder
 
-RUN apk update
-RUN apk add --no-cache libc6-compat
+RUN apk update && apk add --no-cache \
+  libc6-compat \
+  build-base \
+  python3 \
+  git
+
 WORKDIR /app
 
 RUN yarn global add turbo
@@ -18,15 +22,18 @@ RUN turbo prune @nile-auth/server --docker
 FROM base AS installer
 
 RUN corepack enable
-RUN corepack prepare yarn@4.5.0 --activate
+RUN corepack prepare yarn@4.7.0 --activate
 
-RUN apk update
-RUN apk add --no-cache libc6-compat
+RUN apk update && apk add --no-cache \
+  libc6-compat \
+  g++ \
+  make \
+  python3
 
 WORKDIR /app
 
 COPY --from=builder /app/out/json/ .
-RUN yarn install
+RUN yarn install --network-timeout 1000000
 COPY --from=builder /app/out/full/ .
 RUN yarn turbo build --filter=@nile-auth/server...
 
@@ -34,7 +41,7 @@ FROM base AS runner
 
 RUN apk add dumb-init
 RUN corepack enable
-RUN corepack prepare yarn@4.5.0 --activate
+RUN corepack prepare yarn@4.7.0 --activate
 
 WORKDIR /app
 
@@ -50,4 +57,5 @@ COPY --from=installer --chown=nextjs:nodejs /app/apps/server/.next/static ./apps
 
 EXPOSE 3001
 
-CMD PORT=3001 dumb-init node apps/server/server.js
+ENV PORT=3001
+CMD ["dumb-init", "node", "apps/server/server.js"]
