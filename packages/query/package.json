@@ -14,8 +14,8 @@
     "generate:component": "turbo gen react-component"
   },
   "devDependencies": {
-    "@nile-auth/eslint-config": "*",
-    "@nile-auth/typescript-config": "*",
+    "@nile-auth/eslint-config": "workspace:*",
+    "@nile-auth/typescript-config": "workspace:*",
     "@turbo/gen": "^1.12.4",
     "@types/eslint": "^8.56.5",
     "@types/jest": "^29.5.14",
