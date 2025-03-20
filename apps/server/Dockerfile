@@ -18,7 +18,7 @@ RUN turbo prune @nile-auth/server --docker
 FROM base AS installer
 
 RUN corepack enable
-RUN corepack prepare yarn@4.5.0 --activate
+RUN corepack prepare yarn@4.7.0 --activate
 
 RUN apk update
 RUN apk add --no-cache libc6-compat
@@ -34,7 +34,7 @@ FROM base AS runner
 
 RUN apk add dumb-init
 RUN corepack enable
-RUN corepack prepare yarn@4.5.0 --activate
+RUN corepack prepare yarn@4.7.0 --activate
 
 WORKDIR /app
 
