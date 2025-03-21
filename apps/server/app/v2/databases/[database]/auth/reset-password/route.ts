@@ -1,6 +1,6 @@
 import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { queryByReq, queryBySingle } from "@nile-auth/query";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { randomString } from "@nile-auth/core/utils";
 import {

@@ -36,8 +36,8 @@
     "yaml": "^2.7.0"
   },
   "devDependencies": {
-    "@nile-auth/eslint-config": "*",
-    "@nile-auth/typescript-config": "*",
+    "@nile-auth/eslint-config": "workspace:*",
+    "@nile-auth/typescript-config": "workspace:*",
     "@openapitools/openapi-generator-cli": "^2.9.0",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^16.0.0",

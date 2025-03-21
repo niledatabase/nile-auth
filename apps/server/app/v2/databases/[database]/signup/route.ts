@@ -98,11 +98,11 @@ export async function POST(
       const headers = await login(cloned, { params });
       return responder(await userCreate.text(), { headers }, { ...swagBody });
     } catch (e) {
-      if (e instanceof LoginError) {
+      if (e instanceof LoginError || e instanceof Error) {
         error("Unable to login from sign up", {
           message: e.message,
           stack: e.stack,
-          details: e.details,
+          ...("details" in e ? { details: e.details } : {}),
         });
       }
     }
