@@ -85,7 +85,7 @@ export async function PUT(
         ${addContext({ userId: session.user.id })};
 
         SELECT
-          COUNT(*)
+          1
         FROM
           users.tenant_users
         WHERE
@@ -189,7 +189,7 @@ export async function DELETE(
         ${addContext({ userId: session.user.id })};
 
         SELECT
-          COUNT(*)
+          1
         FROM
           users.tenant_users
         WHERE
@@ -296,7 +296,9 @@ export async function GET(
         SELECT
           *
         FROM
-          public.tenants;
+          public.tenants
+        WHERE
+          id = ${params.tenantId};
       `;
 
       if (tenants && "name" in tenants) {

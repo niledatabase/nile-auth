@@ -38,6 +38,7 @@
   "devDependencies": {
     "@nile-auth/eslint-config": "workspace:*",
     "@nile-auth/typescript-config": "workspace:*",
+    "@niledatabase/server": "^4.0.0-alpha.8",
     "@openapitools/openapi-generator-cli": "^2.9.0",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^16.0.0",

@@ -58,7 +58,8 @@ describe("update tenant user", () => {
       text = text.replace(/(\n\s+)/g, " ").trim();
       runCommands.push(text);
 
-      if (text.includes("COUNT(*)")) {
+      console.log(text);
+      if (text.includes("SELECT 1")) {
         return [
           null,
           null,
@@ -88,7 +89,7 @@ describe("update tenant user", () => {
     });
     expect(res.status).toEqual(404);
     expect(runCommands).toEqual([
-      ":SET nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET LOCAL nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET LOCAL nile.user_id = 'some-uuid'; SELECT 1 FROM users.tenant_users WHERE deleted IS NULL",
     ]);
   });
 
@@ -110,7 +111,7 @@ describe("update tenant user", () => {
       text = text.replace(/(\n\s+)/g, " ").trim();
       runCommands.push(text);
 
-      if (text.includes("COUNT(*)")) {
+      if (text.includes("SELECT 1")) {
         return [
           null,
           null,
@@ -166,8 +167,8 @@ describe("update tenant user", () => {
     });
     expect(res.status).toEqual(200);
     expect(runCommands).toEqual([
-      ":SET nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
-      ":SET nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET nile.user_id = '0190b7cd-661a-76d4-ba6e-6ae2c383e3c1'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET LOCAL nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET LOCAL nile.user_id = 'some-uuid'; SELECT 1 FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET LOCAL nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET LOCAL nile.user_id = '0190b7cd-661a-76d4-ba6e-6ae2c383e3c1'; SELECT 1 FROM users.tenant_users WHERE deleted IS NULL",
       'SELECT id, email, name, family_name AS "familyName", given_name AS "givenName", picture FROM users.users WHERE id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1',
       'UPDATE users.users SET name = test@test.com, family_name = test@test.com, given_name = test@test.com, picture = test@test.com WHERE id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1 RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated',
     ]);

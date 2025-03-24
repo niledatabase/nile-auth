@@ -76,7 +76,7 @@ export async function PUT(
         ${addContext({ userId: session.user.id })};
 
         SELECT
-          COUNT(*)
+          1
         FROM
           users.tenant_users
         WHERE
@@ -95,7 +95,7 @@ export async function PUT(
         ${addContext({ userId })};
 
         SELECT
-          COUNT(*)
+          1
         FROM
           users.tenant_users
         WHERE

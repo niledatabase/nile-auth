@@ -11,11 +11,11 @@ export function addContext({
 }) {
   let ctx = "";
   if (tenantId) {
-    ctx = fixPrepare("SET nile.tenant_id", tenantId);
+    ctx = fixPrepare("SET LOCAL nile.tenant_id", tenantId);
   }
   // can't have one without the other, but that's not how the query gets built
   if (userId) {
-    ctx += fixPrepare("SET nile.user_id", userId);
+    ctx += fixPrepare("SET LOCAL nile.user_id", userId);
   }
   return ctx;
 }

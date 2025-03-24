@@ -82,7 +82,7 @@ describe("update tenants", () => {
     });
     expect(res?.status).toEqual(404);
     expect(commands).toEqual([
-      ":SET nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET LOCAL nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET LOCAL nile.user_id = 'some-uuid'; SELECT 1 FROM users.tenant_users WHERE deleted IS NULL",
       "UPDATE public.tenants SET name = garbage WHERE id = 019073f4-75a6-72b9-a379-5ed38ca0d01a RETURNING *;",
     ]);
   });
@@ -142,7 +142,7 @@ describe("update tenants", () => {
     });
     expect(res?.status).toEqual(200);
     expect(runCommands).toEqual([
-      ":SET nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET LOCAL nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET LOCAL nile.user_id = 'some-uuid'; SELECT 1 FROM users.tenant_users WHERE deleted IS NULL",
       "UPDATE public.tenants SET name = garbage WHERE id = 019073f4-75a6-72b9-a379-5ed38ca0d01a RETURNING *;",
     ]);
   });
