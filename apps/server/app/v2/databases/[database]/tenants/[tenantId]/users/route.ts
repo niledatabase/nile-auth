@@ -176,11 +176,12 @@ export async function POST(
         ${addContext({ userId: session.user.id })};
 
         SELECT
-          1
+          COUNT(*)
         FROM
           users.tenant_users
         WHERE
           deleted IS NULL
+          AND user_id = ${session.user.id}
       `;
       if (
         userInTenant &&
