@@ -53,146 +53,153 @@ import { handleFailure } from "@nile-auth/query/utils";
  *         content: {}
  */
 export async function POST(req: NextRequest) {
-  const responder = ResponseLogger(req, EventEnum.CREATE_USER);
-  const body = await req.json();
-  const sql = await queryByReq(req);
-  if (!body.email) {
-    return responder("email is required", { status: 400 });
-  }
-  const validEmail =
-    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(
-      body.email,
-    );
-  if (!validEmail) {
-    return handleFailure(responder, undefined, "Invalid email address");
-  }
-  const [newUser] = await sql`
-    INSERT INTO
-      users.users (email, name, family_name, given_name, picture)
-    VALUES
-      (
-        ${body.email},
-        ${body.name},
-        ${body.familyName},
-        ${body.givenName},
-        ${body.picture}
-      )
-    RETURNING
-      id,
-      email,
-      name,
-      family_name AS "familyName",
-      given_name AS "givenName",
-      picture,
-      created,
-      updated;
-  `;
-  if (!newUser) {
-    return responder(null, { status: 404 });
-  }
-  if ("name" in newUser) {
-    return handleFailure(
-      responder,
-      newUser as ErrorResultSet,
-      `User with email ${body.email}`,
-    );
-  }
-
-  const [user] = newUser.rows ?? [];
-
-  if (!user || !user?.id) {
-    return responder(null, { status: 404 });
-  }
-
-  const sps = new URL(req.url).searchParams;
-  let tenantId = sps.get("tenantId");
-  const newTenantName = sps.get("newTenantName");
-
-  if (newTenantName) {
-    const [tenant] = await sql`
-      INSERT INTO
-        tenants (name)
-      VALUES
-        (${newTenantName})
-      RETURNING
-        id;
-    `;
-    if (tenant && "rowCount" in tenant) {
-      tenantId = tenant.rows[0]?.id as string;
+  const [responder, reporter] = ResponseLogger(req, EventEnum.CREATE_USER);
+  try {
+    const body = await req.json();
+    const sql = await queryByReq(req);
+    if (!body.email) {
+      return responder("email is required", { status: 400 });
     }
-  }
-
-  if (tenantId) {
-    const [tenantUser] = await sql`
+    const validEmail =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(
+        body.email,
+      );
+    if (!validEmail) {
+      return handleFailure(responder, undefined, "Invalid email address");
+    }
+    const [newUser] = await sql`
       INSERT INTO
-        users.tenant_users (tenant_id, user_id, email)
+        users.users (email, name, family_name, given_name, picture)
       VALUES
         (
-          ${tenantId},
-          ${user.id},
-          ${body.email}
+          ${body.email},
+          ${body.name},
+          ${body.familyName},
+          ${body.givenName},
+          ${body.picture}
         )
+      RETURNING
+        id,
+        email,
+        name,
+        family_name AS "familyName",
+        given_name AS "givenName",
+        picture,
+        created,
+        updated;
     `;
-    if (!tenantUser) {
+    if (!newUser) {
+      return responder(null, { status: 404 });
+    }
+    if ("name" in newUser) {
+      return handleFailure(
+        responder,
+        newUser as ErrorResultSet,
+        `User with email ${body.email}`,
+      );
+    }
+
+    const [user] = newUser.rows ?? [];
+
+    if (!user || !user?.id) {
+      return responder(null, { status: 404 });
+    }
+
+    const sps = new URL(req.url).searchParams;
+    let tenantId = sps.get("tenantId");
+    const newTenantName = sps.get("newTenantName");
+
+    if (newTenantName) {
+      const [tenant] = await sql`
+        INSERT INTO
+          tenants (name)
+        VALUES
+          (${newTenantName})
+        RETURNING
+          id;
+      `;
+      if (tenant && "rowCount" in tenant) {
+        tenantId = tenant.rows[0]?.id as string;
+      }
+    }
+
+    if (tenantId) {
+      const [tenantUser] = await sql`
+        INSERT INTO
+          users.tenant_users (tenant_id, user_id, email)
+        VALUES
+          (
+            ${tenantId},
+            ${user.id},
+            ${body.email}
+          )
+      `;
+      if (!tenantUser) {
+        return handleFailure(
+          responder,
+          {} as ErrorResultSet,
+          `Unable to add user ${user.id} to tenant ${tenantId}.`,
+        );
+      }
+
+      if ("name" in tenantUser) {
+        return handleFailure(
+          responder,
+          tenantUser as ErrorResultSet,
+          `Unable to add user ${user.id} to tenant ${tenantId}`,
+        );
+      }
+    }
+    if (body.password) {
+      const [credentials] = await sql`
+        INSERT INTO
+          auth.credentials (user_id, method, provider, payload)
+        VALUES
+          (
+            ${user.id},
+            'EMAIL_PASSWORD',
+            'nile',
+            jsonb_build_object(
+              'crypt',
+              'crypt-bf/8',
+              'hash',
+              public.crypt (
+                ${body.password},
+                public.gen_salt ('bf', 8)
+              ),
+              'email',
+              ${body.email}::text
+            )
+          )
+      `;
+      if (credentials && "name" in credentials) {
+        return handleFailure(
+          responder,
+          credentials as ErrorResultSet,
+          `Unable to save credentials.`,
+        );
+      }
+    }
+
+    if ("rowCount" in newUser && newUser.rowCount === 1) {
+      return responder(
+        JSON.stringify({
+          ...newUser.rows[0],
+          tenants: tenantId ? [tenantId] : [],
+        }),
+        { status: 201 },
+      );
+    } else {
       return handleFailure(
         responder,
         {} as ErrorResultSet,
-        `Unable to add user ${user.id} to tenant ${tenantId}.`,
+        "Unable to create user.",
       );
     }
-
-    if ("name" in tenantUser) {
-      return handleFailure(
-        responder,
-        tenantUser as ErrorResultSet,
-        `Unable to add user ${user.id} to tenant ${tenantId}`,
-      );
-    }
-  }
-  if (body.password) {
-    const [credentials] = await sql`
-      INSERT INTO
-        auth.credentials (user_id, method, provider, payload)
-      VALUES
-        (
-          ${user.id},
-          'EMAIL_PASSWORD',
-          'nile',
-          jsonb_build_object(
-            'crypt',
-            'crypt-bf/8',
-            'hash',
-            public.crypt (
-              ${body.password},
-              public.gen_salt ('bf', 8)
-            ),
-            'email',
-            ${body.email}::text
-          )
-        )
-    `;
-    if (credentials && "name" in credentials) {
-      return handleFailure(
-        responder,
-        credentials as ErrorResultSet,
-        `Unable to save credentials.`,
-      );
-    }
-  }
-
-  if ("rowCount" in newUser && newUser.rowCount === 1) {
-    return responder(
-      JSON.stringify({
-        ...newUser.rows[0],
-        tenants: tenantId ? [tenantId] : [],
-      }),
-      { status: 201 },
-    );
-  } else {
-    return handleFailure(
-      responder,
-      {} as ErrorResultSet,
-      "Unable to create user.",
-    );
+  } catch (e) {
+    reporter.error(e);
+    return responder(e instanceof Error ? e.message : "Internal server error", {
+      status: 500,
+    });
   }
 }

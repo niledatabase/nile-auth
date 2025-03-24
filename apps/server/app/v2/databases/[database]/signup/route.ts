@@ -58,54 +58,64 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { database: string; nextauth: string[] } },
 ) {
-  const responder = ResponseLogger(req, EventEnum.SIGN_UP);
-  const [hasValidToken] = await validCsrfToken(
-    req,
-    process.env.NEXTAUTH_SECRET,
-  );
-  const cloned = req.clone() as NextRequest;
-
-  if (!hasValidToken) {
-    // maybe make the client go get it
-    return responder("Request blocked", { status: 400 });
-  }
-  // support /swagger ability to allow developers to log in
-  const swagger = req.clone();
-
-  let swagBody: any = {};
+  const [responder, reporter] = ResponseLogger(req, EventEnum.SIGN_UP);
   try {
-    swagBody = await swagger.json();
+    const [hasValidToken] = await validCsrfToken(
+      req,
+      process.env.NEXTAUTH_SECRET,
+    );
+    const cloned = req.clone() as NextRequest;
 
-    // only do this if sign up has swagger values
-    if (swagBody.developerPassword) {
-      process.env.NILEDB_USER = swagBody.developerUser;
-      process.env.NILEDB_PASSWORD = swagBody.developerPassword;
-      process.env.NILEDB_NAME = swagBody.database;
-      process.env.NILEDB_HOST = swagBody.host;
-      process.env.NILEDB_PORT = swagBody.port;
+    if (!hasValidToken) {
+      // maybe make the client go get it
+      return responder("Request blocked", { status: 400 });
     }
-  } catch (e) {
-    //noop
-  }
+    // support /swagger ability to allow developers to log in
+    const swagger = req.clone();
 
-  const userCreate = await USER_POST(req);
-  if (userCreate) {
-    if (userCreate.status > 201) {
-      return responder(await userCreate.text(), { status: userCreate.status });
-    }
-
+    let swagBody: any = {};
     try {
-      const headers = await login(cloned, { params });
-      return responder(await userCreate.text(), { headers }, { ...swagBody });
+      swagBody = await swagger.json();
+
+      // only do this if sign up has swagger values
+      if (swagBody.developerPassword) {
+        process.env.NILEDB_USER = swagBody.developerUser;
+        process.env.NILEDB_PASSWORD = swagBody.developerPassword;
+        process.env.NILEDB_NAME = swagBody.database;
+        process.env.NILEDB_HOST = swagBody.host;
+        process.env.NILEDB_PORT = swagBody.port;
+      }
     } catch (e) {
-      if (e instanceof LoginError || e instanceof Error) {
-        error("Unable to login from sign up", {
-          message: e.message,
-          stack: e.stack,
-          ...("details" in e ? { details: e.details } : {}),
+      //noop
+    }
+
+    const userCreate = await USER_POST(req);
+    if (userCreate) {
+      if (userCreate.status > 201) {
+        return responder(await userCreate.text(), {
+          status: userCreate.status,
         });
       }
+
+      try {
+        const headers = await login(cloned, { params });
+        return responder(await userCreate.text(), { headers }, { ...swagBody });
+      } catch (e) {
+        if (e instanceof LoginError || e instanceof Error) {
+          reporter.error();
+          error("Unable to login from sign up", {
+            message: e.message,
+            stack: e.stack,
+            ...("details" in e ? { details: e.details } : {}),
+          });
+        }
+      }
     }
+    return responder(null, { status: 404 });
+  } catch (e) {
+    reporter.error(e);
+    return responder(e instanceof Error ? e.message : "Internal server error", {
+      status: 500,
+    });
   }
-  return responder(null, { status: 404 });
 }
