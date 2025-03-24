@@ -63,64 +63,71 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { database?: string; tenantId?: string } },
 ) {
-  const [session] = await auth(req);
-  const responder = ResponseLogger(req, EventEnum.UPDATE_TENANT);
-  if (session && session?.user?.id) {
-    const { tenantId } = params;
-    if (!tenantId) {
-      return handleFailure(responder, undefined, "tenantId is required.");
+  const [responder, reporter] = ResponseLogger(req, EventEnum.UPDATE_TENANT);
+  try {
+    const [session] = await auth(req);
+    if (session && session?.user?.id) {
+      const { tenantId } = params;
+      if (!tenantId) {
+        return handleFailure(responder, undefined, "tenantId is required.");
+      }
+
+      const sql = await queryByReq(req);
+
+      const body = await req.json();
+      if (!body.name) {
+        return handleFailure(responder, undefined, "name is required");
+      }
+
+      const [, , userInTenant] = await sql`
+        ${addContext({ tenantId })};
+
+        ${addContext({ userId: session.user.id })};
+
+        SELECT
+          COUNT(*)
+        FROM
+          users.tenant_users
+        WHERE
+          deleted IS NULL
+      `;
+
+      if (
+        userInTenant &&
+        "rowCount" in userInTenant &&
+        (Number(userInTenant.rows[0]?.count) ?? 0) === 0
+      ) {
+        return responder(null, { status: 404 });
+      }
+
+      const [tenants] = await sql`
+        UPDATE public.tenants
+        SET
+          name = ${body.name}
+        WHERE
+          id = ${tenantId}
+        RETURNING
+          *;
+      `;
+
+      if (tenants && "name" in tenants) {
+        return handleFailure(responder, tenants as ErrorResultSet);
+      }
+
+      if (tenants && "rowCount" in tenants && tenants.rowCount > 0) {
+        return responder(JSON.stringify(tenants.rows[0]));
+      } else {
+        return responder(null, { status: 404 });
+      }
     }
 
-    const sql = await queryByReq(req);
-
-    const body = await req.json();
-    if (!body.name) {
-      return handleFailure(responder, undefined, "name is required");
-    }
-
-    const [, , userInTenant] = await sql`
-      ${addContext({ tenantId })};
-
-      ${addContext({ userId: session.user.id })};
-
-      SELECT
-        COUNT(*)
-      FROM
-        users.tenant_users
-      WHERE
-        deleted IS NULL
-    `;
-
-    if (
-      userInTenant &&
-      "rowCount" in userInTenant &&
-      (Number(userInTenant.rows[0]?.count) ?? 0) === 0
-    ) {
-      return responder(null, { status: 404 });
-    }
-
-    const [tenants] = await sql`
-      UPDATE public.tenants
-      SET
-        name = ${body.name}
-      WHERE
-        id = ${tenantId}
-      RETURNING
-        *;
-    `;
-
-    if (tenants && "name" in tenants) {
-      return handleFailure(responder, tenants as ErrorResultSet);
-    }
-
-    if (tenants && "rowCount" in tenants && tenants.rowCount > 0) {
-      return responder(JSON.stringify(tenants.rows[0]));
-    } else {
-      return responder(null, { status: 404 });
-    }
+    return responder(null, { status: 401 });
+  } catch (e) {
+    reporter.error(e);
+    return responder(e instanceof Error ? e.message : "Internal server error", {
+      status: 500,
+    });
   }
-
-  return responder(null, { status: 401 });
 }
 
 /**
@@ -166,56 +173,63 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { database?: string; tenantId?: string } },
 ) {
-  const responder = ResponseLogger(req, EventEnum.DELETE_TENANT);
-  const [session] = await auth(req);
-  if (session && session?.user?.id) {
-    const { tenantId } = params;
-    if (!tenantId) {
-      return handleFailure(responder, undefined, "tenantId is required.");
+  const [responder, reporter] = ResponseLogger(req, EventEnum.DELETE_TENANT);
+  try {
+    const [session] = await auth(req);
+    if (session && session?.user?.id) {
+      const { tenantId } = params;
+      if (!tenantId) {
+        return handleFailure(responder, undefined, "tenantId is required.");
+      }
+
+      const sql = await queryByReq(req);
+      const [, , userInTenant] = await sql`
+        ${addContext({ tenantId })};
+
+        ${addContext({ userId: session.user.id })};
+
+        SELECT
+          COUNT(*)
+        FROM
+          users.tenant_users
+        WHERE
+          deleted IS NULL
+      `;
+
+      if (
+        userInTenant &&
+        "rowCount" in userInTenant &&
+        (Number(userInTenant.rows[0]?.count) ?? 0) === 0
+      ) {
+        return responder(null, { status: 404 });
+      }
+
+      const [tenants] = await sql`
+        UPDATE public.tenants
+        SET
+          deleted = ${formatTime()}
+        WHERE
+          id = ${tenantId}
+      `;
+
+      if (tenants && "name" in tenants) {
+        return handleFailure(responder, tenants as ErrorResultSet);
+      }
+
+      if (tenants && "rowCount" in tenants) {
+        return responder(null, { status: 204 });
+      } else {
+        return responder(null, { status: 404 });
+      }
     }
 
-    const sql = await queryByReq(req);
-    const [, , userInTenant] = await sql`
-      ${addContext({ tenantId })};
-
-      ${addContext({ userId: session.user.id })};
-
-      SELECT
-        COUNT(*)
-      FROM
-        users.tenant_users
-      WHERE
-        deleted IS NULL
-    `;
-
-    if (
-      userInTenant &&
-      "rowCount" in userInTenant &&
-      (Number(userInTenant.rows[0]?.count) ?? 0) === 0
-    ) {
-      return responder(null, { status: 404 });
-    }
-
-    const [tenants] = await sql`
-      UPDATE public.tenants
-      SET
-        deleted = ${formatTime()}
-      WHERE
-        id = ${tenantId}
-    `;
-
-    if (tenants && "name" in tenants) {
-      return handleFailure(responder, tenants as ErrorResultSet);
-    }
-
-    if (tenants && "rowCount" in tenants) {
-      return responder(null, { status: 204 });
-    } else {
-      return responder(null, { status: 404 });
-    }
+    return responder(null, { status: 401 });
+  } catch (e) {
+    reporter.error(e);
+    return responder(e instanceof Error ? e.message : "Internal server error", {
+      status: 500,
+    });
   }
-
-  return new Response(null, { status: 401 });
 }
 /**
  * @swagger
@@ -263,37 +277,44 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { database?: string; tenantId?: string } },
 ) {
-  const [session] = await auth(req);
-  const responder = ResponseLogger(req, EventEnum.LIST_TENANT);
-  if (session && session?.user?.id) {
-    const { tenantId } = params;
-    if (!params.tenantId) {
-      return handleFailure(responder, undefined, "tenantId is required.");
+  const [responder, reporter] = ResponseLogger(req, EventEnum.LIST_TENANT);
+  try {
+    const [session] = await auth(req);
+    if (session && session?.user?.id) {
+      const { tenantId } = params;
+      if (!params.tenantId) {
+        return handleFailure(responder, undefined, "tenantId is required.");
+      }
+
+      const sql = await queryByReq(req);
+
+      const [, , tenants] = await sql`
+        ${addContext({ tenantId })};
+
+        ${addContext({ userId: session.user.id })};
+
+        SELECT
+          *
+        FROM
+          public.tenants;
+      `;
+
+      if (tenants && "name" in tenants) {
+        return handleFailure(responder, tenants as ErrorResultSet);
+      }
+
+      if (tenants && "rowCount" in tenants) {
+        return responder(JSON.stringify(tenants.rows[0]));
+      } else {
+        return responder(null, { status: 404 });
+      }
     }
 
-    const sql = await queryByReq(req);
-
-    const [, , tenants] = await sql`
-      ${addContext({ tenantId })};
-
-      ${addContext({ userId: session.user.id })};
-
-      SELECT
-        *
-      FROM
-        public.tenants;
-    `;
-
-    if (tenants && "name" in tenants) {
-      return handleFailure(responder, tenants as ErrorResultSet);
-    }
-
-    if (tenants && "rowCount" in tenants) {
-      return responder(JSON.stringify(tenants.rows[0]));
-    } else {
-      return responder(null, { status: 404 });
-    }
+    return responder(null, { status: 401 });
+  } catch (e) {
+    reporter.error(e);
+    return responder(e instanceof Error ? e.message : "Internal server error", {
+      status: 500,
+    });
   }
-
-  return responder(null, { status: 401 });
 }

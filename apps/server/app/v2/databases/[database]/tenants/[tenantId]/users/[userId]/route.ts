@@ -1,6 +1,6 @@
 import { auth } from "@nile-auth/core";
-import { queryByReq, formatTime, ErrorResultSet } from "@nile-auth/query";
-import { Logger, EventEnum, ResponseLogger } from "@nile-auth/logger";
+import { queryByReq, ErrorResultSet } from "@nile-auth/query";
+import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 import { addContext } from "@nile-auth/query/context";
 import { handleFailure } from "@nile-auth/query/utils";
@@ -55,115 +55,125 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { userId?: string; tenantId?: string } },
 ) {
-  const [session] = await auth(req);
-  const responder = ResponseLogger(req, EventEnum.UPDATE_TENANT_USER);
-  if (session && session?.user?.id) {
-    const { userId, tenantId } = params;
-    if (!userId) {
-      return handleFailure(responder, undefined, "userId is required.");
-    }
-    if (!tenantId) {
-      return handleFailure(responder, undefined, "tenantId is required.");
-    }
-    const sql = await queryByReq(req);
-    const [, , principalInTenant] = await sql`
-      ${addContext({ tenantId })};
+  const [responder, reporter] = ResponseLogger(
+    req,
+    EventEnum.UPDATE_TENANT_USER,
+  );
+  try {
+    const [session] = await auth(req);
+    if (session && session?.user?.id) {
+      const { userId, tenantId } = params;
+      if (!userId) {
+        return handleFailure(responder, undefined, "userId is required.");
+      }
+      if (!tenantId) {
+        return handleFailure(responder, undefined, "tenantId is required.");
+      }
+      const sql = await queryByReq(req);
+      const [, , principalInTenant] = await sql`
+        ${addContext({ tenantId })};
 
-      ${addContext({ userId: session.user.id })};
+        ${addContext({ userId: session.user.id })};
 
-      SELECT
-        COUNT(*)
-      FROM
-        users.tenant_users
-      WHERE
-        deleted IS NULL
-    `;
-    if (
-      principalInTenant &&
-      "rowCount" in principalInTenant &&
-      (Number(principalInTenant.rows[0]?.count) ?? 0) === 0
-    ) {
-      return responder(null, { status: 404 });
-    }
-    const [, , userInTenant] = await sql`
-      ${addContext({ tenantId })};
-
-      ${addContext({ userId })};
-
-      SELECT
-        COUNT(*)
-      FROM
-        users.tenant_users
-      WHERE
-        deleted IS NULL
-    `;
-
-    if (
-      userInTenant &&
-      "rowCount" in userInTenant &&
-      (Number(userInTenant.rows[0]?.count) ?? 0) === 0
-    ) {
-      return responder(null, { status: 404 });
-    }
-    const [userData] = await sql`
-      SELECT
-        id,
-        email,
-        name,
-        family_name AS "familyName",
-        given_name AS "givenName",
-        picture
-      FROM
-        users.users
-      WHERE
-        id = ${userId}
-    `;
-    if (userData && "rows" in userData) {
-      if (userData.rowCount === 0) {
+        SELECT
+          COUNT(*)
+        FROM
+          users.tenant_users
+        WHERE
+          deleted IS NULL
+      `;
+      if (
+        principalInTenant &&
+        "rowCount" in principalInTenant &&
+        (Number(principalInTenant.rows[0]?.count) ?? 0) === 0
+      ) {
         return responder(null, { status: 404 });
       }
+      const [, , userInTenant] = await sql`
+        ${addContext({ tenantId })};
 
-      const body = await req.json();
-      const user = userData.rows[0] as {
-        name: string;
-        familyName: string;
-        givenName: string;
-        picture: string;
-      };
-      const [updatedUser] = await sql`
-        UPDATE users.users
-        SET
-          name = ${body?.name ?? user.name},
-          family_name = ${body?.familyName ?? user.familyName},
-          given_name = ${body.givenName ?? user.givenName},
-          picture = ${body.picture ?? user.picture}
+        ${addContext({ userId })};
+
+        SELECT
+          COUNT(*)
+        FROM
+          users.tenant_users
         WHERE
-          id = ${userId}
-        RETURNING
+          deleted IS NULL
+      `;
+
+      if (
+        userInTenant &&
+        "rowCount" in userInTenant &&
+        (Number(userInTenant.rows[0]?.count) ?? 0) === 0
+      ) {
+        return responder(null, { status: 404 });
+      }
+      const [userData] = await sql`
+        SELECT
           id,
           email,
           name,
           family_name AS "familyName",
           given_name AS "givenName",
-          picture,
-          created,
-          updated
+          picture
+        FROM
+          users.users
+        WHERE
+          id = ${userId}
       `;
+      if (userData && "rows" in userData) {
+        if (userData.rowCount === 0) {
+          return responder(null, { status: 404 });
+        }
 
-      if (updatedUser && "rowCount" in updatedUser) {
-        return responder(JSON.stringify(updatedUser.rows[0]));
+        const body = await req.json();
+        const user = userData.rows[0] as {
+          name: string;
+          familyName: string;
+          givenName: string;
+          picture: string;
+        };
+        const [updatedUser] = await sql`
+          UPDATE users.users
+          SET
+            name = ${body?.name ?? user.name},
+            family_name = ${body?.familyName ?? user.familyName},
+            given_name = ${body.givenName ?? user.givenName},
+            picture = ${body.picture ?? user.picture}
+          WHERE
+            id = ${userId}
+          RETURNING
+            id,
+            email,
+            name,
+            family_name AS "familyName",
+            given_name AS "givenName",
+            picture,
+            created,
+            updated
+        `;
+
+        if (updatedUser && "rowCount" in updatedUser) {
+          return responder(JSON.stringify(updatedUser.rows[0]));
+        }
+        if (updatedUser && "name" in updatedUser) {
+          return handleFailure(
+            responder,
+            updatedUser as ErrorResultSet,
+            `User with email ${body.email}`,
+          );
+        }
+      } else {
+        return responder(null, { status: 404 });
       }
-      if (updatedUser && "name" in updatedUser) {
-        return handleFailure(
-          responder,
-          updatedUser as ErrorResultSet,
-          `User with email ${body.email}`,
-        );
-      }
-    } else {
-      return responder(null, { status: 404 });
     }
-  }
 
-  return responder(null, { status: 401 });
+    return responder(null, { status: 401 });
+  } catch (e) {
+    reporter.error(e);
+    return responder(e instanceof Error ? e.message : "Internal server error", {
+      status: 500,
+    });
+  }
 }

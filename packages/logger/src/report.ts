@@ -1,7 +1,7 @@
 import { Logger } from "./logger";
 import tracer from "dd-trace";
 
-const { debug, warn } = Logger("metrics");
+const { debug, warn, error } = Logger("metrics");
 
 type Tag = "env" | "service" | "status" | "url";
 
@@ -9,7 +9,7 @@ type Tags = {
   [tag in Tag]: string | number;
 };
 
-type Metrics = "http.latency" | "http.response.count";
+type Metrics = "http.latency" | "http.response.count" | "http.failure";
 
 try {
   tracer.init({
@@ -19,7 +19,18 @@ try {
 } catch (e) {
   warn("failed to configure UDS. NOT LOGGING TO DATADOG");
 }
-export function report(req: Request) {
+
+export type Reporter = {
+  time: [number, number];
+  url: string;
+  start(): void;
+  end(): void;
+  response(status: number): void;
+  error(e?: unknown): void;
+  ok(): void;
+  send(metric: Metrics, value: number, tags?: Partial<Tags>): void;
+};
+export function report(req: Request): Reporter {
   const metrics = tracer.dogstatsd;
   const url = cleanUrl(req);
   return {
@@ -36,6 +47,20 @@ export function report(req: Request) {
 
     response(status: number) {
       this.send("http.response.count", 1, { status });
+    },
+
+    error(e) {
+      if (e instanceof Error) {
+        error("Request failed", {
+          message: e.message,
+          stack: e.stack,
+          ...("details" in e ? { details: e.details } : {}),
+        });
+      }
+      this.send("http.failure", 1);
+    },
+    ok() {
+      this.send("http.failure", 0);
     },
 
     send(metric: Metrics, value: number, tags?: Partial<Tags>) {

@@ -43,58 +43,65 @@ import { handleFailure } from "@nile-auth/query/utils";
  *     - sessionCookie: []
  */
 export async function GET(req: NextRequest) {
-  const responder = ResponseLogger(req, EventEnum.ME);
-  const [session] = await auth(req);
-  if (session && session?.user?.id) {
-    const sql = await queryByReq(req);
-    const [[user], [tenants]] = await Promise.all([
-      await sql`
-        SELECT
-          id,
-          email,
-          name,
-          family_name AS "familyName",
-          given_name AS "givenName",
-          picture,
-          created,
-          updated,
-          email_verified AS "emailVerified"
-        FROM
-          users.users
-        WHERE
-          id = ${session.user.id}
-          AND deleted IS NULL
-      `,
-      await sql`
-        SELECT DISTINCT
-          t.id
-        FROM
-          public.tenants t
-          JOIN users.tenant_users tu ON t.id = tu.tenant_id
-        WHERE
-          tu.user_id = ${session.user.id}
-          AND tu.deleted IS NULL
-          AND t.deleted IS NULL
-      `,
-    ]);
+  const [responder, reporter] = ResponseLogger(req, EventEnum.ME);
+  try {
+    const [session] = await auth(req);
+    if (session && session?.user?.id) {
+      const sql = await queryByReq(req);
+      const [[user], [tenants]] = await Promise.all([
+        await sql`
+          SELECT
+            id,
+            email,
+            name,
+            family_name AS "familyName",
+            given_name AS "givenName",
+            picture,
+            created,
+            updated,
+            email_verified AS "emailVerified"
+          FROM
+            users.users
+          WHERE
+            id = ${session.user.id}
+            AND deleted IS NULL
+        `,
+        await sql`
+          SELECT DISTINCT
+            t.id
+          FROM
+            public.tenants t
+            JOIN users.tenant_users tu ON t.id = tu.tenant_id
+          WHERE
+            tu.user_id = ${session.user.id}
+            AND tu.deleted IS NULL
+            AND t.deleted IS NULL
+        `,
+      ]);
 
-    if (tenants && "name" in tenants) {
-      return handleFailure(responder, tenants as ErrorResultSet);
-    }
+      if (tenants && "name" in tenants) {
+        return handleFailure(responder, tenants as ErrorResultSet);
+      }
 
-    if (user && "name" in user) {
-      return handleFailure(responder, user as ErrorResultSet);
-    }
+      if (user && "name" in user) {
+        return handleFailure(responder, user as ErrorResultSet);
+      }
 
-    if (user && "rowCount" in user && user.rowCount === 1) {
-      return responder(
-        JSON.stringify({ ...user.rows[0], tenants: tenants?.rows ?? [] }),
-      );
-    } else {
-      return responder(null, { status: 404 });
+      if (user && "rowCount" in user && user.rowCount === 1) {
+        return responder(
+          JSON.stringify({ ...user.rows[0], tenants: tenants?.rows ?? [] }),
+        );
+      } else {
+        return responder(null, { status: 404 });
+      }
     }
+    return responder(null, { status: 401 });
+  } catch (e) {
+    reporter.error(e);
+    return responder(e instanceof Error ? e.message : "Internal server error", {
+      status: 500,
+    });
   }
-  return responder(null, { status: 401 });
 }
 
 /**
@@ -136,13 +143,66 @@ export async function GET(req: NextRequest) {
  *     - sessionCookie: []
  */
 export async function PUT(req: NextRequest) {
-  const responder = ResponseLogger(req, EventEnum.ME);
-  const [session] = await auth(req);
-  if (session && session?.user?.id) {
-    const sql = await queryByReq(req);
-    const [[userRows], [tenants]] = await Promise.all([
-      await sql`
-        SELECT
+  const [responder, reporter] = ResponseLogger(req, EventEnum.ME);
+  try {
+    const [session] = await auth(req);
+    if (session && session?.user?.id) {
+      const sql = await queryByReq(req);
+      const [[userRows], [tenants]] = await Promise.all([
+        await sql`
+          SELECT
+            id,
+            email,
+            name,
+            family_name AS "familyName",
+            given_name AS "givenName",
+            picture,
+            created,
+            updated,
+            email_verified AS "emailVerified"
+          FROM
+            users.users
+          WHERE
+            id = ${session.user.id}
+            AND deleted IS NULL
+        `,
+        await sql`
+          SELECT DISTINCT
+            t.id
+          FROM
+            public.tenants t
+            JOIN users.tenant_users tu ON t.id = tu.tenant_id
+          WHERE
+            tu.user_id = ${session.user.id}
+            AND tu.deleted IS NULL
+            AND t.deleted IS NULL
+        `,
+      ]);
+
+      if (tenants && "name" in tenants) {
+        return handleFailure(responder, tenants as ErrorResultSet);
+      }
+
+      if (userRows && "name" in userRows) {
+        return handleFailure(responder, userRows as ErrorResultSet);
+      }
+      const body = await req.json();
+      const user = userRows?.rows[0] as {
+        name: string;
+        familyName: string;
+        givenName: string;
+        picture: string;
+      };
+      const [updatedUser] = await sql`
+        UPDATE users.users
+        SET
+          name = ${body?.name ?? user.name},
+          family_name = ${body?.familyName ?? user.familyName},
+          given_name = ${body.givenName ?? user.givenName},
+          picture = ${body.picture ?? user.picture}
+        WHERE
+          id = ${session?.user?.id}
+        RETURNING
           id,
           email,
           name,
@@ -152,74 +212,28 @@ export async function PUT(req: NextRequest) {
           created,
           updated,
           email_verified AS "emailVerified"
-        FROM
-          users.users
-        WHERE
-          id = ${session.user.id}
-          AND deleted IS NULL
-      `,
-      await sql`
-        SELECT DISTINCT
-          t.id
-        FROM
-          public.tenants t
-          JOIN users.tenant_users tu ON t.id = tu.tenant_id
-        WHERE
-          tu.user_id = ${session.user.id}
-          AND tu.deleted IS NULL
-          AND t.deleted IS NULL
-      `,
-    ]);
+      `;
 
-    if (tenants && "name" in tenants) {
-      return handleFailure(responder, tenants as ErrorResultSet);
+      if (
+        updatedUser &&
+        "rowCount" in updatedUser &&
+        updatedUser.rowCount === 1
+      ) {
+        return responder(
+          JSON.stringify({
+            ...updatedUser.rows[0],
+            tenants: tenants?.rows ?? [],
+          }),
+        );
+      } else {
+        return responder(null, { status: 404 });
+      }
     }
-
-    if (userRows && "name" in userRows) {
-      return handleFailure(responder, userRows as ErrorResultSet);
-    }
-    const body = await req.json();
-    const user = userRows?.rows[0] as {
-      name: string;
-      familyName: string;
-      givenName: string;
-      picture: string;
-    };
-    const [updatedUser] = await sql`
-      UPDATE users.users
-      SET
-        name = ${body?.name ?? user.name},
-        family_name = ${body?.familyName ?? user.familyName},
-        given_name = ${body.givenName ?? user.givenName},
-        picture = ${body.picture ?? user.picture}
-      WHERE
-        id = ${session?.user?.id}
-      RETURNING
-        id,
-        email,
-        name,
-        family_name AS "familyName",
-        given_name AS "givenName",
-        picture,
-        created,
-        updated,
-        email_verified AS "emailVerified"
-    `;
-
-    if (
-      updatedUser &&
-      "rowCount" in updatedUser &&
-      updatedUser.rowCount === 1
-    ) {
-      return responder(
-        JSON.stringify({
-          ...updatedUser.rows[0],
-          tenants: tenants?.rows ?? [],
-        }),
-      );
-    } else {
-      return responder(null, { status: 404 });
-    }
+    return responder(null, { status: 401 });
+  } catch (e) {
+    reporter.error(e);
+    return responder(e instanceof Error ? e.message : "Internal server error", {
+      status: 500,
+    });
   }
-  return responder(null, { status: 401 });
 }

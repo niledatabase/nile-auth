@@ -24,7 +24,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { database: string; nextauth: string[] } },
 ) {
-  const responder = ResponseLogger(req, EventEnum.NILE_AUTH_GET);
+  const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_GET);
   try {
     const res = await NileAuth(req, { params });
 
@@ -71,6 +71,7 @@ export async function GET(
         stack: e.stack,
       });
     }
+    reporter.error();
     return responder(null, { status: 404 });
   }
 }
@@ -79,7 +80,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { database: string; nextauth: string[] } },
 ) {
-  const responder = ResponseLogger(req, EventEnum.NILE_AUTH_POST);
+  const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_POST);
   try {
     const body = req.clone();
 
@@ -127,6 +128,7 @@ export async function POST(
         stack: e.stack,
       });
     }
+    reporter.error();
     return responder(null, { status: 404 });
   }
 }
