@@ -58,7 +58,7 @@ describe("create users", () => {
       text = text.replace(/(\n\s+)/g, " ").trim();
       runCommands.push(text);
 
-      if (text.includes("SELECT 1")) {
+      if (text.includes("SELECT COUNT(*)")) {
         return [
           null,
           null,
@@ -85,7 +85,7 @@ describe("create users", () => {
     });
     expect(res.status).toEqual(404);
     expect(runCommands).toEqual([
-      ":SET LOCAL nile.tenant_id = 'tenantId'; :SET LOCAL nile.user_id = 'some-uuid'; SELECT 1 FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET LOCAL nile.tenant_id = 'tenantId'; :SET LOCAL nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL AND user_id = some-uuid",
     ]);
   });
   it("returns a created user", async () => {
@@ -109,7 +109,7 @@ describe("create users", () => {
       if (text.includes("auth.credentials")) {
         return [];
       }
-      if (text.includes("SELECT 1")) {
+      if (text.includes("SELECT COUNT(*)")) {
         return [
           null,
           null,
@@ -163,7 +163,7 @@ describe("create users", () => {
     });
     expect(res.status).toEqual(201);
     expect(runCommands).toEqual([
-      ":SET LOCAL nile.tenant_id = 'tenantId'; :SET LOCAL nile.user_id = 'some-uuid'; SELECT 1 FROM users.tenant_users WHERE deleted IS NULL",
+      ":SET LOCAL nile.tenant_id = 'tenantId'; :SET LOCAL nile.user_id = 'some-uuid'; SELECT COUNT(*) FROM users.tenant_users WHERE deleted IS NULL AND user_id = some-uuid",
       'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated, email_verified AS "emailVerified"',
       "INSERT INTO users.tenant_users (tenant_id, user_id, email) VALUES ( tenantId, 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, test@test.com )",
       "INSERT INTO auth.credentials (user_id, method, provider, payload) VALUES ( 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, 'EMAIL_PASSWORD', 'nile', jsonb_build_object( 'crypt', 'crypt-bf/8', 'hash', public.crypt ( password, public.gen_salt ('bf', 8) ), 'email', test@test.com::text ) )",

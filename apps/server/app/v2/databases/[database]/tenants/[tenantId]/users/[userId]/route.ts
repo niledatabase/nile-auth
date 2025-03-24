@@ -76,11 +76,12 @@ export async function PUT(
         ${addContext({ userId: session.user.id })};
 
         SELECT
-          1
+          COUNT(*)
         FROM
           users.tenant_users
         WHERE
           deleted IS NULL
+          AND user_id = ${session.user.id}
       `;
       if (
         principalInTenant &&
@@ -95,11 +96,12 @@ export async function PUT(
         ${addContext({ userId })};
 
         SELECT
-          1
+          COUNT(*)
         FROM
           users.tenant_users
         WHERE
           deleted IS NULL
+          AND user_id = ${session.user.id}
       `;
 
       if (
