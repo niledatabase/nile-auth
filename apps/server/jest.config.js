@@ -2,10 +2,14 @@
 // jest.config.js
 
 process.env.DISABLE_LOGGING = true;
-process.env.NEXTAUTH_SECRET = 'super_secret';
+process.env.NEXTAUTH_SECRET = "super_secret";
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  moduleDirectories: ['node_modules', '<rootDir>/'],
-  setupFiles: ['dotenv/config'],
+  preset: "ts-jest",
+  testEnvironment: "node",
+  moduleDirectories: ["node_modules", "<rootDir>/"],
+  setupFiles: ["dotenv/config"],
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "<rootDir>/test/integration.test.ts",
+  ],
 };

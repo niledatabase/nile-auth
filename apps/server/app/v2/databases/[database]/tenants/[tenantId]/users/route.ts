@@ -176,7 +176,7 @@ export async function POST(
         ${addContext({ userId: session.user.id })};
 
         SELECT
-          COUNT(*)
+          1
         FROM
           users.tenant_users
         WHERE

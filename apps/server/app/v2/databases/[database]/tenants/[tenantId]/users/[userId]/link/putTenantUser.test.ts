@@ -151,8 +151,8 @@ describe("mark a user deleted", () => {
 
     expect(runCommands).toEqual([
       "SELECT * FROM users.users WHERE id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1",
-      ":SET nile.tenant_id = 'whatever'; :SET nile.user_id = 'some-uuid'; SELECT * FROM users.tenant_users WHERE user_id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1;",
-      ":SET nile.tenant_id = 'whatever'; UPDATE users.tenant_users SET deleted = NULL WHERE user_id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1;",
+      ":SET LOCAL nile.tenant_id = 'whatever'; :SET LOCAL nile.user_id = 'some-uuid'; SELECT * FROM users.tenant_users WHERE user_id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1;",
+      ":SET LOCAL nile.tenant_id = 'whatever'; UPDATE users.tenant_users SET deleted = NULL WHERE user_id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1;",
     ]);
   });
 });

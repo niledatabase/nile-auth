@@ -149,11 +149,12 @@ export function sqlTemplate(dbInfo: DbCreds, responder?: ResponderFn) {
       }
     }
     if (usesContext) {
+      text = `BEGIN; ${text}`;
       // unset it for the next query. Later, make this smarter so a single request handles this well, or convert the `ClientManager` to use pools
       if (text[text.length - 1] !== ";") {
         text += ";";
       }
-      text += `RESET nile.user_id; RESET nile.tenant_id;`;
+      text += `COMMIT;`;
     }
     const json = {
       text,
@@ -174,7 +175,10 @@ export function sqlTemplate(dbInfo: DbCreds, responder?: ResponderFn) {
         rowMode: "none",
       });
       debug(text.replace(/(\n\s+)/g, " ").trim());
-      res = data;
+      // we could take out `set` as well (for context, but that is a larger change)
+      res = data.filter((d) => {
+        return d && "command" in d && d?.command.toLowerCase() !== "begin";
+      });
     }
 
     if (responder) {
