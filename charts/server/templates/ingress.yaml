@@ -2,15 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: nile-auth
+  {{- with .Values.ingress.annotations }}
   annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.certificateArn }}
-    alb.ingress.kubernetes.io/success-codes: "404"
-    alb.ingress.kubernetes.io/healthcheck-path: "/nothing_here"
-    alb.ingress.kubernetes.io/target-group-attributes: 'stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=300'
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  ingressClassName: alb
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
   defaultBackend:
     service:
       name: khnum

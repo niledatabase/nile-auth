@@ -10,9 +10,11 @@ resources:
     memory: 128Mi
 
 ingress:
+  className: ""
   host: ""
-  certificateArn: ""
   globalControlPlaneHost: ""
+  annotations:
+#    foo: bar
 
 nextauthSecret: ""
 niledbHostname: "khnum.nile.svc.cluster.local"
