@@ -1,4 +1,4 @@
-import { getToken } from "next-auth/jwt";
+import { getToken, JWT } from "next-auth/jwt";
 import { Logger } from "@nile-auth/logger";
 import { getSecureCookies } from "./next-auth/cookies";
 
@@ -17,14 +17,22 @@ export async function buildFetch(
 
   const castedReq = req as any;
 
-  const token = await getToken({
+  const token: JWT | null = await getToken<false>({
     req: castedReq,
     cookieName,
   });
 
   if (token) {
     debug("token taken from request", { token });
-    return [{ user: { id: String(token.id) } }];
+    const now = Math.floor(Date.now() / 1000);
+    if (
+      token &&
+      typeof token.exp === "number" &&
+      !isNaN(token.exp) &&
+      token.exp > now
+    ) {
+      return [{ user: { id: String(token.id) } }];
+    }
   }
   const url = new URL(req.url);
   const paths = url.pathname.split("/").slice(0, 4);

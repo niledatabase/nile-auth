@@ -10,6 +10,6 @@ module.exports = {
   setupFiles: ["dotenv/config"],
   testPathIgnorePatterns: [
     "/node_modules/",
-    "<rootDir>/test/integration.test.ts",
+    // "<rootDir>/test/integration.test.ts",
   ],
 };

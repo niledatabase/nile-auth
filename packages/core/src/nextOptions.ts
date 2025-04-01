@@ -8,6 +8,8 @@ import { defaultCookies, getSecureCookies } from "./next-auth/cookies";
 import { Provider as NextAuthProvider } from "next-auth/providers/index";
 const { warn } = Logger("[next-auth-options]");
 
+export const maxAge = 30 * 24 * 60 * 60; // Sessions expire after 30 days of being idle by default
+
 export async function nextOptions(
   req: Request,
   dbInfo: DbInfo,
@@ -35,6 +37,7 @@ export async function nextOptions(
   if (url.pathname.endsWith("/credentials")) {
     options.session = {
       strategy: "jwt",
+      maxAge,
     };
   }
   return [options];

@@ -6,9 +6,11 @@ import { randomString } from "@nile-auth/core/utils";
 import {
   generateEmailBody,
   sendEmail,
+  sendPasswordHasBeenReset,
   Template,
   Variable,
 } from "@nile-auth/core/providers/email";
+import { User } from "next-auth";
 import {
   createHash,
   getCookieParts,
@@ -19,6 +21,7 @@ import {
   getCookie,
   getPasswordResetCookie,
   getSecureCookies,
+  makeNewSessionJwt,
 } from "@nile-auth/core/cookies";
 
 /**
@@ -35,6 +38,11 @@ import {
  *       - name: database
  *         in: path
  *         required: true
+ *         schema:
+ *           type: string
+ *       - name: json
+ *         in: query
+ *         description: set to `true` if you want json back (useful for reset password for authenticated users)
  *         schema:
  *           type: string
  *     requestBody:
@@ -71,9 +79,15 @@ export async function POST(req: NextRequest) {
   );
   try {
     const useSecureCookies = getSecureCookies(req);
-    const callbackCookie = decodeURIComponent(
-      String(getCookie(getCallbackCookie(useSecureCookies).name, req.headers)),
-    ).replace(/\/$/, "");
+    let callbackCookie = null;
+    const useableCookie = getCookie(
+      getCallbackCookie(useSecureCookies).name,
+      req.headers,
+    );
+
+    if (useableCookie) {
+      callbackCookie = decodeURIComponent(useableCookie).replace(/\/$/, "");
+    }
 
     const callback = `${callbackCookie}/api/auth/reset-password`;
 
@@ -81,7 +95,7 @@ export async function POST(req: NextRequest) {
 
     const email = json.email;
     const callbackUrl = json.callbackUrl ?? callback;
-    const redirectURL = json.redirectURL ?? callbackCookie;
+    const redirectUrl = json.redirectUrl ?? callbackCookie;
 
     if (typeof email !== "string" || !email) {
       return responder("Email is required", { status: 400 });
@@ -159,7 +173,12 @@ export async function POST(req: NextRequest) {
       return templateError;
     }
     if (serverError) {
-      return serverError;
+      return responder(
+        JSON.stringify({ message: "Server is not configured to send emails." }),
+        {
+          status: 400,
+        },
+      );
     }
 
     const FOUR_HOURS_FROM_NOW = new Date(
@@ -184,11 +203,30 @@ export async function POST(req: NextRequest) {
         expires = EXCLUDED.expires
     `;
 
+    const requestUrl = new URL(req.url);
+    const sendJson = requestUrl.searchParams.get("json");
+
     const searchParams = new URLSearchParams({
       token: newToken,
-      identifier: identifier,
-      callbackURL: callbackUrl,
+      identifier,
+      callbackUrl,
     });
+
+    const canRedirect = redirectUrl.startsWith("http://") || callbackCookie;
+    if (!canRedirect) {
+      return responder(JSON.stringify({ message: "Invalid redirect" }), {
+        status: 400,
+      });
+    }
+    const url = `${!redirectUrl.startsWith("http://") ? `${callbackCookie}${redirectUrl}` : redirectUrl}?${searchParams.toString()}`;
+
+    console.log(url);
+    console.log(redirectUrl);
+    console.log(callbackCookie);
+    // if we are sending json, expect the client to do the right thing.
+    if (sendJson === "true") {
+      return responder(JSON.stringify({ url }), { status: 201 });
+    }
 
     const { from, body, subject } = await generateEmailBody({
       email: user?.email,
@@ -196,7 +234,7 @@ export async function POST(req: NextRequest) {
       template: template as Template,
       variables:
         variables && "rows" in variables ? (variables.rows as Variable[]) : [],
-      url: `${!redirectURL.startsWith("http://") ? `${callbackCookie}${redirectURL}` : redirectURL}?${searchParams.toString()}`,
+      url,
     });
 
     await sendEmail({
@@ -246,7 +284,11 @@ export async function POST(req: NextRequest) {
  *         required: true
  *         schema:
  *           type: string
- *
+ *       - name: redirect
+ *         in: query
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       "200":
  *         description: Token has been sent to the client via cookie, if possible
@@ -275,7 +317,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const token = searchParams.get("token");
     const identifier = searchParams.get("identifier");
-    const callbackURL = searchParams.get("callbackURL");
+    const callbackUrl = searchParams.get("callbackUrl");
+    const redirect = searchParams.get("redirect");
     const sql = await queryBySingle({ req, responder });
 
     const {
@@ -296,13 +339,16 @@ export async function GET(req: NextRequest) {
       return responder(null, {
         status: 307,
         headers: {
-          Location: String(callbackURL),
+          Location: String(callbackUrl),
         },
       });
     }
     if (new Date(verificationToken?.expires) > new Date()) {
-      if (callbackURL) {
-        const headers = new Headers({ location: callbackURL });
+      if (callbackUrl) {
+        const headers = new Headers();
+        if (redirect !== "false") {
+          headers.set("location", callbackUrl);
+        }
         const useSecureCookies = getSecureCookies(req);
         const resetCookie = getPasswordResetCookie(useSecureCookies);
         const secureToken = await createHash(
@@ -389,6 +435,7 @@ export async function PUT(req: NextRequest) {
     const resetCookie = getResetCookie(req);
     const [token, resetTokenHash] = getCookieParts(resetCookie) ?? [];
 
+    console.log(token, "dafdsa");
     if (!token) {
       return responder("Missing token", { status: 400 });
     }
@@ -435,7 +482,7 @@ export async function PUT(req: NextRequest) {
     const {
       rows: [user],
       error: userError,
-    } = await sql`
+    } = await sql<User>`
       SELECT
         *
       FROM
@@ -443,33 +490,51 @@ export async function PUT(req: NextRequest) {
       WHERE
         email = ${body.email}
     `;
-
     if (userError) {
       return userError;
     }
 
-    // you can now reset your password
-    await sql`
-      UPDATE auth.credentials
-      SET
-        payload = jsonb_build_object(
-          'crypt',
-          'crypt-bf/8',
-          'hash',
-          public.crypt (
-            ${body.password},
-            public.gen_salt ('bf', 8)
-          ),
-          'email',
-          ${body.email}::text
-        )
-      WHERE
-        user_id = ${user?.id}
-      RETURNING
-        *;
-    `;
+    if (user?.id) {
+      // you can now reset your password
+      // all the other passwords are bad
+      await sql`
+        DELETE FROM auth.credentials
+        WHERE
+          user_id = ${user.id}
+          AND method = 'EMAIL_PASSWORD'
+          AND provider = 'nile'
+      `;
 
-    return responder(null, { status: 204 });
+      await sql`
+        INSERT INTO
+          auth.credentials (user_id, method, payload)
+        VALUES
+          (
+            ${user.id},
+            'EMAIL_PASSWORD',
+            jsonb_build_object(
+              'crypt',
+              'crypt-bf/8',
+              'hash',
+              public.crypt (
+                ${body.password},
+                public.gen_salt ('bf', 8)
+              ),
+              'email',
+              ${body.email}::text
+            )
+          )
+        RETURNING
+          *;
+      `;
+      const headers = new Headers();
+      const cookie = await makeNewSessionJwt(req, user);
+      headers.append("set-cookie", cookie);
+      await sendPasswordHasBeenReset({ req, responder, user });
+      return responder(null, { status: 204, headers });
+    }
+
+    return responder("Unable to reset password", { status: 400 });
   } catch (e) {
     reporter.error(e);
     return responder(e instanceof Error ? e.message : "Internal server error", {

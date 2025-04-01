@@ -51,6 +51,22 @@ describe("api integration", () => {
     const update = {
       name: "updatedName",
     };
+
+    const res = await nile.api.auth.signOut({
+      callbackUrl: "http://localhost:3000",
+    });
+
+    // this is because we hard-code `process.env.NEXT_URL` in the test.
+    expect(res.url).toEqual("https://us-west-2.api.dev.thenile.dev");
+
+    const failedUpdatedFirstUser =
+      await nile.api.users.updateMe<Response>(update);
+    expect(failedUpdatedFirstUser.status).toEqual(401);
+
+    await nile.api.login(primaryUser);
+
+    // await nile.api.auth.resetPassword({ password: "12345" });
+
     const updatedFirstUser = await nile.api.users.updateMe(update);
 
     expect(updatedFirstUser).toMatchObject({
