@@ -15,6 +15,7 @@ export type NileUser = {
   email: string;
   name: string;
   picture: string;
+  email_verified: Date;
 };
 type NileAccount = {
   payload: {
@@ -52,7 +53,7 @@ export const convertUser = (row?: NileUser): null | AdapterUser => {
     name: row.name,
     image: row.picture,
     email: row.email,
-    emailVerified: null,
+    emailVerified: row.email_verified,
   };
 };
 
