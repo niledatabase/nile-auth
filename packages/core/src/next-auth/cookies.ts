@@ -1,4 +1,7 @@
-import { CookieOption, CookiesOptions } from "next-auth";
+import { CookieOption, CookiesOptions, User } from "next-auth";
+import { encode } from "next-auth/jwt";
+import { maxAge } from "../nextOptions";
+import { jwt } from "@nile-auth/core/utils";
 
 // this cookie does not go through next-auth
 export function getPasswordResetCookie(
@@ -45,21 +48,26 @@ export function getCsrfTokenCookie(useSecureCookies: boolean): CookieOption {
   };
 }
 
+export function getSessionTokenCookie(useSecureCookies: boolean): CookieOption {
+  const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+  return {
+    name: `${cookiePrefix}nile.session-token`,
+    options: {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: useSecureCookies,
+    },
+  };
+}
+
 export function defaultCookies(
   useSecureCookies: boolean,
 ): Partial<CookiesOptions> {
   const cookiePrefix = useSecureCookies ? "__Secure-" : "";
   return {
     // default cookie options
-    sessionToken: {
-      name: `${cookiePrefix}nile.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: useSecureCookies,
-      },
-    },
+    sessionToken: getSessionTokenCookie(useSecureCookies),
     callbackUrl: getCallbackCookie(useSecureCookies),
     csrfToken: getCsrfTokenCookie(useSecureCookies),
     pkceCodeVerifier: {
@@ -196,3 +204,50 @@ export const X_SECURE_COOKIES = "nile.secure_cookies";
 export const HEADER_TENANT_ID = "nile-tenant-id";
 export const HEADER_ORIGIN = "nile-origin";
 export const HEADER_SECURE_COOKIES = "nile-secure-cookies";
+
+export function findCallbackCookie(req: Request) {
+  const useSecureCookies = getSecureCookies(req);
+  return decodeURIComponent(
+    String(getCookie(getCallbackCookie(useSecureCookies).name, req.headers)),
+  ).replace(/\/$/, "");
+}
+
+export async function makeNewSessionJwt(req: Request, user: User) {
+  const useSecureCookies = getSecureCookies(req);
+  const sessionCookie = getSessionTokenCookie(useSecureCookies);
+  let newToken = "";
+
+  const defaultToken = {
+    name: user.name,
+    email: user.email,
+    picture: user.image,
+    sub: user.id?.toString(),
+  };
+  const token = await jwt({
+    token: defaultToken,
+    user: user as User,
+    account: null, // not oauth
+  });
+  if (process.env.NEXTAUTH_SECRET) {
+    // no salt for session cookie
+    newToken = await encode({
+      ...jwt,
+      token,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+  }
+
+  // Set cookie expiry date
+  const cookieExpires = new Date();
+  cookieExpires.setTime(cookieExpires.getTime() + maxAge * 1000);
+  // update the session token
+  const cookie = `${sessionCookie.name}=${newToken}; ${Object.keys(
+    sessionCookie.options,
+  )
+    .map((key: string) => {
+      return `${key}=${sessionCookie.options[key]}`;
+    })
+    .join("; ")}`;
+
+  return cookie;
+}

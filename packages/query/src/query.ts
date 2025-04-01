@@ -96,7 +96,7 @@ export async function queryByReq(req: Request, responder?: ResponderFn) {
     ...values: Primitive[]
   ) => Promise<T>;
 }
-type Params = {
+export type Params = {
   req?: Request;
   responder?: ResponderFn;
   creds?: DbCreds;
@@ -225,7 +225,9 @@ export function getRows<T = Record<string, any>>(
   return { rows, error };
 }
 
-export function getRow<T = Record<string, any>>(res: ResultSet | undefined) {
+export function getRow<T = Record<string, any>>(
+  res: ResultSet | undefined,
+): T | undefined {
   if (res && "rows" in res) {
     return res.rows[0] as T;
   }
