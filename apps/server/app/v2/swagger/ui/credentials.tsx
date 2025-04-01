@@ -1,4 +1,4 @@
-import { HEADER_ORIGIN } from "@nile-auth/core/cookies";
+import { HEADER_ORIGIN } from "@nile-auth/core/cookies/constants";
 
 export default function Credentials({
   form,
