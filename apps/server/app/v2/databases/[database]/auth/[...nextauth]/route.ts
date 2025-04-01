@@ -26,7 +26,7 @@ export async function GET(
 ) {
   const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_GET);
   try {
-    const res = await NileAuth(req, { params });
+    const res = await NileAuth(req, { params, responder });
 
     const details = {
       requestHeaders: serializeHeaders(req.headers),
@@ -37,11 +37,11 @@ export async function GET(
 
     if (res.status > 303) {
       try {
-        log.warn("Failure occurred in nextauth post", { details });
+        log.warn("Failure occurred in nextauth get", { details });
       } catch (e) {
         // what to do about this?
         console.warn(
-          `failure occurred in nextauth post ${JSON.stringify(details)}`,
+          `failure occurred in nextauth get ${JSON.stringify(details)}`,
         );
       }
     }
@@ -84,7 +84,7 @@ export async function POST(
   try {
     const body = req.clone();
 
-    const res = await NileAuth(req, { params });
+    const res = await NileAuth(req, { params, responder });
     const details = {
       requestHeaders: serializeHeaders(req.headers),
       responseHeaders: serializeHeaders(res.headers),

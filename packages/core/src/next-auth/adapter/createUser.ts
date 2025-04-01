@@ -6,9 +6,12 @@ import { formatTime, query } from "@nile-auth/query";
 
 export function createUser(pool: Pool) {
   return async function createUser(
-    user: Omit<AdapterUser, "id">,
+    user: Omit<AdapterUser, "id"> & {
+      given_name?: string;
+      family_name?: string;
+    },
   ): Promise<AdapterUser> {
-    const { name, email, image, emailVerified } = user;
+    const { given_name, family_name, name, email, image, emailVerified } = user;
     // it is possible that a user has already been "created", they just used a different provider.
     // Unless they have actually verified their email (which getUserByEmail handles), treat them as a "new" user for that provider, removing the old one
     const sql = query(pool);
@@ -26,12 +29,15 @@ export function createUser(pool: Pool) {
         UPDATE users.users
         SET
           name = ${name ? name : null},
-          picture = ${image ? image : null}
+          picture = ${image ? image : null},
+          given_name = ${given_name ? given_name : null},
+          family_name = ${family_name ? family_name : null},
         RETURNING
           id,
           name,
           email,
-          picture;
+          email_verified,
+          picture
       `;
 
       if (result && "rowCount" in result) {
@@ -44,6 +50,8 @@ export function createUser(pool: Pool) {
         INSERT INTO
           users.users (
             name,
+            family_name,
+            given_name,
             email,
             picture,
             email_verified,
@@ -53,6 +61,8 @@ export function createUser(pool: Pool) {
         VALUES
           (
             ${name ? name : null},
+            ${family_name ? family_name : null},
+            ${given_name ? given_name : null},
             ${email},
             ${image ? image : null},
             ${emailVerified ? emailVerified : null},
@@ -63,6 +73,7 @@ export function createUser(pool: Pool) {
           id,
           name,
           email,
+          email_verified,
           picture;
       `;
       if (result && "rowCount" in result) {

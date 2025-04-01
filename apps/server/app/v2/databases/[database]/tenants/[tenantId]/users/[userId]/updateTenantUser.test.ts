@@ -58,7 +58,6 @@ describe("update tenant user", () => {
       text = text.replace(/(\n\s+)/g, " ").trim();
       runCommands.push(text);
 
-      console.log(text);
       if (text.includes("SELECT COUNT(*)")) {
         return [
           null,

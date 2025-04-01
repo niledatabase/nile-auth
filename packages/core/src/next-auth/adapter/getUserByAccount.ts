@@ -27,7 +27,6 @@ export function getUserByAccount(pool: Pool) {
           AND op.deleted IS NULL
       `,
     ]);
-
     if (result && "rows" in result) {
       return convertUser(result.rows[0]);
     }

@@ -1401,7 +1401,7 @@ __metadata:
     "@nile-auth/logger": "npm:*"
     "@nile-auth/query": "npm:*"
     "@nile-auth/typescript-config": "workspace:*"
-    "@niledatabase/server": "npm:^4.0.0-alpha.8"
+    "@niledatabase/server": ../../../nile-js/packages/server
     "@openapitools/openapi-generator-cli": "npm:^2.9.0"
     "@panva/hkdf": "npm:^1.2.1"
     "@simplewebauthn/browser": "npm:^11.0.0"
@@ -1447,15 +1447,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@niledatabase/server@npm:^4.0.0-alpha.8":
-  version: 4.0.0-alpha.8
-  resolution: "@niledatabase/server@npm:4.0.0-alpha.8"
+"@niledatabase/server@file:../../../nile-js/packages/server::locator=%40nile-auth%2Fserver%40workspace%3Aapps%2Fserver":
+  version: 4.0.0-alpha.12
+  resolution: "@niledatabase/server@file:../../../nile-js/packages/server#../../../nile-js/packages/server::hash=eb3ff7&locator=%40nile-auth%2Fserver%40workspace%3Aapps%2Fserver"
   dependencies:
     dotenv: "npm:^16.4.5"
     h3: "npm:^1.15.1"
     jose: "npm:^4.15.4"
     pg: "npm:^8.11.3"
-  checksum: 10c0/c2d2dab8cffd40011aef123d2329d3bdf43d6732dba8a21148d171c48f576c594a4016e83777384a926d2273efc3faab7d5b3d50345c246c3afad97ce1845b4a
+  checksum: 10c0/986c59fe25a4bc7b7f1a1771e5032738ddcae8de1a0b343ae35e54470f7fde4fa6863b1c1b0981314c7c7c29a1b20ab6349dd21746c8440af4a2c863143ec692
   languageName: node
   linkType: hard
 
