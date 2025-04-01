@@ -3,6 +3,7 @@ import { Logger } from "@nile-auth/logger";
 import bcrypt from "bcryptjs";
 import CredentialProvider from "next-auth/providers/credentials";
 import { Pool } from "pg";
+
 import { ActionableErrors, CredentialRow, ProviderMethods } from "../../types";
 
 const { debug, warn, error } = Logger("[credential provider]");
@@ -81,6 +82,9 @@ export default function CredProvider({ pool }: Params) {
         credentials?.password,
         credPayload?.hash,
       );
+
+      // there is a case where you have SSO'd, but also want to use username/password.
+      // If you try to do that, your email address must be verified. op
 
       if (!isValid) {
         warn(`Bad password for ${user.email}`);

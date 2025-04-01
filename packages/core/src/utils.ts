@@ -1,4 +1,4 @@
-import { DefaultSession, Session } from "next-auth";
+import { Account, DefaultSession, Profile, Session, User } from "next-auth";
 import { AdapterUser } from "next-auth/adapters";
 import { Pool } from "pg";
 import { JWT } from "next-auth/jwt";
@@ -125,6 +125,24 @@ async function handleRefreshTokens(
   }
   return params.session;
 }
+export async function jwt(params: {
+  token: JWT;
+  user: User | AdapterUser;
+  account: Account | null;
+  profile?: Profile | undefined;
+  trigger?: "signIn" | "signUp" | "update";
+  isNewUser?: boolean;
+  session?: any;
+}): Promise<JWT> {
+  const { user, token } = params;
+  if (user) {
+    token.id = user.id;
+    token.name = user.name;
+    token.picture = user.image;
+  }
+  debug("JWT CALLBACK", { token, user });
+  return token;
+}
 
 export function buildOptions(cfg?: AuthOptions) {
   const dbInfo = getDbInfo(cfg);
@@ -134,15 +152,7 @@ export function buildOptions(cfg?: AuthOptions) {
     ...dbInfo,
   });
   config.callbacks = {
-    jwt: function jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.name = user.name;
-        token.picture = user.image;
-      }
-      debug("JWT CALLBACK", { token, user });
-      return token;
-    },
+    jwt,
     session: async function session(params) {
       const { session, token, user } = params;
       debug("session CALLBACK");
