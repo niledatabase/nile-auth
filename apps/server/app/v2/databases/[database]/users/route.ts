@@ -3,6 +3,7 @@ import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 import { ErrorResultSet } from "@nile-auth/query";
 import { handleFailure } from "@nile-auth/query/utils";
+import { ProviderMethods } from "@nile-auth/core";
 
 /**
  *
@@ -105,6 +106,37 @@ export async function POST(req: NextRequest) {
       return responder(null, { status: 404 });
     }
 
+    if (body.password) {
+      const [credentials] = await sql`
+        INSERT INTO
+          auth.credentials (user_id, method, provider, payload)
+        VALUES
+          (
+            ${user.id},
+            ${ProviderMethods.EMAIL_PASSWORD},
+            'nile',
+            jsonb_build_object(
+              'crypt',
+              'crypt-bf/8',
+              'hash',
+              public.crypt (
+                ${body.password},
+                public.gen_salt ('bf', 8)
+              ),
+              'email',
+              ${body.email}::text
+            )
+          )
+      `;
+      if (credentials && "name" in credentials) {
+        return handleFailure(
+          responder,
+          credentials as ErrorResultSet,
+          `Unable to save credentials.`,
+        );
+      }
+    }
+
     const sps = new URL(req.url).searchParams;
     let tenantId = sps.get("tenantId");
     const newTenantName = sps.get("newTenantName");
@@ -147,36 +179,6 @@ export async function POST(req: NextRequest) {
           responder,
           tenantUser as ErrorResultSet,
           `Unable to add user ${user.id} to tenant ${tenantId}`,
-        );
-      }
-    }
-    if (body.password) {
-      const [credentials] = await sql`
-        INSERT INTO
-          auth.credentials (user_id, method, provider, payload)
-        VALUES
-          (
-            ${user.id},
-            'EMAIL_PASSWORD',
-            'nile',
-            jsonb_build_object(
-              'crypt',
-              'crypt-bf/8',
-              'hash',
-              public.crypt (
-                ${body.password},
-                public.gen_salt ('bf', 8)
-              ),
-              'email',
-              ${body.email}::text
-            )
-          )
-      `;
-      if (credentials && "name" in credentials) {
-        return handleFailure(
-          responder,
-          credentials as ErrorResultSet,
-          `Unable to save credentials.`,
         );
       }
     }

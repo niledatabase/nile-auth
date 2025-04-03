@@ -157,16 +157,19 @@ export async function getProviders(
               clientId: row.client_id,
               clientSecret: row.client_secret,
               tenantId: row.config.tenantId,
+              allowDangerousEmailAccountLinking: true,
             });
           case ProviderNames.Discord:
             return DiscordProvider({
               clientId: row.client_id,
               clientSecret: row.client_secret,
+              allowDangerousEmailAccountLinking: true,
             });
           case ProviderNames.Github:
             return GithubProvider({
               clientId: row.client_id,
               clientSecret: row.client_secret,
+              allowDangerousEmailAccountLinking: true,
             });
           case ProviderNames.Google:
             return GoogleProvider({
@@ -175,11 +178,23 @@ export async function getProviders(
               authorization: {
                 params: { access_type: "offline", prompt: "consent" },
               },
+              allowDangerousEmailAccountLinking: true,
+              profile(profile) {
+                return {
+                  id: profile.sub,
+                  name: profile.name,
+                  email: profile.email,
+                  image: profile.picture,
+                  given_name: profile.given_name,
+                  family_name: profile.family_name,
+                };
+              },
             });
           case ProviderNames.HubSpot:
             return HubspotProvider({
               clientId: row.client_id,
               clientSecret: row.client_secret,
+              allowDangerousEmailAccountLinking: true,
             });
           case ProviderNames.LinkedIn:
             return LinkedInProvider({
@@ -192,6 +207,8 @@ export async function getProviders(
                 name: profile.name,
                 email: profile.email,
                 image: profile.picture,
+                given_name: profile.localizedFirstName,
+                family_name: profile.localizedLastName,
               }),
               wellKnown:
                 "https://www.linkedin.com/oauth/.well-known/openid-configuration",
@@ -200,17 +217,30 @@ export async function getProviders(
                   scope: "openid profile email",
                 },
               },
+              allowDangerousEmailAccountLinking: true,
             });
           case ProviderNames.Slack:
             return SlackProvider({
               clientId: row.client_id,
               clientSecret: row.client_secret,
+              allowDangerousEmailAccountLinking: true,
+              profile(profile) {
+                return {
+                  id: profile.sub,
+                  name: profile.name,
+                  email: profile.email,
+                  image: profile.picture,
+                  given_name: profile.given_name,
+                  family_name: profile.family_name,
+                };
+              },
             });
           case ProviderNames.X:
             return TwitterProvider({
               clientId: row.client_id,
               clientSecret: row.client_secret,
               version: "2.0",
+              allowDangerousEmailAccountLinking: true,
             });
         }
       });
