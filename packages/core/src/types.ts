@@ -35,3 +35,32 @@ export type Provider = {
   config: Record<string, string>;
   ttl_sec: boolean;
 };
+
+type OidcPayload = {
+  type: string;
+  scope: string;
+  expires_at: number;
+  token_type: string;
+  access_token: string;
+  refresh_token: string;
+};
+export type CredentialRow<T = OidcPayload> = {
+  id: string;
+  user_id: string;
+  created: Date;
+  updated: Date;
+  deleted: null | Date;
+  method: `${ProviderMethods}`;
+  provider: `${ProviderNames}` | "nile";
+  payload: T;
+  provider_account_id: string | null;
+};
+
+export enum ProviderMethods {
+  EMAIL_PASSWORD = "EMAIL_PASSWORD",
+  OIDC = "OIDC",
+}
+
+export enum ActionableErrors {
+  notVerified = "Not verified",
+}

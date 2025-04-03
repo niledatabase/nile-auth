@@ -37,11 +37,11 @@ export async function GET(
 
     if (res.status > 303) {
       try {
-        log.warn("Failure occurred in nextauth post", { details });
+        log.warn("Failure occurred in nextauth get", { details });
       } catch (e) {
         // what to do about this?
         console.warn(
-          `failure occurred in nextauth post ${JSON.stringify(details)}`,
+          `failure occurred in nextauth get ${JSON.stringify(details)}`,
         );
       }
     }

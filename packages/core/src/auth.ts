@@ -24,7 +24,15 @@ export async function buildFetch(
 
   if (token) {
     debug("token taken from request", { token });
-    return [{ user: { id: String(token.id) } }];
+    const now = Math.floor(Date.now() / 1000);
+    if (
+      token &&
+      typeof token.exp === "number" &&
+      !isNaN(token.exp) &&
+      token.exp > now
+    ) {
+      return [{ user: { id: String(token.id) } }];
+    }
   }
   const url = new URL(req.url);
   const paths = url.pathname.split("/").slice(0, 4);

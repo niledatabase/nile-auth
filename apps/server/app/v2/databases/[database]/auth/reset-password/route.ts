@@ -20,6 +20,7 @@ import {
   getPasswordResetCookie,
   getSecureCookies,
 } from "@nile-auth/core/cookies";
+import { ProviderMethods } from "@nile-auth/core";
 
 /**
  *
@@ -465,6 +466,7 @@ export async function PUT(req: NextRequest) {
         )
       WHERE
         user_id = ${user?.id}
+        AND method = ${ProviderMethods.EMAIL_PASSWORD}
       RETURNING
         *;
     `;

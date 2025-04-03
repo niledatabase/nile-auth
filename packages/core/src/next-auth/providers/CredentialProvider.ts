@@ -3,6 +3,7 @@ import { Logger } from "@nile-auth/logger";
 import bcrypt from "bcryptjs";
 import CredentialProvider from "next-auth/providers/credentials";
 import { Pool } from "pg";
+import { ActionableErrors, CredentialRow, ProviderMethods } from "../../types";
 
 const { debug, warn, error } = Logger("[credential provider]");
 
@@ -32,10 +33,51 @@ export default function CredProvider({ pool }: Params) {
       if (!user || !credentials?.password) {
         throw new Error("Login failed.");
       }
+      const sql = query(pool);
+      const creds = await sql`
+        SELECT
+          *
+        FROM
+          auth.credentials
+        WHERE
+          user_id = ${user.id}
+          AND deleted IS NULL
+      `;
+      const providers:
+        | null
+        | CredentialRow<{
+            hash: string;
+            crypt: string;
+            email: string;
+          }>[] = creds && "rows" in creds ? creds.rows : null;
 
+      const emailProvider = providers?.find(
+        (p) => p.method === ProviderMethods.EMAIL_PASSWORD,
+      );
+
+      const credPayload = emailProvider?.payload;
+      // if the user hash is missing, it means they have not enabled the credentials provider
+      if (!credPayload?.hash) {
+        // look to see if there are SSO providers, need to pass a better error back that user should be
+        if (providers && providers.length > 0) {
+          warn("user is not verified and attempted login with an SSO account");
+          throw new Error(ActionableErrors.notVerified);
+        }
+        throw new Error("Login failed.");
+      } else {
+        // if they have a hash and even 1 provider, they must be verified.
+        if (providers && providers.length > 1 && !user.email_verified) {
+          throw new Error(ActionableErrors.notVerified);
+        }
+      }
+
+      // order matters, check for creds first, as this could be  empty
+      if (user.email !== credPayload.email) {
+        throw new Error("Login failed.");
+      }
       const isValid = await verifyUserPassword(
         credentials?.password,
-        user.hash,
+        credPayload?.hash,
       );
 
       if (!isValid) {
@@ -48,10 +90,10 @@ export default function CredProvider({ pool }: Params) {
 }
 
 type CredPayload = {
-  hash: string;
-  email: string;
+  hash?: string;
+  email?: string;
 };
-type UserByEmail = CredPayload & { id: string };
+type UserByEmail = CredPayload & { id: string; email_verified: Date | null };
 export async function getUserByEmail(
   email: string | undefined,
   pool: Pool,
@@ -71,27 +113,25 @@ export async function getUserByEmail(
   `;
   if (user && "rowCount" in user && user.rowCount > 0) {
     const u = user.rows[0];
-    const creds = await sql`
-      SELECT
-        *
-      FROM
-        auth.credentials
-      WHERE
-        user_id = ${u.id}
-        AND deleted IS NULL
-    `;
-    if (creds && "rows" in creds) {
-      const { payload } = creds.rows[0] as unknown as { payload: CredPayload };
-      return { ...payload, id: user.rows[0].id } as UserByEmail;
-    }
+    return u;
   }
   return null;
 }
 
 export async function verifyUserPassword(
   enteredPassword: string,
-  storedPasswordHash: string,
+  storedPasswordHash: string | undefined,
 ) {
-  const isValid = await bcrypt.compare(enteredPassword, storedPasswordHash);
-  return isValid;
+  try {
+    if (!storedPasswordHash) {
+      return false;
+    }
+    const isValid = await bcrypt.compare(enteredPassword, storedPasswordHash);
+    return isValid;
+  } catch (e) {
+    if (e instanceof Error) {
+      error(e.message, { stack: e.stack });
+    }
+    return false;
+  }
 }

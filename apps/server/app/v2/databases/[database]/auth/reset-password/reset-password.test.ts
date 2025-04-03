@@ -190,7 +190,7 @@ describe("generatePasswordToken", () => {
       "SELECT * FROM auth.verification_tokens WHERE token = token",
       "DELETE FROM auth.verification_tokens WHERE identifier = email",
       "SELECT * FROM users.users WHERE email = email",
-      "UPDATE auth.credentials SET payload = jsonb_build_object( 'crypt', 'crypt-bf/8', 'hash', public.crypt ( undefined, public.gen_salt ('bf', 8) ), 'email', email::text ) WHERE user_id = undefined RETURNING *;",
+      "UPDATE auth.credentials SET payload = jsonb_build_object( 'crypt', 'crypt-bf/8', 'hash', public.crypt ( undefined, public.gen_salt ('bf', 8) ), 'email', email::text ) WHERE user_id = undefined AND method = EMAIL_PASSWORD RETURNING *;",
     ]);
   });
   it("does nothing on an expired token", async () => {
