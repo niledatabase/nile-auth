@@ -30,12 +30,10 @@ export function createUser(pool: Pool) {
         SET
           name = ${name ? name : ""},
           picture = ${image ? image : ""},
-          given_name = ${given_name
-          ? given_name
-          : (existing.rows[0].given_name ?? "")},
+          given_name = ${given_name ? given_name : existing.rows[0].given_name},
           family_name = ${family_name
           ? family_name
-          : (existing.rows[0].given_name ?? "")},
+          : existing.rows[0].given_name},
         RETURNING
           id,
           name,
@@ -64,12 +62,12 @@ export function createUser(pool: Pool) {
           )
         VALUES
           (
-            ${name ? name : ""},
-            ${family_name ? family_name : ""},
-            ${given_name ? given_name : ""},
+            ${name ? name : null},
+            ${family_name ? family_name : null},
+            ${given_name ? given_name : null},
             ${email},
-            ${image ? image : ""},
-            ${emailVerified ? emailVerified : ""},
+            ${image ? image : null},
+            ${emailVerified ? emailVerified : null},
             ${formatTime()},
             ${formatTime()}
           )
