@@ -28,10 +28,14 @@ export function createUser(pool: Pool) {
       const result = await sql`
         UPDATE users.users
         SET
-          name = ${name ? name : null},
-          picture = ${image ? image : null},
-          given_name = ${given_name ? given_name : null},
-          family_name = ${family_name ? family_name : null},
+          name = ${name ? name : ""},
+          picture = ${image ? image : ""},
+          given_name = ${given_name
+          ? given_name
+          : (existing.rows[0].given_name ?? "")},
+          family_name = ${family_name
+          ? family_name
+          : (existing.rows[0].given_name ?? "")},
         RETURNING
           id,
           name,
@@ -60,12 +64,12 @@ export function createUser(pool: Pool) {
           )
         VALUES
           (
-            ${name ? name : null},
-            ${family_name ? family_name : null},
-            ${given_name ? given_name : null},
+            ${name ? name : ""},
+            ${family_name ? family_name : ""},
+            ${given_name ? given_name : ""},
             ${email},
-            ${image ? image : null},
-            ${emailVerified ? emailVerified : null},
+            ${image ? image : ""},
+            ${emailVerified ? emailVerified : ""},
             ${formatTime()},
             ${formatTime()}
           )
