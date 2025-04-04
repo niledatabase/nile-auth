@@ -33,7 +33,7 @@ export function createUser(pool: Pool) {
           given_name = ${given_name ? given_name : existing.rows[0].given_name},
           family_name = ${family_name
           ? family_name
-          : existing.rows[0].given_name},
+          : existing.rows[0].given_name}
         RETURNING
           id,
           name,
