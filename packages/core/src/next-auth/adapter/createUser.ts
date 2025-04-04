@@ -34,6 +34,8 @@ export function createUser(pool: Pool) {
           family_name = ${family_name
           ? family_name
           : existing.rows[0].given_name}
+        WHERE
+          email = ${email}
         RETURNING
           id,
           name,
