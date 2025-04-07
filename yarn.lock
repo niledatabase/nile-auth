@@ -1418,6 +1418,7 @@ __metadata:
     "@types/react-dom": "npm:^18.2.19"
     "@types/swagger-ui-react": "npm:^4.18.3"
     "@types/uuid": "npm:^10"
+    "@types/validator": "npm:^13"
     bcryptjs: "npm:^2.4.3"
     cookie: "npm:^1.0.2"
     dotenv: "npm:^16.4.5"
@@ -1436,6 +1437,7 @@ __metadata:
     ts-jest: "npm:^29.1.5"
     typescript: "npm:^5.4.5"
     uuid: "npm:^10.0.0"
+    validator: "npm:^13.15.0"
     winston: "npm:^3.14.2"
     yaml: "npm:^2.7.0"
   languageName: unknown
@@ -2870,6 +2872,13 @@ __metadata:
   version: 10.0.0
   resolution: "@types/uuid@npm:10.0.0"
   checksum: 10c0/9a1404bf287164481cb9b97f6bb638f78f955be57c40c6513b7655160beb29df6f84c915aaf4089a1559c216557dc4d2f79b48d978742d3ae10b937420ddac60
+  languageName: node
+  linkType: hard
+
+"@types/validator@npm:^13":
+  version: 13.12.3
+  resolution: "@types/validator@npm:13.12.3"
+  checksum: 10c0/bc40191cd2e3c9b4b8d1f10611038ae3793462685366201940f2ef953b3229c02edcdb7c73cc5e6f762d5ecf1762a821afadaf97f71bd7fb06fae3aeb2729caf
   languageName: node
   linkType: hard
 
@@ -12392,6 +12401,13 @@ __metadata:
   version: 5.0.1
   resolution: "validate-npm-package-name@npm:5.0.1"
   checksum: 10c0/903e738f7387404bb72f7ac34e45d7010c877abd2803dc2d614612527927a40a6d024420033132e667b1bade94544b8a1f65c9431a4eb30d0ce0d80093cd1f74
+  languageName: node
+  linkType: hard
+
+"validator@npm:^13.15.0":
+  version: 13.15.0
+  resolution: "validator@npm:13.15.0"
+  checksum: 10c0/0f13fd7031ac575e8d7828431da8ef5859bac6a38ee65e1d7fdd367dbf1c3d94d95182aecc3183f7fa7a30ff4474bf864d1aff54707620227a2cdbfd36d894c2
   languageName: node
   linkType: hard
 

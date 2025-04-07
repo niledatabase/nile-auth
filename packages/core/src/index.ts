@@ -6,6 +6,7 @@ import { nextOptions } from "./nextOptions";
 import getDbInfo from "@nile-auth/query/getDbInfo";
 import { AuthOptions } from "./types";
 import { X_NILE_ORIGIN, X_NILE_TENANT_ID } from "./next-auth/cookies";
+import { isFQDN } from "validator";
 
 const { warn } = Logger("[nile-auth]");
 
@@ -16,6 +17,19 @@ type AppParams = {
     nextauth: string[];
   };
 };
+
+function isWellFormedUrl(input: string) {
+  try {
+    const url = new URL(input);
+    return (
+      url.protocol.startsWith("http") &&
+      isFQDN(url.hostname, { require_tld: false }) // allows localhost etc.
+    );
+  } catch (e) {
+    warn("Invalid nile origin url sent", { input });
+    return false;
+  }
+}
 
 export default async function NileAuth(
   req: Request,
@@ -29,6 +43,13 @@ export default async function NileAuth(
 
   const origin = req.headers.get(X_NILE_ORIGIN);
   const tenantId = req.headers.get(X_NILE_TENANT_ID);
+
+  const isGoodUrl = isWellFormedUrl(String(origin));
+  if (!isGoodUrl) {
+    return new Response("The request origin is not a well formed URL.", {
+      status: 400,
+    });
+  }
   process.env.NEXTAUTH_URL = String(origin);
 
   const [options] = await nextOptions(req, dbInfo, tenantId);
