@@ -4,7 +4,7 @@ import { Pool } from "pg";
 import { JWT } from "next-auth/jwt";
 
 import { Logger } from "@nile-auth/logger";
-import getDbInfo, { DbCreds } from "../../query/src/getDbInfo";
+import getDbInfo, { DbCreds } from "@nile-auth/query/getDbInfo";
 
 import Adapter from "./next-auth/adapter";
 import { AuthOptions, ProviderNames } from "./types";
