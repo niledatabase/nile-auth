@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import NileAuth from "@nile-auth/core";
 import { EventEnum, Logger, ResponseLogger } from "@nile-auth/logger";
-import { X_NILE_ORIGIN } from "@nile-auth/core/cookies";
+import { getOrigin, X_NILE_ORIGIN } from "@nile-auth/core/cookies";
 
 const log = Logger(EventEnum.NILE_AUTH);
 
@@ -37,7 +37,7 @@ export async function GET(
       responseHeaders: serializeHeaders(res.headers),
       body: sanitizeBody(await res.clone().text()),
       href: req.nextUrl?.href ?? req.url,
-      nileOrigin: String(req.headers.get(X_NILE_ORIGIN)),
+      nileOrigin: String(getOrigin(req)),
     };
 
     if (res.status > 303) {
@@ -95,7 +95,7 @@ export async function POST(
       responseHeaders: serializeHeaders(res.headers),
       body: sanitizeBody(await new Response(body.body).text()),
       href: req.nextUrl?.href ?? req.url,
-      nileOrigin: String(req.headers.get(X_NILE_ORIGIN)),
+      nileOrigin: String(getOrigin(req)),
     };
 
     if (res.status > 303) {

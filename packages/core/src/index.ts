@@ -5,7 +5,11 @@ import { buildOptions } from "./utils";
 import { nextOptions } from "./nextOptions";
 import getDbInfo from "@nile-auth/query/getDbInfo";
 import { AuthOptions } from "./types";
-import { X_NILE_ORIGIN, X_NILE_TENANT_ID } from "./next-auth/cookies";
+import {
+  getOrigin,
+  X_NILE_ORIGIN,
+  X_NILE_TENANT_ID,
+} from "./next-auth/cookies";
 import { isFQDN } from "validator";
 
 const { warn } = Logger("[nile-auth]");
@@ -41,7 +45,10 @@ export default async function NileAuth(
     return new Response("database info is missing", { status: 400 });
   }
 
-  const origin = req.headers.get(X_NILE_ORIGIN);
+  // the origin comes from a client because of the proxy
+  // if you make these calls server side, there is no origin, but we need
+  // to use the request url as the value to be sure we use cookies correctly
+  const origin = getOrigin(req);
   const tenantId = req.headers.get(X_NILE_TENANT_ID);
 
   const isGoodUrl = isWellFormedUrl(String(origin));
