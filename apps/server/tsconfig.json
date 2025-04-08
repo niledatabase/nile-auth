@@ -7,6 +7,7 @@
       }
     ]
   },
+  "rootDir": ".",
   "include": [
     "next-env.d.ts",
     "next.config.mjs",
