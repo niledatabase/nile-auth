@@ -1,8 +1,11 @@
 {
   "extends": "@nile-auth/typescript-config/react-library.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true,
+    "incremental": true,
   },
-  "include": ["src", "src/getDbInfo.ts"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }

@@ -112,10 +112,18 @@ export function getSecureCookies(req: Request): boolean {
     return secureCookies === "true";
   }
 
-  const origin = req.headers?.get(X_NILE_ORIGIN);
+  const origin = getOrigin(req);
   return Boolean(String(origin).startsWith("https://"));
 }
 
+export function getOrigin(req: Request) {
+  const origin = req.headers?.get(X_NILE_ORIGIN);
+  if (origin) {
+    return origin;
+  }
+
+  return new URL(req.url).origin;
+}
 export function getCookie(cookieKey: void | string, headers: void | Headers) {
   const cookie = headers?.get("cookie")?.split("; ");
   const _cookies: Record<string, string> = {};

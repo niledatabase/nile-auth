@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import NileAuth from "@nile-auth/core";
 import { EventEnum, Logger, ResponseLogger } from "@nile-auth/logger";
-import { X_NILE_ORIGIN } from "@nile-auth/core/cookies";
+import { getOrigin, X_NILE_ORIGIN } from "@nile-auth/core/cookies";
 
 const log = Logger(EventEnum.NILE_AUTH);
 
@@ -20,6 +20,10 @@ function serializeHeaders(headers: Headers) {
   return serializedHeaders;
 }
 
+const sanitizeBody = (body: string) => {
+  // may remove more than we want, but more is better than none
+  return body.replace(/password=([^&#]*)/, "password=***&");
+};
 export async function GET(
   req: NextRequest,
   { params }: { params: { database: string; nextauth: string[] } },
@@ -31,8 +35,9 @@ export async function GET(
     const details = {
       requestHeaders: serializeHeaders(req.headers),
       responseHeaders: serializeHeaders(res.headers),
-      body: await res.clone().text(),
-      nileOrigin: String(req.headers.get(X_NILE_ORIGIN)),
+      body: sanitizeBody(await res.clone().text()),
+      href: req.nextUrl?.href ?? req.url,
+      nileOrigin: String(getOrigin(req)),
     };
 
     if (res.status > 303) {
@@ -88,9 +93,9 @@ export async function POST(
     const details = {
       requestHeaders: serializeHeaders(req.headers),
       responseHeaders: serializeHeaders(res.headers),
-      body: await new Response(body.body).text(),
+      body: sanitizeBody(await new Response(body.body).text()),
       href: req.nextUrl?.href ?? req.url,
-      nileOrigin: String(req.headers.get(X_NILE_ORIGIN)),
+      nileOrigin: String(getOrigin(req)),
     };
 
     if (res.status > 303) {
