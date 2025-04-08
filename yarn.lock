@@ -1320,6 +1320,7 @@ __metadata:
     "@types/pg": "npm:^8"
     "@types/react": "npm:^18.2.61"
     "@types/react-dom": "npm:^18.2.19"
+    "@types/validator": "npm:^13"
     bcryptjs: "npm:^2.4.3"
     eslint: "npm:^8.57.0"
     jest: "npm:^29.7.0"
@@ -1328,6 +1329,7 @@ __metadata:
     pg: "npm:^8.13.1"
     ts-jest: "npm:^29.2.5"
     typescript: "npm:^5.6.3"
+    validator: "npm:^13.15.0"
   languageName: unknown
   linkType: soft
 
@@ -1427,7 +1429,6 @@ __metadata:
     "@types/react-dom": "npm:^18.2.19"
     "@types/swagger-ui-react": "npm:^4.18.3"
     "@types/uuid": "npm:^10"
-    "@types/validator": "npm:^13"
     bcryptjs: "npm:^2.4.3"
     cookie: "npm:^1.0.2"
     dotenv: "npm:^16.4.5"
@@ -1446,7 +1447,6 @@ __metadata:
     ts-jest: "npm:^29.1.5"
     typescript: "npm:^5.4.5"
     uuid: "npm:^10.0.0"
-    validator: "npm:^13.15.0"
     winston: "npm:^3.14.2"
     yaml: "npm:^2.7.0"
   languageName: unknown
