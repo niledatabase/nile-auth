@@ -20,6 +20,10 @@ function serializeHeaders(headers: Headers) {
   return serializedHeaders;
 }
 
+const sanitizeBody = (body: string) => {
+  // may remove more than we want, but more is better than none
+  return body.replace(/password=([^&#]*)/, "password=***&");
+};
 export async function GET(
   req: NextRequest,
   { params }: { params: { database: string; nextauth: string[] } },
@@ -31,7 +35,8 @@ export async function GET(
     const details = {
       requestHeaders: serializeHeaders(req.headers),
       responseHeaders: serializeHeaders(res.headers),
-      body: await res.clone().text(),
+      body: sanitizeBody(await res.clone().text()),
+      href: req.nextUrl?.href ?? req.url,
       nileOrigin: String(req.headers.get(X_NILE_ORIGIN)),
     };
 
@@ -88,7 +93,7 @@ export async function POST(
     const details = {
       requestHeaders: serializeHeaders(req.headers),
       responseHeaders: serializeHeaders(res.headers),
-      body: await new Response(body.body).text(),
+      body: sanitizeBody(await new Response(body.body).text()),
       href: req.nextUrl?.href ?? req.url,
       nileOrigin: String(req.headers.get(X_NILE_ORIGIN)),
     };
