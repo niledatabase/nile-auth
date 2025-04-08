@@ -1,8 +1,14 @@
 {
   "extends": "@nile-auth/typescript-config/react-library.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true,
+    "incremental": true,
   },
-  "include": ["src", "../query/src/query.ts", "jest.config.js", "../query/src/getDbInfo.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "jest.config.js"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../query" }
+  ]
 }
