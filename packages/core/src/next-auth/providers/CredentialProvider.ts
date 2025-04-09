@@ -63,6 +63,7 @@ export default function CredProvider({ pool }: Params) {
           warn("user is not verified and attempted login with an SSO account");
           throw new Error(ActionableErrors.notVerified);
         }
+        warn(`No password in db for ${user.email}`);
         throw new Error("Login failed.");
       } else {
         // if they have a hash and even 1 provider, they must be verified.
@@ -73,6 +74,7 @@ export default function CredProvider({ pool }: Params) {
 
       // order matters, check for creds first, as this could be  empty
       if (user.email !== credPayload.email) {
+        warn(`Bad email for ${user.email}`);
         throw new Error("Login failed.");
       }
       const isValid = await verifyUserPassword(
@@ -81,6 +83,7 @@ export default function CredProvider({ pool }: Params) {
       );
 
       if (!isValid) {
+        warn(`Bad password for ${user.email}`);
         throw new Error("Login failed.");
       }
 

@@ -2,7 +2,7 @@ import { report, Reporter } from "./report";
 import { tinybird } from "./tinybird";
 import { Logger } from "./logger";
 import { EventEnum } from "./types";
-const { setMetadata, info } = Logger("response logger");
+const { setMetadata, info, warn } = Logger("response logger");
 
 export type ResponderFn = (
   body: Response | BodyInit | null | undefined,
@@ -20,10 +20,7 @@ export function ResponseLogger(
     function Responder(body, init, detail): Response {
       const url = new URL(req.url);
       setMetadata({ event });
-      info(`[${req.method ?? "GET"}] ${url.pathname}`, {
-        ...detail,
-        init,
-      });
+      const logLine = `[${req.method ?? "GET"}] ${url.pathname}`;
       tinybird({ req, event, body, detail });
       reporter.end();
       const status = init?.status ?? 200;
@@ -31,9 +28,26 @@ export function ResponseLogger(
         reporter.response(status);
       }
       if (!(body instanceof Response)) {
+        if (typeof body === "string") {
+          warn(logLine, {
+            ...detail,
+            init,
+            body,
+          });
+        } else {
+          info(logLine, {
+            ...detail,
+            init,
+            body,
+          });
+        }
         return new Response(body, init);
       }
       reporter.ok();
+      info(logLine, {
+        ...detail,
+        init,
+      });
       return body;
     },
     reporter,
