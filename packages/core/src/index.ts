@@ -5,11 +5,7 @@ import { buildOptions } from "./utils";
 import { nextOptions } from "./nextOptions";
 import getDbInfo from "@nile-auth/query/getDbInfo";
 import { AuthOptions } from "./types";
-import {
-  getOrigin,
-  X_NILE_ORIGIN,
-  X_NILE_TENANT_ID,
-} from "./next-auth/cookies";
+import { getOrigin, X_NILE_TENANT_ID } from "./next-auth/cookies";
 import { isFQDN } from "validator";
 
 const { warn } = Logger("[nile-auth]");

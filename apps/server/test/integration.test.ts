@@ -10,6 +10,7 @@ const config: ServerConfig = {
   password: parsed?.NILEDB_PASSWORD,
   db: {
     host: url.hostname,
+    port: Number(url.port),
   },
   databaseName: url.pathname.slice(1),
 };
@@ -45,6 +46,9 @@ describe("api integration", () => {
     expect(user.id).toBeTruthy();
 
     await nile.api.login(primaryUser);
+
+    const me = await nile.api.users.me<{ email: string }>();
+    expect(me.email).toEqual(primaryUser.email);
 
     // Updating session user
     expect(user.name).toEqual(null);

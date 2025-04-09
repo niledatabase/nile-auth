@@ -98,8 +98,8 @@ export function Logger(endpoint: string): {
   setMetadata: (params: { event: EventEnum }) => void;
 } {
   return {
-    info: logger.info,
-    warn: logger.warn,
+    info: logger.info.bind(logger),
+    warn: logger.warn.bind(logger),
     debug: logger.debug,
     error: (...msg: any) => {
       const metadata = formatError(msg);
