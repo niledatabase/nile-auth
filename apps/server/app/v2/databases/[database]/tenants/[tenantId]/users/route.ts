@@ -244,32 +244,6 @@ export async function POST(
         );
       }
       const user = newUser.rows[0] as { id: string; email: string };
-      const [tenantUser] = await sql`
-        INSERT INTO
-          users.tenant_users (tenant_id, user_id, email)
-        VALUES
-          (
-            ${tenantId},
-            ${user.id},
-            ${body.email}
-          )
-      `;
-      if (!tenantUser) {
-        return handleFailure(
-          responder,
-          {} as ErrorResultSet,
-          `Unable to add user ${user.id} to tenant ${tenantId}.`,
-        );
-      }
-
-      if ("name" in tenantUser) {
-        return handleFailure(
-          responder,
-          tenantUser as ErrorResultSet,
-          `Unable to add user ${user.id} to tenant ${tenantId}`,
-        );
-      }
-
       if (body.password) {
         const [credentials] = await sql`
           INSERT INTO
@@ -300,6 +274,33 @@ export async function POST(
           );
         }
       }
+
+      const [tenantUser] = await sql`
+        INSERT INTO
+          users.tenant_users (tenant_id, user_id, email)
+        VALUES
+          (
+            ${tenantId},
+            ${user.id},
+            ${body.email}
+          )
+      `;
+      if (!tenantUser) {
+        return handleFailure(
+          responder,
+          {} as ErrorResultSet,
+          `Unable to add user ${user.id} to tenant ${tenantId}.`,
+        );
+      }
+
+      if ("name" in tenantUser) {
+        return handleFailure(
+          responder,
+          tenantUser as ErrorResultSet,
+          `Unable to add user ${user.id} to tenant ${tenantId}`,
+        );
+      }
+
       if ("rowCount" in newUser && newUser.rowCount === 1) {
         return responder(JSON.stringify(user), { status: 201 });
       } else {
