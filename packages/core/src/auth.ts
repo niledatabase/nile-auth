@@ -1,4 +1,4 @@
-import { getToken } from "next-auth/jwt";
+import { getToken, JWT } from "next-auth/jwt";
 import { Logger } from "@nile-auth/logger";
 import { getSecureCookies } from "./next-auth/cookies";
 
@@ -17,7 +17,7 @@ export async function buildFetch(
 
   const castedReq = req as any;
 
-  const token = await getToken({
+  const token: JWT | null = await getToken<false>({
     req: castedReq,
     cookieName,
   });

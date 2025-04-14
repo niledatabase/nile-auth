@@ -28,8 +28,8 @@ export function createUser(pool: Pool) {
       const result = await sql`
         UPDATE users.users
         SET
-          name = ${name ? name : ""},
-          picture = ${image ? image : ""},
+          name = ${name ? name : existing.rows[0].name},
+          picture = ${image ? image : existing.rows[0].picture},
           given_name = ${given_name ? given_name : existing.rows[0].given_name},
           family_name = ${family_name
           ? family_name
