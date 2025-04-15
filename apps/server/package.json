@@ -39,7 +39,7 @@
     "@nile-auth/eslint-config": "workspace:*",
     "@nile-auth/typescript-config": "workspace:*",
     "@niledatabase/server": "latest",
-    "@openapitools/openapi-generator-cli": "^2.9.0",
+    "@openapitools/openapi-generator-cli": "^2.18.4",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^16.0.0",
     "@types/bcryptjs": "^2",
