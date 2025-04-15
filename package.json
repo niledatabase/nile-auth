@@ -19,7 +19,8 @@
     "typescript": "^5.4.5"
   },
   "resolutions": {
-    "prismjs": "^1.30.0"
+    "prismjs": "^1.30.0",
+    "@nestjs/common": "^10.4.16"
   },
   "engines": {
     "node": ">=20"

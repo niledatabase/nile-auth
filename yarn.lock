@@ -1126,9 +1126,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/common@npm:10.4.15":
-  version: 10.4.15
-  resolution: "@nestjs/common@npm:10.4.15"
+"@nestjs/common@npm:^10.4.16":
+  version: 10.4.16
+  resolution: "@nestjs/common@npm:10.4.16"
   dependencies:
     iterare: "npm:1.2.1"
     tslib: "npm:2.8.1"
@@ -1136,6 +1136,7 @@ __metadata:
   peerDependencies:
     class-transformer: "*"
     class-validator: "*"
+    file-type: ^20.4.1
     reflect-metadata: ^0.1.12 || ^0.2.0
     rxjs: ^7.1.0
   peerDependenciesMeta:
@@ -1143,7 +1144,9 @@ __metadata:
       optional: true
     class-validator:
       optional: true
-  checksum: 10c0/9566993fd3f805df2be632f5a16ca90d81b0deeb50e1e7cde4a49d4948c0d8d7db58b42ded70f35061e95e91a40d2adcd9e19cb2771090114eb737f62d2ea4c6
+    file-type:
+      optional: true
+  checksum: 10c0/666872141a8e1565eeafd5c641e2dd3cb25fe38cb437a5956a8c4ef7f89cb07c7e0dfb42a4e1755f87dd20fe91232a119538ac2e9caf25aa849ae1d23719deb0
   languageName: node
   linkType: hard
 
@@ -1373,7 +1376,7 @@ __metadata:
     "@nile-auth/query": "npm:*"
     "@nile-auth/typescript-config": "workspace:*"
     "@niledatabase/server": "npm:latest"
-    "@openapitools/openapi-generator-cli": "npm:^2.9.0"
+    "@openapitools/openapi-generator-cli": "npm:^2.18.4"
     "@panva/hkdf": "npm:^1.2.1"
     "@simplewebauthn/browser": "npm:^11.0.0"
     "@simplewebauthn/server": "npm:^11.0.0"
@@ -1499,7 +1502,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openapitools/openapi-generator-cli@npm:^2.9.0":
+"@openapitools/openapi-generator-cli@npm:^2.18.4":
   version: 2.18.4
   resolution: "@openapitools/openapi-generator-cli@npm:2.18.4"
   dependencies:
