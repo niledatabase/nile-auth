@@ -18,6 +18,9 @@
     "turbo": "^2.2.3",
     "typescript": "^5.4.5"
   },
+  "resolutions": {
+    "prismjs": "^1.30.0"
+  },
   "engines": {
     "node": ">=20"
   },

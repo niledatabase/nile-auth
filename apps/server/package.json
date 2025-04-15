@@ -30,7 +30,7 @@
     "pg": "^8.13.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "swagger-ui-react": "^5.18.0",
+    "swagger-ui-react": "^5.21.0",
     "uuid": "^10.0.0",
     "winston": "^3.14.2",
     "yaml": "^2.7.0"
