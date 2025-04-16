@@ -83,17 +83,33 @@ export async function POST(req: NextRequest) {
       }
       const [user] = userRows.rows;
 
-      const [tenants] = await sql`
-        INSERT INTO
-          public.tenants (name)
-        VALUES
-          (${body.name})
-        RETURNING
-          *
-      `;
+      const [tenants] = body.id
+        ? await sql`
+            INSERT INTO
+              public.tenants (name, id)
+            VALUES
+              (
+                ${body.name},
+                ${body.id}
+              )
+            RETURNING
+              *
+          `
+        : await sql`
+            INSERT INTO
+              public.tenants (name)
+            VALUES
+              (${body.name})
+            RETURNING
+              *
+          `;
 
       if (!tenants || (tenants && "name" in tenants)) {
-        return handleFailure(responder, tenants as ErrorResultSet);
+        return handleFailure(
+          responder,
+          tenants as ErrorResultSet,
+          `tenant with id ${body.id}`,
+        );
       }
 
       const { id: tenantId } = tenants.rows[0] ?? {};

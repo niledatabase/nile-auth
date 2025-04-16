@@ -19,7 +19,11 @@ export function handleFailure(
     }
 
     if (pgData.code === ErrorCodes.unique_violation) {
-      return responder(`${msg} already exists.`, { status: 400 });
+      if (msg) {
+        return responder(`${msg} already exists.`, { status: 400 });
+      } else {
+        return responder((pgData as ErrorResultSet)?.message, { status: 400 });
+      }
     }
 
     if (pgData.code === ErrorCodes.invalid_param) {
