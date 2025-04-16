@@ -91,6 +91,9 @@
  *       properties:
  *         name:
  *           type: string
+ *         id:
+ *           type: string
+ *           description: The desired uuidv7 of the tenant
  *     Tenant:
  *       required:
  *         - id
