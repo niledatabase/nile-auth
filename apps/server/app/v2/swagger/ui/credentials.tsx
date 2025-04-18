@@ -1,4 +1,4 @@
-import { X_NILE_ORIGIN } from "@nile-auth/core/cookies";
+import { HEADER_ORIGIN } from "@nile-auth/core/cookies";
 
 export default function Credentials({
   form,
@@ -79,12 +79,12 @@ export default function Credentials({
             e.preventDefault();
             // doing this manually, @niledatabase/react handles this automatically
             await fetch(`/v2/databases/${form.database}/auth/csrf`, {
-              headers: { [X_NILE_ORIGIN]: window.location.origin },
+              headers: { [HEADER_ORIGIN]: window.location.origin },
             });
             await fetch(`/v2/databases/${form.database}/signup`, {
               method: "POST",
               body: JSON.stringify(form),
-              headers: { [X_NILE_ORIGIN]: window.location.origin },
+              headers: { [HEADER_ORIGIN]: window.location.origin },
             });
             window.location.search = new URLSearchParams(form).toString();
           }}
@@ -100,7 +100,7 @@ export default function Credentials({
             const token = await fetch(
               `/v2/databases/${form.database}/auth/csrf`,
               {
-                headers: { [X_NILE_ORIGIN]: window.location.origin },
+                headers: { [HEADER_ORIGIN]: window.location.origin },
               },
             );
 
@@ -117,7 +117,7 @@ export default function Credentials({
                   json: "true",
                 }),
                 headers: {
-                  [X_NILE_ORIGIN]: window.location.origin,
+                  [HEADER_ORIGIN]: window.location.origin,
                   "Content-Type": "application/x-www-form-urlencoded",
                 },
               },
