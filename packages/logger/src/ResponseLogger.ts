@@ -29,11 +29,23 @@ export function ResponseLogger(
       }
       if (!(body instanceof Response)) {
         if (typeof body === "string") {
-          warn(logLine, {
-            ...detail,
-            init,
-            body,
-          });
+          try {
+            // these are good cases, not just string errors being sent from some error
+            const json = JSON.parse(body);
+            if (json) {
+              info(logLine, {
+                ...detail,
+                init,
+              });
+            }
+          } catch {
+            warn(logLine, {
+              ...detail,
+              init,
+              body,
+              req,
+            });
+          }
         } else {
           info(logLine, {
             ...detail,

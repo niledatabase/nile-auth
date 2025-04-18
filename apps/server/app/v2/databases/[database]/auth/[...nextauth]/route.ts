@@ -71,6 +71,7 @@ export async function GET(
       log.error("Failure occurred in nextauth get", {
         error: e.message,
         stack: e.stack,
+        cause: e.cause,
       });
     }
     reporter.error();
@@ -84,7 +85,6 @@ export async function POST(
 ) {
   const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_POST);
   try {
-    const body = req.clone();
 
     const res = await NileAuth(req, { params });
     const details = await getDetails(req, res);
@@ -116,6 +116,7 @@ export async function POST(
       log.error("Failure occurred in nextauth post", {
         error: e.message,
         stack: e.stack,
+        cause: e.cause,
       });
     }
     reporter.error();

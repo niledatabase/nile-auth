@@ -106,7 +106,13 @@ export function defaultCookies(
 }
 
 export function getSecureCookies(req: Request): boolean {
-  const secureCookies = req.headers?.get("nile.secure_cookies");
+  const headerSecureCookies = req.headers?.get(HEADER_SECURE_COOKIES);
+
+  if (headerSecureCookies != null) {
+    return headerSecureCookies === "true";
+  }
+
+  const secureCookies = req.headers?.get(X_SECURE_COOKIES);
 
   if (secureCookies != null) {
     return secureCookies === "true";
@@ -117,6 +123,11 @@ export function getSecureCookies(req: Request): boolean {
 }
 
 export function getOrigin(req: Request) {
+  const realOrigin = req.headers?.get(HEADER_ORIGIN);
+  if (realOrigin) {
+    return realOrigin;
+  }
+
   const origin = req.headers?.get(X_NILE_ORIGIN);
   if (origin) {
     return origin;
@@ -145,31 +156,31 @@ export function getCookie(cookieKey: void | string, headers: void | Headers) {
 }
 
 export function setTenantCookie(req: Request, rows: Record<string, string>[]) {
-  if (!getCookie(X_NILE_TENANT_ID, req.headers)) {
+  if (!getCookie(HEADER_TENANT_ID, req.headers)) {
     const headers = new Headers();
     if (rows[0]?.id) {
       headers.set(
         "set-cookie",
-        `${X_NILE_TENANT_ID}=${rows[0].id}; Path=/; SameSite=lax`,
+        `${HEADER_TENANT_ID}=${rows[0].id}; Path=/; SameSite=lax`,
       );
     }
     return headers;
   } else {
     // help the UI if a user is removed or cookies got changed poorly, doesn't actually auth anything.
-    const cookie = getCookie(X_NILE_TENANT_ID, req.headers);
+    const cookie = getCookie(HEADER_TENANT_ID, req.headers);
     const exists = rows.some((r) => r.id === cookie);
     if (!exists) {
       const headers = new Headers();
       if (rows[0]?.id) {
         headers.set(
           "set-cookie",
-          `${X_NILE_TENANT_ID}=${rows[0].id}; Path=/; SameSite=lax`,
+          `${HEADER_TENANT_ID}=${rows[0].id}; Path=/; SameSite=lax`,
         );
       } else {
         // the user doesn't have a tenant for the tenants we know, so remove the cookie
         headers.set(
           "set-cookie",
-          `${X_NILE_TENANT_ID}=; Path=/; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+          `${HEADER_TENANT_ID}=; Path=/; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
         );
       }
       return headers;
@@ -177,5 +188,11 @@ export function setTenantCookie(req: Request, rows: Record<string, string>[]) {
   }
 }
 
-export const X_NILE_TENANT_ID = "nile.tenant_id";
+/** @deprecated Use HEADER_ORIGIN */
 export const X_NILE_ORIGIN = "nile.origin";
+/** @deprecated Use HEADER_SECURE_COOKIES */
+export const X_SECURE_COOKIES = "nile.secure_cookies";
+
+export const HEADER_TENANT_ID = "nile-tenant-id";
+export const HEADER_ORIGIN = "nile-origin";
+export const HEADER_SECURE_COOKIES = "nile-secure-cookies";
