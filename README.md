@@ -1,4 +1,14 @@
 ![Blog post cover (3) copy (1)](https://github.com/user-attachments/assets/3bb2c821-1caf-478c-868a-342e879050a2)
+<p align="center">
+  <a href="https://www.thenile.dev/docs/auth/introduction"><strong>Learn more ↗️</strong></a>
+  <br />
+  <br />
+  <a href="https://discord.gg/akRKRPKA">Discord</a>
+  🔵
+  <a href="https://thenile.dev/auth">Website</a>
+  🔵 
+  <a href="https://github.com/orgs/niledatabase/discussions">Issues</a>
+ </p>
 
 # Nile Auth
 
