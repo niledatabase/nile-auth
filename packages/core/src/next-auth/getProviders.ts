@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 
 import AzureProvider from "next-auth/providers/azure-ad";
 import CredentialProvider from "./providers/CredentialProvider";
@@ -33,7 +33,7 @@ type RelyingParty = {
   config: Record<string, string>;
 };
 
-const { info, debug, warn } = Logger("[providers]");
+const { info, debug, warn, error } = Logger("[providers]");
 
 export async function getProviders(
   params: DbCreds,
@@ -41,8 +41,16 @@ export async function getProviders(
 ): Promise<[null | NextAuthProvider[]]> {
   const pool = new Pool(params);
 
+  pool.on("connect", (client: PoolClient) => {
+    client.on("error", (e: Error) => {
+      error("Unexpected error on client", {
+        stack: e.stack,
+        message: e.message,
+      });
+    })
+  })
   pool.on("error", (e: Error) => {
-    info("Unexpected error on client", {
+    error("Unexpected error on client", {
       stack: e.stack,
       message: e.message,
     });
