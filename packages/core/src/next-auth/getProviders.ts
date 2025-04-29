@@ -102,6 +102,14 @@ export async function getProviders(
     });
   }
 
+  if (credentials && "rowCount" in credentials && credentials.rowCount === 0) {
+    warn("No relying parties are configured are configured.", {
+      providers,
+      credentials,
+      tenantProviders,
+    });
+  }
+
   if (
     providers &&
     "rows" in providers &&
