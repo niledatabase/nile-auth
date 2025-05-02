@@ -85,7 +85,6 @@ export async function POST(
 ) {
   const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_POST);
   try {
-
     const res = await NileAuth(req, { params });
     const details = await getDetails(req, res);
 
