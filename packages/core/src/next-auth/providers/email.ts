@@ -155,6 +155,7 @@ export async function sendEmail({
       url,
       to,
       from,
+      sender: from,
       html,
       subject,
     };
