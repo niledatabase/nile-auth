@@ -74,12 +74,15 @@ export async function PUT(
 
       const sql = await queryByReq(req);
 
-      const body = await req.json();
-      if (!body.name) {
+      let body;
+      try {
+        body = await req.json();
+      } catch {}
+      if (!body?.name) {
         return handleFailure(responder, undefined, "name is required");
       }
 
-      const [, , userInTenant] = await sql`
+      const [contextError, , userInTenant] = await sql`
         ${addContext({ tenantId })};
 
         ${addContext({ userId: session.user.id })};
@@ -93,6 +96,9 @@ export async function PUT(
           AND user_id = ${session.user.id}
       `;
 
+      if (contextError && "name" in contextError) {
+        return handleFailure(responder, contextError as ErrorResultSet);
+      }
       if (
         userInTenant &&
         "rowCount" in userInTenant &&
@@ -184,7 +190,7 @@ export async function DELETE(
       }
 
       const sql = await queryByReq(req);
-      const [, , userInTenant] = await sql`
+      const [contextError, , userInTenant] = await sql`
         ${addContext({ tenantId })};
 
         ${addContext({ userId: session.user.id })};
@@ -198,6 +204,9 @@ export async function DELETE(
           AND user_id = ${session.user.id}
       `;
 
+      if (contextError) {
+        return handleFailure(responder, contextError as ErrorResultSet);
+      }
       if (
         userInTenant &&
         "rowCount" in userInTenant &&
@@ -290,7 +299,7 @@ export async function GET(
 
       const sql = await queryByReq(req);
 
-      const [, , tenants] = await sql`
+      const [contextError, , tenants] = await sql`
         ${addContext({ tenantId })};
 
         ${addContext({ userId: session.user.id })};
@@ -302,6 +311,10 @@ export async function GET(
         WHERE
           id = ${params.tenantId};
       `;
+
+      if (contextError && "name" in contextError) {
+        return handleFailure(responder, contextError as ErrorResultSet);
+      }
 
       if (tenants && "name" in tenants) {
         return handleFailure(responder, tenants as ErrorResultSet);

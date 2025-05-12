@@ -99,7 +99,7 @@ describe("list tenant users", () => {
     });
     expect(res.status).toEqual(404);
     expect(runCommands).toEqual([
-      ':SET LOCAL nile.tenant_id = \'tenantId\'; SELECT id, u.email, name, family_name AS "familyName", given_name AS "givenName", picture, email_verified AS "emailVerified" FROM users.users u JOIN users.tenant_users tu ON u.id = tu.user_id WHERE u.deleted IS NULL AND tu.deleted IS NULL',
+      ':SET LOCAL nile.tenant_id = \'tenantId\'; :SET LOCAL nile.user_id = \'some-uuid\'; SELECT id, u.email, name, family_name AS "familyName", given_name AS "givenName", picture, email_verified AS "emailVerified" FROM users.users u JOIN users.tenant_users tu ON u.id = tu.user_id WHERE u.deleted IS NULL AND tu.deleted IS NULL',
     ]);
   });
   it("returns a list of tenant users", async () => {
@@ -131,6 +131,7 @@ describe("list tenant users", () => {
       if (text.includes("users.users")) {
         return [
           null,
+          null,
           {
             rows: users,
             rowCount: 2,
@@ -145,9 +146,10 @@ describe("list tenant users", () => {
     const res = await GET(req as NextRequest, {
       params: { tenantId: "tenantId" },
     });
+    console.log(res);
     const json = await new Response(res.body).json();
     expect(runCommands).toEqual([
-      ':SET LOCAL nile.tenant_id = \'tenantId\'; SELECT id, u.email, name, family_name AS "familyName", given_name AS "givenName", picture, email_verified AS "emailVerified" FROM users.users u JOIN users.tenant_users tu ON u.id = tu.user_id WHERE u.deleted IS NULL AND tu.deleted IS NULL',
+      ':SET LOCAL nile.tenant_id = \'tenantId\'; :SET LOCAL nile.user_id = \'some-uuid\'; SELECT id, u.email, name, family_name AS "familyName", given_name AS "givenName", picture, email_verified AS "emailVerified" FROM users.users u JOIN users.tenant_users tu ON u.id = tu.user_id WHERE u.deleted IS NULL AND tu.deleted IS NULL',
     ]);
     expect(json).toEqual(users);
   });

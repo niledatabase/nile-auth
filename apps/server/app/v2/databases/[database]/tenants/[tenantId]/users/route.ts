@@ -66,8 +66,10 @@ export async function GET(
       }
       const sql = await queryByReq(req);
 
-      const [, users] = await sql`
+      const [contextError, , users] = await sql`
         ${addContext({ tenantId })};
+
+        ${addContext({ userId: session.user.id })};
 
         SELECT
           id,
@@ -85,9 +87,13 @@ export async function GET(
           AND tu.deleted IS NULL
       `;
 
+      console.log(contextError, users);
+      if (contextError && "name" in contextError) {
+        return handleFailure(responder, contextError as ErrorResultSet);
+      }
+
       if (users && "name" in users) {
-        const fail = handleFailure(responder, users as ErrorResultSet);
-        return fail;
+        return handleFailure(responder, users as ErrorResultSet);
       }
 
       if (users && "rowCount" in users) {
@@ -170,7 +176,7 @@ export async function POST(
         return handleFailure(responder, undefined, "tenantId is required.");
       }
       const sql = await queryByReq(req);
-      const [, , userInTenant] = await sql`
+      const [contextError, , userInTenant] = await sql`
         ${addContext({ tenantId })};
 
         ${addContext({ userId: session.user.id })};
@@ -183,6 +189,11 @@ export async function POST(
           deleted IS NULL
           AND user_id = ${session.user.id}
       `;
+
+      if (contextError && "name" in contextError) {
+        return handleFailure(responder, contextError as ErrorResultSet);
+      }
+
       if (
         userInTenant &&
         "rowCount" in userInTenant &&
@@ -190,6 +201,7 @@ export async function POST(
       ) {
         return responder(null, { status: 404 });
       }
+
       let body;
       try {
         body = await req.json();

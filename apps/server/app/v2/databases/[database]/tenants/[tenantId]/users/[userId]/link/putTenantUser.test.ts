@@ -93,7 +93,7 @@ describe("mark a user deleted", () => {
       },
     });
     expect(runCommands).toEqual([
-      "SELECT * FROM users.users WHERE id = 019073f4-75a6-72b9-a379-5ed38ca0d01a",
+      "SELECT * FROM users.users WHERE id = 019073f4-75a6-72b9-a379-5ed38ca0d01a AND deleted IS NULL",
     ]);
   });
   it("deletes a user", async () => {
@@ -147,12 +147,10 @@ describe("mark a user deleted", () => {
         tenantId: "whatever",
       },
     });
-    expect(runCommands.length).toEqual(3);
 
     expect(runCommands).toEqual([
-      "SELECT * FROM users.users WHERE id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1",
-      ":SET LOCAL nile.tenant_id = 'whatever'; :SET LOCAL nile.user_id = 'some-uuid'; SELECT * FROM users.tenant_users WHERE user_id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1;",
-      ":SET LOCAL nile.tenant_id = 'whatever'; UPDATE users.tenant_users SET deleted = NULL WHERE user_id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1;",
+      "SELECT * FROM users.users WHERE id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1 AND deleted IS NULL",
+      ":SET LOCAL nile.tenant_id = 'whatever'; :SET LOCAL nile.user_id = 'some-uuid'; INSERT INTO users.tenant_users (tenant_id, user_id, email) VALUES ( whatever, 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, no@no.com )",
     ]);
   });
 });

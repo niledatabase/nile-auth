@@ -7,6 +7,7 @@ enum ErrorCodes {
   syntax_error = "42601",
   invalid_param = "22023",
   ECONNREFUSED = "ECONNREFUSED",
+  invalid_authorization_specification = "28000",
 }
 export function handleFailure(
   responder: ResponderFn,
@@ -14,6 +15,10 @@ export function handleFailure(
   msg?: string,
 ) {
   if (pgData && "code" in pgData) {
+    if (pgData.code === ErrorCodes.invalid_authorization_specification) {
+      return responder(`Unauthorized.`, { status: 401 });
+    }
+
     if (pgData.code === ErrorCodes.ECONNREFUSED) {
       return responder(`Connection refused to the database.`, { status: 400 });
     }

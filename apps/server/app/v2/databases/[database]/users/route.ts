@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
       RETURNING
         id,
         email,
+        email_verified AS "emailVerified",
         name,
         family_name AS "familyName",
         given_name AS "givenName",

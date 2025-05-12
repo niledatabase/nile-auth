@@ -80,106 +80,63 @@ export async function PUT(
           users.users
         WHERE
           id = ${userId}
+          AND deleted IS NULL
       `;
       if (
         !newUser ||
         (newUser && "rowCount" in newUser && newUser.rowCount === 0)
       ) {
-        return responder(null, { status: 404 });
+        return responder("User does not exist or has been deleted.", {
+          status: 400,
+        });
       }
       if ("name" in newUser) {
         return handleFailure(responder, newUser as ErrorResultSet);
       }
       const user = newUser.rows[0] as { id: string; email: string };
-      // would be good to consolidate these into a single `client` at some point
-      const [, , exists] = await sql`
+      const [contextError, , tenantUser] = await sql`
         ${addContext({ tenantId })};
 
         ${addContext({ userId: session.user.id })};
 
-        SELECT
-          *
-        FROM
-          users.tenant_users
-        WHERE
-          user_id = ${user.id};
+        INSERT INTO
+          users.tenant_users (tenant_id, user_id, email)
+        VALUES
+          (
+            ${tenantId},
+            ${user.id},
+            ${user.email}
+          )
       `;
 
-      if (exists && "name" in exists) {
-        return handleFailure(responder, exists as ErrorResultSet);
+      if (contextError && "name" in contextError) {
+        return handleFailure(responder, contextError as ErrorResultSet);
       }
 
-      if (exists && "rowCount" in exists && exists.rowCount > 0) {
-        const [, tenantUser] = await sql`
-          ${addContext({ tenantId })};
+      if (!tenantUser) {
+        return handleFailure(
+          responder,
+          {} as ErrorResultSet,
+          `Unable to add user ${user.id} to tenant ${tenantId}. Link`,
+        );
+      }
 
-          UPDATE users.tenant_users
-          SET
-            deleted = NULL
-          WHERE
-            user_id = ${user.id};
-        `;
-        if (!tenantUser) {
-          return handleFailure(
-            responder,
-            {} as ErrorResultSet,
-            `Unable to add user ${user.id} to tenant ${tenantId}.`,
-          );
-        }
+      if ("name" in tenantUser) {
+        return handleFailure(
+          responder,
+          tenantUser as ErrorResultSet,
+          `Unable to add user ${user.id} to tenant ${tenantId}. Link`,
+        );
+      }
 
-        if ("name" in tenantUser) {
-          return handleFailure(
-            responder,
-            tenantUser as ErrorResultSet,
-            `Unable to add user ${user.id} to tenant ${tenantId}`,
-          );
-        }
-
-        if ("rowCount" in newUser && newUser.rowCount === 1) {
-          return new Response(JSON.stringify(user), { status: 201 });
-        } else {
-          return handleFailure(
-            responder,
-            {} as ErrorResultSet,
-            "Unable to add user to tenant.",
-          );
-        }
+      if ("rowCount" in newUser && newUser.rowCount === 1) {
+        return responder(JSON.stringify(user), { status: 201 });
       } else {
-        const [tenantUser] = await sql`
-          INSERT INTO
-            users.tenant_users (tenant_id, user_id, email)
-          VALUES
-            (
-              ${tenantId},
-              ${user.id},
-              ${user.email}
-            )
-        `;
-        if (!tenantUser) {
-          return handleFailure(
-            responder,
-            {} as ErrorResultSet,
-            `Unable to add user ${user.id} to tenant ${tenantId}.`,
-          );
-        }
-
-        if ("name" in tenantUser) {
-          return handleFailure(
-            responder,
-            tenantUser as ErrorResultSet,
-            `Unable to add user ${user.id} to tenant ${tenantId}`,
-          );
-        }
-
-        if ("rowCount" in newUser && newUser.rowCount === 1) {
-          return responder(JSON.stringify(user), { status: 201 });
-        } else {
-          return handleFailure(
-            responder,
-            {} as ErrorResultSet,
-            "Unable to create user.",
-          );
-        }
+        return handleFailure(
+          responder,
+          {} as ErrorResultSet,
+          "Unable to create user.",
+        );
       }
     }
 
@@ -273,9 +230,7 @@ export async function DELETE(
 
         ${addContext({ userId })};
 
-        UPDATE users.tenant_users
-        SET
-          deleted = ${formatTime()}
+        DELETE FROM users.tenant_users
         WHERE
           user_id = ${userId}
       `;
