@@ -89,7 +89,10 @@ export async function GET(req: NextRequest) {
 
       if (user && "rowCount" in user && user.rowCount === 1) {
         return responder(
-          JSON.stringify({ ...user.rows[0], tenants: tenants?.rows ?? [] }),
+          JSON.stringify({
+            ...user.rows[0],
+            tenants: tenants?.rows.map(({ id }: { id: string }) => id) ?? [],
+          }),
         );
       } else {
         return responder(null, { status: 404 });
@@ -143,7 +146,7 @@ export async function GET(req: NextRequest) {
  *     - sessionCookie: []
  */
 export async function PUT(req: NextRequest) {
-  const [responder, reporter] = ResponseLogger(req, EventEnum.ME);
+  const [responder, reporter] = ResponseLogger(req, EventEnum.ME_UPDATE);
   try {
     const [session] = await auth(req);
     if (session && session?.user?.id) {
@@ -228,6 +231,64 @@ export async function PUT(req: NextRequest) {
       } else {
         return responder(null, { status: 404 });
       }
+    }
+    return responder(null, { status: 401 });
+  } catch (e) {
+    reporter.error(e);
+    return responder(e instanceof Error ? e.message : "Internal server error", {
+      status: 500,
+    });
+  }
+}
+
+/**
+ * @swagger
+ * /v2/databases/{database}/me:
+ *   delete:
+ *     tags:
+ *     - tenants
+ *     summary: delete the current user
+ *     description: sets the current user for delete.
+ *     operationId: deleteMe
+ *     parameters:
+ *       - name: database
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       "204":
+ *         description: user has been deleted
+ *         content: {}
+ *       "400":
+ *         description: API/Database failures
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       "404":
+ *         description: Not found
+ *         content: {}
+ *       "401":
+ *         description: Unauthorized
+ *         content: {}
+ *     security:
+ *     - sessionCookie: []
+ */
+export async function DELETE(req: NextRequest) {
+  const [responder, reporter] = ResponseLogger(req, EventEnum.ME_DELETE);
+  try {
+    const [session] = await auth(req);
+    if (session && session?.user?.id) {
+      const sql = await queryByReq(req);
+      await sql`
+        UPDATE users.users
+        SET
+          deleted = CURRENT_TIMESTAMP
+        WHERE
+          id = ${session.user.id}
+      `;
+      return responder(null, { status: 204 });
     }
     return responder(null, { status: 401 });
   } catch (e) {

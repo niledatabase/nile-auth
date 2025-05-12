@@ -70,7 +70,7 @@ export async function PUT(
         return handleFailure(responder, undefined, "tenantId is required.");
       }
       const sql = await queryByReq(req);
-      const [, , principalInTenant] = await sql`
+      const [contextError, , principalInTenant] = await sql`
         ${addContext({ tenantId })};
 
         ${addContext({ userId: session.user.id })};
@@ -83,6 +83,10 @@ export async function PUT(
           deleted IS NULL
           AND user_id = ${session.user.id}
       `;
+      if (contextError && "name" in contextError) {
+        return handleFailure(responder, contextError as ErrorResultSet);
+      }
+
       if (
         principalInTenant &&
         "rowCount" in principalInTenant &&
@@ -90,7 +94,7 @@ export async function PUT(
       ) {
         return responder(null, { status: 404 });
       }
-      const [, , userInTenant] = await sql`
+      const [contextUserError, , userInTenant] = await sql`
         ${addContext({ tenantId })};
 
         ${addContext({ userId })};
@@ -104,6 +108,9 @@ export async function PUT(
           AND user_id = ${session.user.id}
       `;
 
+      if (contextUserError && "name" in contextUserError) {
+        return handleFailure(responder, contextUserError as ErrorResultSet);
+      }
       if (
         userInTenant &&
         "rowCount" in userInTenant &&

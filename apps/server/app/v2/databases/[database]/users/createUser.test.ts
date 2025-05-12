@@ -115,7 +115,7 @@ describe("list users", () => {
     await POST(req as NextRequest);
 
     expect(runCommands).toEqual([
-      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
+      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, email_verified AS "emailVerified", name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
     ]);
   });
   it("supports newTenantName", async () => {
@@ -148,7 +148,7 @@ describe("list users", () => {
       updated: "2024-07-15T23:10:09.945Z",
     });
     expect(runCommands).toEqual([
-      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
+      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, email_verified AS "emailVerified", name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
       "INSERT INTO tenants (name) VALUES (foo) RETURNING id;",
       "INSERT INTO users.tenant_users (tenant_id, user_id, email) VALUES ( 019073f4-75a6-72b9-a379-5ed38ca0d01a, 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, test@test.com )",
     ]);
@@ -183,7 +183,7 @@ describe("list users", () => {
       updated: "2024-07-15T23:10:09.945Z",
     });
     expect(runCommands).toEqual([
-      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
+      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, email_verified AS "emailVerified", name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
       "INSERT INTO users.tenant_users (tenant_id, user_id, email) VALUES ( 12345, 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, test@test.com )",
     ]);
   });
