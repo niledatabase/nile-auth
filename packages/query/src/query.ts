@@ -175,10 +175,14 @@ export function sqlTemplate(dbInfo: DbCreds, responder?: ResponderFn) {
         rowMode: "none",
       });
       debug(text.replace(/(\n\s+)/g, " ").trim());
-      // we could take out `set` as well (for context, but that is a larger change)
       res = data.filter((d) => {
         if (d && "command" in d) {
-          return d && "command" in d && d?.command.toLowerCase() !== "begin";
+          return (
+            d &&
+            "command" in d &&
+            d?.command.toLowerCase() !== "begin" &&
+            d?.command.toLowerCase() !== "set"
+          );
         }
         return true;
       });

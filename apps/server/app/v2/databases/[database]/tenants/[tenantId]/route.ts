@@ -205,7 +205,7 @@ export async function DELETE(
       `;
 
       if (contextError) {
-        return handleFailure(responder, contextError as ErrorResultSet);
+        handleFailure(responder, contextError as ErrorResultSet);
       }
       if (
         userInTenant &&
