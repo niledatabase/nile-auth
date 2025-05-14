@@ -126,7 +126,7 @@ export function sqlTemplate(dbInfo: DbCreds, responder?: ResponderFn) {
   return async function sqlTemplate<T = ResultSet>(
     strings: TemplateStringsArray,
     ...values: Primitive[]
-  ): Promise<ResultSet[] | { rows: T[]; error?: Response }> {
+  ): Promise<Array<undefined | ResultSet> | { rows: T[]; error?: Response }> {
     let text = strings[0] ?? "";
 
     const [initial] = values;
@@ -188,7 +188,13 @@ export function sqlTemplate(dbInfo: DbCreds, responder?: ResponderFn) {
       const [single] = res;
       return getRows<T>(single, responder);
     } else {
-      return res;
+      return res.map((r) => {
+        // the `set` worked in the context, so remove it. We want to return it if it failed, for errors
+        if (r && "command" in r && r.command.toLowerCase() === "set") {
+          return undefined;
+        }
+        return r;
+      });
     }
   };
 }
