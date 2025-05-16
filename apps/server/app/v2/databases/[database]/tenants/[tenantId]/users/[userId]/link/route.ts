@@ -205,7 +205,7 @@ export async function DELETE(
       const { tenantId, userId } = params;
       const sql = await queryByReq(req);
 
-      const [, , principalInTenant] = await sql`
+      const [contextError, , principalInTenant] = await sql`
         ${addContext({ tenantId })};
 
         ${addContext({ userId: session.user.id })};
@@ -218,6 +218,11 @@ export async function DELETE(
           deleted IS NULL
           AND user_id = ${session.user.id}
       `;
+
+      if (contextError) {
+        return handleFailure(responder, contextError as ErrorResultSet);
+      }
+
       if (
         principalInTenant &&
         "rowCount" in principalInTenant &&
@@ -225,7 +230,7 @@ export async function DELETE(
       ) {
         return responder(null, { status: 404 });
       }
-      const [, , users] = await sql`
+      const [deleteContextFailure, , users] = await sql`
         ${addContext({ tenantId })};
 
         ${addContext({ userId })};
@@ -234,6 +239,10 @@ export async function DELETE(
         WHERE
           user_id = ${userId}
       `;
+      if (deleteContextFailure) {
+        return handleFailure(responder, deleteContextFailure as ErrorResultSet);
+      }
+
       if (users && "rowCount" in users && users.rowCount === 1) {
         return responder(null, { status: 204 });
       } else {
