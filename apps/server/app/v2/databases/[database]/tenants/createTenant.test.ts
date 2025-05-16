@@ -24,6 +24,7 @@ jest.mock("@nile-auth/logger", () => ({
       }),
     { error: jest.fn() },
   ],
+  Logger: () => ({ debug: jest.fn(), warn: jest.fn(), error: jest.fn() }),
   EventEnum: {
     CREATE_TENANT: "CREATE_TENANT",
   },

@@ -131,7 +131,7 @@ export async function getProviders(
         switch (provider.name) {
           case ProviderNames.Email:
             // eslint-disable-next-line no-case-declarations
-            const ep = await EmailProvider(provider, params);
+            const ep = await EmailProvider(params);
             if (ep) {
               enabledProviders.push(provider.name);
               return ep;

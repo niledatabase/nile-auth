@@ -1,9 +1,15 @@
-import { queryByReq } from "@nile-auth/query";
+import { getRow, queryByReq } from "@nile-auth/query";
 import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 import { ErrorResultSet } from "@nile-auth/query";
 import { handleFailure } from "@nile-auth/query/utils";
 import { ProviderMethods } from "@nile-auth/core";
+import { sendLoginAttemptEmail } from "@nile-auth/core/providers/email";
+import {
+  getCallbackCookie,
+  getCookie,
+  getSecureCookies,
+} from "@nile-auth/core/cookies";
 
 /**
  *
@@ -56,6 +62,7 @@ import { ProviderMethods } from "@nile-auth/core";
 export async function POST(req: NextRequest) {
   const [responder, reporter] = ResponseLogger(req, EventEnum.CREATE_USER);
   try {
+    const preserve = await req.clone();
     const body = await req.json();
     const sql = await queryByReq(req);
     if (!body.email) {
@@ -68,6 +75,70 @@ export async function POST(req: NextRequest) {
     if (!validEmail) {
       return handleFailure(responder, undefined, "Invalid email address");
     }
+    const [oldUser] = await sql`
+      SELECT
+        *
+      FROM
+        users.users
+      WHERE
+        email = ${body.email}
+    `;
+
+    const existingUser = getRow<{
+      email_verified: boolean;
+      id: string;
+      email: string;
+    }>(oldUser);
+
+    if (existingUser) {
+      // if this user exists,their email must be verified.
+      const [hasSso] = await sql`
+        SELECT
+          EXISTS (
+            SELECT
+              1
+            FROM
+              auth.credentials
+            WHERE
+              user_id = ${existingUser.id}
+              AND method <> 'EMAIL_PASSWORD'
+          ) AS has_other_methods;
+      `;
+      const { has_other_methods } = getRow(hasSso) ?? {};
+      if (has_other_methods) {
+        // user has an SSO, so the email *must* be verified. If it's not, send an email.
+        if (!existingUser?.email_verified) {
+          const useSecureCookies = getSecureCookies(req);
+          const callbackCookie = decodeURIComponent(
+            String(
+              getCookie(getCallbackCookie(useSecureCookies).name, req.headers),
+            ),
+          ).replace(/\/$/, "");
+
+          if (!callbackCookie) {
+            return responder("Invalid callback cookie url", { status: 400 });
+          }
+          const callback = new URL(callbackCookie);
+          // the url that redirects
+          const url =
+            body.redirectUrl ?? `${callback.origin}/api/auth/verify-email`;
+
+          const callbackUrl = body.callbackUrl ?? callbackCookie;
+
+          return await sendLoginAttemptEmail({
+            req: preserve,
+            responder,
+            email: existingUser.email,
+            url,
+            callbackUrl,
+          });
+        }
+      }
+      return responder(`The user ${body.email} already exists`, {
+        status: 400,
+      });
+    }
+
     const [newUser] = await sql`
       INSERT INTO
         users.users (email, name, family_name, given_name, picture)
@@ -90,10 +161,18 @@ export async function POST(req: NextRequest) {
         created,
         updated;
     `;
+
     if (!newUser) {
       return responder(null, { status: 404 });
     }
+
     if ("name" in newUser) {
+      // the user insert failed. It is possible the user already used the email address for SSO.
+      // we can allow the creation of a password credential.
+      // if you can just guess someone's email, you would be able to set their password to anything you like
+      //  if you have a verified email, reject because its been done
+      // after email verification, create the credential there
+      // if email cred exists, delete on SSO  and make them verify
       return handleFailure(
         responder,
         newUser as ErrorResultSet,

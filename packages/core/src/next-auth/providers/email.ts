@@ -1,10 +1,17 @@
 import EmailProvider from "next-auth/providers/email";
-import { Provider } from "../../types";
 import { createTransport } from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
-import { queryByInfo, ResultSet } from "@nile-auth/query";
-import { Logger } from "@nile-auth/logger";
+import { User as NextAuthUser } from "next-auth";
+
+import {
+  queryByInfo,
+  queryByReq,
+  queryBySingle,
+  ResultSet,
+} from "@nile-auth/query";
+import { Logger, ResponderFn } from "@nile-auth/logger";
 import { DbCreds } from "@nile-auth/query/getDbInfo";
+import { randomString } from "../../utils";
 const { info, warn, debug } = Logger("emailProvider");
 
 export type Variable = { name: string; value?: string };
@@ -12,8 +19,12 @@ export type Variable = { name: string; value?: string };
 function isEmpty(row: ResultSet<Record<string, string>[]> | undefined) {
   return row && "rowCount" in row && row.rowCount === 0;
 }
-export default async function Email(provider: Provider, creds: DbCreds) {
+export default async function Email(
+  creds: DbCreds,
+  config?: { emailTemplate: "email_invitation" | "password_reset" },
+) {
   const sql = await queryByInfo(creds);
+  const { emailTemplate = "email_invitation" } = config ?? {};
 
   const [[serverExist], [templateExists], [variablesExist]] = await Promise.all(
     [
@@ -71,7 +82,7 @@ export default async function Email(provider: Provider, creds: DbCreds) {
       FROM
         auth.email_templates
       WHERE
-        name = 'email_invitation'
+        name = ${emailTemplate}
     `,
     sql`
       SELECT
@@ -214,6 +225,7 @@ export function generateEmailBody(params: {
   } catch (e) {
     // bad url, oh no
   }
+
   let from = template?.sender;
   const possibleSender = params.variables.find(({ name }) => name === "sender");
   if (possibleSender && !from) {
@@ -275,4 +287,192 @@ function validSender(
     });
   }
   return validEmail;
+}
+
+export async function sendLoginAttemptEmail(params: {
+  req: Request;
+  responder: ResponderFn;
+  email: string;
+  callbackUrl: string;
+  url: string;
+}) {
+  const { req, responder, email, callbackUrl, url } = params;
+  const sqlOne = await queryBySingle({ req, responder });
+  const sqlMany = await queryByReq(req as Request);
+  const [variables] = await sqlMany`
+    SELECT
+      *
+    FROM
+      auth.template_variables
+  `;
+
+  const {
+    rows: [user],
+    error,
+  } = await sqlOne`
+    SELECT
+      *
+    FROM
+      users.users
+    WHERE
+      email = ${email}
+  `;
+
+  // if we don't have a user, don't tell anyone
+  if (!user) {
+    return responder(null, { status: 200 });
+  }
+  if (error) {
+    return error;
+  }
+  const [
+    {
+      rows: [template],
+      error: templateError,
+    },
+    {
+      rows: [server],
+      error: serverError,
+    },
+  ] = await Promise.all([
+    sqlOne`
+      SELECT
+        *
+      FROM
+        auth.email_templates
+      WHERE
+        name = 'login_attempt'
+    `,
+    sqlOne`
+      SELECT
+        *
+      FROM
+        auth.email_servers
+      ORDER BY
+        created DESC
+      LIMIT
+        1
+    `,
+  ]);
+  if (templateError) {
+    return templateError;
+  }
+  if (serverError) {
+    return serverError;
+  }
+
+  const FOUR_HOURS_FROM_NOW = new Date(
+    Date.now() + 1000 * 60 * 60 * 4,
+  ).toISOString();
+
+  const token = randomString(32);
+
+  const identifier = email;
+  await sqlOne`
+    INSERT INTO
+      auth.verification_tokens (identifier, token, expires)
+    VALUES
+      (
+        ${identifier},
+        ${token},
+        ${FOUR_HOURS_FROM_NOW}
+      )
+    ON CONFLICT (identifier) DO UPDATE
+    SET
+      token = EXCLUDED.token,
+      expires = EXCLUDED.expires
+  `;
+
+  const searchParams = new URLSearchParams({
+    token,
+    identifier,
+    callbackUrl,
+  });
+
+  const { from, body, subject } = await generateEmailBody({
+    email: user?.email,
+    username: user?.name,
+    template: template as Template,
+    variables:
+      variables && "rows" in variables ? (variables.rows as Variable[]) : [],
+    url: `${url}?${searchParams.toString()}`,
+  });
+
+  await sendEmail({
+    body,
+    to: user.email,
+    from,
+    subject,
+    url: String(server?.server),
+  });
+
+  return responder(null, { status: 201 });
+}
+
+export async function sendPasswordHasBeenReset(params: {
+  req: Request;
+  responder: ResponderFn;
+  user: NextAuthUser;
+}) {
+  const { req, responder, user } = params;
+  const sqlOne = await queryBySingle({ req, responder });
+  const sqlMany = await queryByReq(req as Request);
+  const [variables] = await sqlMany`
+    SELECT
+      *
+    FROM
+      auth.template_variables
+  `;
+  const [
+    {
+      rows: [template],
+      error: templateError,
+    },
+    {
+      rows: [server],
+      error: serverError,
+    },
+  ] = await Promise.all([
+    sqlOne`
+      SELECT
+        *
+      FROM
+        auth.email_templates
+      WHERE
+        name = 'password_alert'
+    `,
+    sqlOne`
+      SELECT
+        *
+      FROM
+        auth.email_servers
+      ORDER BY
+        created DESC
+      LIMIT
+        1
+    `,
+  ]);
+  if (templateError) {
+    return templateError;
+  }
+  if (serverError) {
+    return serverError;
+  }
+  if (user.email && user.name) {
+    const { from, body, subject } = await generateEmailBody({
+      email: user.email,
+      username: user.name,
+      template: template as Template,
+      variables:
+        variables && "rows" in variables ? (variables.rows as Variable[]) : [],
+      url: "", // a rare case where there is no app url to use
+    });
+    await sendEmail({
+      body,
+      to: user.email,
+      from,
+      subject,
+      url: String(server?.server),
+    });
+  }
 }

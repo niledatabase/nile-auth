@@ -55,6 +55,21 @@ describe("api integration", () => {
     const update = {
       name: "updatedName",
     };
+
+    const res = await nile.api.auth.signOut({
+      callbackUrl: "http://localhost:3000",
+    });
+
+    expect(res.url).toEqual("http://localhost:3000");
+
+    const failedUpdatedFirstUser =
+      await nile.api.users.updateMe<Response>(update);
+    expect(failedUpdatedFirstUser.status).toEqual(401);
+
+    await nile.api.login(primaryUser);
+
+    // await nile.api.auth.resetPassword({ password: "12345" });
+
     const updatedFirstUser = await nile.api.users.updateMe(update);
 
     expect(updatedFirstUser).toMatchObject({
