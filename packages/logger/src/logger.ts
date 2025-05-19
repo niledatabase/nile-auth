@@ -7,7 +7,7 @@ import {
 import { EventEnum } from "./types";
 
 const colorizer = format.colorize();
-const level =
+export const level =
   process.env.NODE_ENV === "production"
     ? (process.env.LOG_LEVEL ?? "info")
     : "silly";
@@ -22,12 +22,12 @@ const devFormat = format.combine(
       try {
         if (typeof meta[key] === "object") {
           return colorizer.colorize(
-            "silly",
+            level,
             `\n[${timestamp}] ${level}: ${key}: ${JSON.stringify(meta[key], null, 2)}`,
           );
         }
         return colorizer.colorize(
-          "silly",
+          level,
           `\n[${timestamp}] ${level}: ${key}: ${JSON.stringify(JSON.parse(String(meta[key])), null, 2)}`,
         );
       } catch (e) {

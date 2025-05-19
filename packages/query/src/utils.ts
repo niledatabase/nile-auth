@@ -2,7 +2,7 @@ import { ResponderFn } from "@nile-auth/logger";
 import { ErrorResultSet } from "./types";
 
 // https://www.postgresql.org/docs/current/errcodes-appendix.html
-enum ErrorCodes {
+export enum ErrorCodes {
   unique_violation = "23505",
   syntax_error = "42601",
   invalid_param = "22023",
