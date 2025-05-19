@@ -87,7 +87,6 @@ export async function GET(
           AND tu.deleted IS NULL
       `;
 
-      console.log(contextError, users);
       if (contextError && "name" in contextError) {
         return handleFailure(responder, contextError as ErrorResultSet);
       }

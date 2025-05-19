@@ -208,7 +208,6 @@ export async function POST(req: NextRequest) {
 
     const requestUrl = new URL(req.url);
     const sendJson = requestUrl.searchParams.get("json");
-    console.log(sendJson, requestUrl, "what is this");
 
     const searchParams = new URLSearchParams({
       token: newToken,
