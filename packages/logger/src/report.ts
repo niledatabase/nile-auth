@@ -140,7 +140,6 @@ export function cleanUrl(req: Request | string): void | string {
 }
 
 export function cleanSql(command: void | string) {
-  console.log(command);
   if (!command) {
     return;
   }
