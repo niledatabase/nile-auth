@@ -1,12 +1,13 @@
 import { QueryResult } from "pg";
 
 import ClientManager from "./ClientManager";
+import { report } from "@nile-auth/logger";
 
 export type ReturnType = Error | QueryResult[];
 const clientManager = new ClientManager();
-
+type Command = { text: string; rowMode?: "array" | "none"; values?: string[] };
 export async function executeCommand(params: {
-  command: { text: string; rowMode?: "array" | "none"; values?: string[] };
+  command: Command;
   user: string;
   password: string;
   database: string;
@@ -39,19 +40,20 @@ export async function executeCommand(params: {
   debug("pg client retrieved");
 
   try {
-    const commands = [_command.text];
-
     const start = Date.now();
-    const command = { ..._command, text: commands[0] };
+    const command: Command = { ..._command };
     if (_command.rowMode !== "none") {
       command.rowMode = "array";
     }
 
     const logCommand = command.text
-      ?.replace(/(\n|\r)/g, " ")
+      .replace(/(\n|\r)/g, " ")
       .replace(/\s+/g, " ")
       .trim();
-    debug(`Starting command ${logCommand} ${_command.values?.toString()}`);
+
+    const reporter = report(logCommand);
+
+    reporter.start();
     const res = await client.query(_command).catch((e) => {
       // users re-inserting isn't an error to worry about
       if (!(e.message as string).includes("users_email_key")) {
@@ -67,8 +69,8 @@ export async function executeCommand(params: {
 
       return { ...e, message: e.message, lineNumber };
     });
-    const stamp = Math.floor(Date.now() - start);
-    debug(`Finished command in ${stamp}ms`);
+
+    reporter.end("pg.latency", { values: _command.values?.toString() }, false);
 
     if (!Array.isArray(res)) {
       return [res];

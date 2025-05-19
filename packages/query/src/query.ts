@@ -1,10 +1,12 @@
-import { Logger, ResponderFn } from "@nile-auth/logger";
+import { Logger, report, ResponderFn } from "@nile-auth/logger";
 import { Pool } from "pg";
 import { handleQuery } from "./handleQuery";
 import getDbInfo, { DbCreds } from "./getDbInfo";
 import { fixPrepare } from "./context";
 import { ErrorResultSet, ErrorResultSet as ErrorSet } from "./types";
 import { handleFailure } from "./utils";
+import { level } from "../../logger/src/logger";
+import { Reporter } from "../../logger/src/report";
 export { formatTime } from "./formatTime";
 const { debug, error, warn } = Logger("adaptor sql");
 
@@ -60,6 +62,10 @@ export function query(pool: Pool): SqlTemplateFn {
       );
     });
     try {
+      const debugText = text.replace(/(\n\s+)/g, " ").trim();
+      const reporter = report(debugText);
+
+      reporter.start();
       // @ts-expect-error - allows for null args in function, but not in query
       const result = await client.query(text, values).catch((e) => {
         warn(
@@ -67,10 +73,9 @@ export function query(pool: Pool): SqlTemplateFn {
           { stack: e.stack, message: e.message, text, values },
         );
       });
-      debug("[SQL]", {
-        text: text.replace(/(\n\s+)/g, " ").trim(),
-        ...(values.length ? { values } : {}),
-      });
+
+      reporter.end("pg.latency", { values: values.toString() }, false);
+
       return result;
     } catch (e) {
       if (e instanceof Error) {
