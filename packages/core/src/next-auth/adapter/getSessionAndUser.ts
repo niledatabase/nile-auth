@@ -16,6 +16,30 @@ export function getSessionAndUser(pool: Pool) {
       return null;
     }
 
+    // try doing jwt first, its maybe faster?
+    try {
+      const parsed = await decode({
+        token: sessionToken,
+        secret: String(process.env.NEXTAUTH_SECRET),
+      });
+      if (
+        typeof parsed?.email === "string" &&
+        typeof parsed?.id === "string" &&
+        typeof parsed.exp === "number"
+      ) {
+        return {
+          user: { id: parsed.id, email: parsed.email, emailVerified: null },
+          session: {
+            sessionToken,
+            userId: parsed.id,
+            expires: new Date(parsed.exp * 1000),
+          },
+        };
+      }
+    } catch (e) {
+      // do nothing, they may have a valid session (non JWT)
+    }
+
     const sql = query(pool);
     const sessions = await sql`
       SELECT
@@ -25,33 +49,8 @@ export function getSessionAndUser(pool: Pool) {
       WHERE
         session_token = ${sessionToken}
     `;
-    if (!sessions || ("rowCount" in sessions && sessions.rowCount === 0)) {
-      // try doing jwt
-      try {
-        const parsed = await decode({
-          token: sessionToken,
-          secret: String(process.env.NEXTAUTH_SECRET),
-        });
-        if (
-          typeof parsed?.email === "string" &&
-          typeof parsed?.id === "string" &&
-          typeof parsed.exp === "number"
-        ) {
-          return {
-            user: { id: parsed.id, email: parsed.email, emailVerified: null },
-            session: {
-              sessionToken,
-              userId: parsed.id,
-              expires: new Date(parsed.exp * 1000),
-            },
-          };
-        }
-      } catch (e) {
-        return null;
-      }
-      return null;
-    }
-    if ("rows" in sessions) {
+
+    if (sessions && "rows" in sessions) {
       const session = convertSession(
         sessions.rows[0] as unknown as NileSession,
       ) as AdapterSession;
@@ -63,7 +62,7 @@ export function getSessionAndUser(pool: Pool) {
           users.users
         WHERE
           id = ${session.userId}
-          AND DELETED IS NULL
+          AND deleted IS NULL
       `;
       if (users && "rowCount" in users && users.rowCount === 0) {
         return null;

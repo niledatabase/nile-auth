@@ -7,7 +7,7 @@ import {
 import { EventEnum } from "./types";
 
 const colorizer = format.colorize();
-const level =
+export const level =
   process.env.NODE_ENV === "production"
     ? (process.env.LOG_LEVEL ?? "info")
     : "silly";
