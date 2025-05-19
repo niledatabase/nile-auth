@@ -4,7 +4,8 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
-    "./cookies": "./src/next-auth/cookies.ts",
+    "./cookies": "./src/next-auth/cookies/index.ts",
+    "./cookies/constants": "./src/next-auth/cookies/constants.ts",
     "./csrf": "./src/next-auth/csrf.ts",
     "./utils": "./src/utils.ts",
     "./providers/email": "./src/next-auth/providers/email.ts"

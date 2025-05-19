@@ -1,4 +1,4 @@
-import { X_NILE_ORIGIN } from "@nile-auth/core/cookies";
+import { HEADER_ORIGIN } from "@nile-auth/core/cookies/constants";
 
 export default function Email({ form, setForm }: { form: any; setForm: any }) {
   if (form.provider !== "email") {
@@ -62,7 +62,7 @@ export default function Email({ form, setForm }: { form: any; setForm: any }) {
                 method: "POST",
                 body: new URLSearchParams({ email: form.email, csrfToken }),
                 headers: {
-                  [X_NILE_ORIGIN]: window.location.origin,
+                  [HEADER_ORIGIN]: window.location.origin,
                   "Content-Type": "application/x-www-form-urlencoded",
                 },
               });

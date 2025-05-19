@@ -1,12 +1,18 @@
-import { Logger } from "@nile-auth/logger";
+import { Logger, ResponderFn } from "@nile-auth/logger";
 import NextAuth, { AuthOptions as NextAuthOptions } from "next-auth";
 
 import { buildOptions } from "./utils";
 import { nextOptions } from "./nextOptions";
 import getDbInfo from "@nile-auth/query/getDbInfo";
-import { AuthOptions } from "./types";
-import { getOrigin, HEADER_TENANT_ID } from "./next-auth/cookies";
+import { getOrigin } from "./next-auth/cookies";
 import { isFQDN } from "validator";
+import { ActionableErrors, AuthOptions } from "./types";
+import { findCallbackCookie } from "./next-auth/cookies";
+import { sendLoginAttemptEmail } from "./next-auth/providers/email";
+import { validCsrfToken } from "./next-auth/csrf";
+import { HEADER_TENANT_ID } from "./next-auth/cookies/constants";
+
+export { maxAge } from "./nextOptions";
 
 const { warn } = Logger("[nile-auth]");
 
@@ -16,6 +22,7 @@ type AppParams = {
   params: {
     nextauth: string[];
   };
+  responder: ResponderFn;
 };
 
 function isWellFormedUrl(input: string) {
@@ -33,7 +40,7 @@ function isWellFormedUrl(input: string) {
 
 export default async function NileAuth(
   req: Request,
-  { params }: AppParams,
+  { responder, params }: AppParams,
   config?: AuthOptions,
 ) {
   const dbInfo = getDbInfo(undefined, req);
@@ -65,12 +72,58 @@ export default async function NileAuth(
   const cfg: AuthOptions = { ...options, ...dbInfo, ...config } as AuthOptions;
   const opts = buildOptions(cfg);
   try {
+    const preserve = await req.clone();
     const handler = await NextAuth(
       req as unknown as any, // NextApiRequest
       { params } as unknown as any, // NextApiResponse
       opts as unknown as NextAuthOptions,
     );
 
+    if (handler.status === 401) {
+      const checker = handler.clone();
+      const checkerBody = await checker.json();
+      if (checkerBody.url) {
+        const searchParams = new URL(checkerBody.url).searchParams;
+        const error = searchParams.get("error");
+
+        // The user exists (SSO), but tried to login with username/password.
+        // Send an email to that user forcing them to verify themselves
+        if (error === ActionableErrors.notVerified) {
+          const formData = await preserve.formData();
+          const email = String(formData.get("email"));
+          const resetUrl = String(formData.get("resetUrl"));
+          const csrfToken = formData.get("csrfToken");
+          const redirectUrl = formData.get("redirectUrl");
+
+          const [hasValidToken, csrf] = await validCsrfToken(
+            req,
+            process.env.NEXTAUTH_SECRET,
+          );
+          if (!hasValidToken || csrf !== csrfToken) {
+            return new Response("Request blocked", { status: 400 });
+          }
+          const callbackCookie = findCallbackCookie(req);
+          const callback = new URL(callbackCookie);
+          // the url that redirects
+          const url =
+            typeof redirectUrl === "string"
+              ? redirectUrl
+              : `${callback.origin}/api/auth/verify-email`;
+          if (email && resetUrl) {
+            await sendLoginAttemptEmail({
+              req,
+              email,
+              responder,
+              callbackUrl: resetUrl,
+              url,
+            });
+            return new Response(JSON.stringify({ message: "Email sent" }), {
+              status: 401,
+            });
+          }
+        }
+      }
+    }
     return handler;
   } catch (e) {
     if (e instanceof Error) {
