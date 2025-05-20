@@ -93,7 +93,7 @@ export function report(req: Request | string): Reporter {
         _tags.values = values;
       }
 
-      if (metric.includes("latency") && value > 1000) {
+      if (metric.includes("latency") && value > 100) {
         warn(metric, { value, tags: _tags });
       } else {
         debug(metric, { value, tags: _tags });

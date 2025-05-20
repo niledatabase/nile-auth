@@ -176,12 +176,9 @@ export async function POST(req: NextRequest) {
       return templateError;
     }
     if (serverError) {
-      return responder(
-        JSON.stringify({ message: "Server is not configured to send emails." }),
-        {
-          status: 400,
-        },
-      );
+      return responder("Server is not configured to send emails.", {
+        status: 400,
+      });
     }
 
     const FOUR_HOURS_FROM_NOW = new Date(
