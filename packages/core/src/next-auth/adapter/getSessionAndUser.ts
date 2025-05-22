@@ -53,7 +53,10 @@ export function getSessionAndUser(pool: Pool) {
     if (sessions && "rows" in sessions) {
       const session = convertSession(
         sessions.rows[0] as unknown as NileSession,
-      ) as AdapterSession;
+      );
+      if (!session) {
+        return null;
+      }
 
       const users = await sql`
         SELECT

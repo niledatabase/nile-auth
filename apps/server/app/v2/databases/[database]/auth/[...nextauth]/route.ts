@@ -1,8 +1,15 @@
 import { NextRequest } from "next/server";
+import { serialize } from "cookie";
 
 import NileAuth from "@nile-auth/core";
 import { EventEnum, Logger, ResponseLogger } from "@nile-auth/logger";
-import { getOrigin } from "@nile-auth/core/cookies";
+import {
+  findCallbackCookie,
+  getCallbackCookie,
+  getOrigin,
+  getSecureCookies,
+} from "@nile-auth/core/cookies";
+import { HEADER_ORIGIN } from "@nile-auth/core/cookies/constants";
 
 const log = Logger(EventEnum.NILE_AUTH);
 
@@ -46,6 +53,20 @@ export async function GET(
 
     if (res.status > 303) {
       log.warn("Bad nextauth get", { details });
+    }
+    // the callback url and the origin should be the same, so fix it
+    const callbackCookie = findCallbackCookie(req);
+    const origin = getOrigin(req);
+    if (callbackCookie !== origin) {
+      const updatedCallbackCookie = getCallbackCookie(getSecureCookies(req));
+      res.headers.append(
+        "set-cookie",
+        serialize(
+          updatedCallbackCookie.name,
+          origin,
+          updatedCallbackCookie.options,
+        ),
+      );
     }
 
     if (res.status === 302) {
