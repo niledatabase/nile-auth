@@ -41,17 +41,6 @@ const mockTenantUsers = [
   },
 ];
 
-/*
-jest.mock(
-  "../../../../../../../packages/core/src/next-auth/providers/email",
-  () => ({
-    sendLoginAttemptEmail: jest
-      .fn()
-      .mockResolvedValue(new Response("email sent", { status: 200 })),
-  }),
-);
-*/
-
 jest.mock("../../../../../../../packages/query/src/query", () => ({
   getRow: jest.fn(),
   handleFailure: jest.fn(),
