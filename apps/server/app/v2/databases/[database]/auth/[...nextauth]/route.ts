@@ -54,20 +54,6 @@ export async function GET(
     if (res.status > 303) {
       log.warn("Bad nextauth get", { details });
     }
-    // the callback url and the origin should be the same, so fix it
-    const callbackCookie = findCallbackCookie(req);
-    const origin = getOrigin(req);
-    if (callbackCookie !== origin) {
-      const updatedCallbackCookie = getCallbackCookie(getSecureCookies(req));
-      res.headers.append(
-        "set-cookie",
-        serialize(
-          updatedCallbackCookie.name,
-          origin,
-          updatedCallbackCookie.options,
-        ),
-      );
-    }
 
     if (res.status === 302) {
       const location = res.headers.get("location");
