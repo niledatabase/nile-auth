@@ -126,7 +126,7 @@ describe("generatePasswordToken", () => {
     });
 
     const req = {
-      url: "http://localhost?callbackURL=http://localhost:3000&token=token&identifier=identifier",
+      url: "http://localhost?callbackUrl=http://localhost:3000&token=token&identifier=identifier",
       async json() {
         return { name: "garbage", email: "email" };
       },

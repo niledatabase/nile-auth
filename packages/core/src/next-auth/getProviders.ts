@@ -156,7 +156,7 @@ export async function getProviders(
             return AzureProvider({
               clientId: row.client_id,
               clientSecret: row.client_secret,
-              tenantId: row.config.tenantId,
+              tenantId: row?.config?.tenantId,
               allowDangerousEmailAccountLinking: true,
             });
           case ProviderNames.Discord:
@@ -244,6 +244,7 @@ export async function getProviders(
             });
         }
       });
+
     // void providers kill next-auth
     const ps = (await Promise.all(configuredProviders)).filter(Boolean);
     if (ps.length === 0) {

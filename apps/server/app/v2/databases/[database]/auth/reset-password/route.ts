@@ -283,7 +283,7 @@ export async function POST(req: NextRequest) {
  *         required: true
  *         schema:
  *           type: string
- *       - name: callbackURL
+ *       - name: callbackUrl
  *         in: query
  *         required: true
  *         schema:
@@ -497,7 +497,7 @@ export async function PUT(req: NextRequest) {
         email = ${body.email}
     `;
     if (userError) {
-      return userError;
+      return responder(userError);
     }
 
     if (user?.id) {

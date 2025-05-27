@@ -5,8 +5,6 @@ import getDbInfo, { DbCreds } from "./getDbInfo";
 import { fixPrepare } from "./context";
 import { ErrorResultSet, ErrorResultSet as ErrorSet } from "./types";
 import { handleFailure } from "./utils";
-import { level } from "../../logger/src/logger";
-import { Reporter } from "../../logger/src/report";
 export { formatTime } from "./formatTime";
 const { debug, error, warn } = Logger("adaptor sql");
 
@@ -42,7 +40,14 @@ export type ResultSet<T = Record<string, string>[]> =
   | ErrorSet
   | ValidResultSet<T>;
 
-export type Primitive = string | number | boolean | string[] | Date | null;
+export type Primitive =
+  | string
+  | number
+  | boolean
+  | string[]
+  | Date
+  | null
+  | RawSQL;
 export type SqlTemplateFn = (
   strings: TemplateStringsArray,
   ...values: Primitive[]
@@ -135,35 +140,50 @@ export function sqlTemplate(dbInfo: DbCreds, responder?: ResponderFn) {
     let text = strings[0] ?? "";
 
     const [initial] = values;
+    const finalValues = [];
     const usesContext = String(initial).startsWith(":");
     let removed = 0;
     for (let i = 1; i < strings.length; i++) {
-      // context is always first, I suppose
-      if (String(values[0]).startsWith(":")) {
-        // we have a context, so we need to "manually" parse all the values so pgnode actually works
-        text += `${String(values[0]).slice(1)}${strings[i] ?? ""}`;
-        values.splice(0, 1);
+      const current = values[0];
+
+      if (typeof current === "string" && current.startsWith(":")) {
+        text += `${current.slice(1)}${strings[i] ?? ""}`;
+        values.shift();
         removed++;
+        continue;
+      }
+
+      // Handle raw SQL (do not parameterize)
+      if (current instanceof RawSQL) {
+        text += `${current.value}${strings[i] ?? ""}`;
+        values.shift();
+        removed++;
+        continue;
+      }
+
+      // Normal param logic
+      if (usesContext) {
+        // If context was set, we fix-prepare all following values manually
+        text += `${fixPrepare(null, String(current))}${strings[i] ?? ""}`;
+        values.shift();
       } else {
-        if (usesContext) {
-          text += `${fixPrepare(null, String(values[0]))}${strings[i] ?? ""}`;
-          values.splice(0, 1);
-        } else {
-          text += `$${i - removed}${strings[i] ?? ""}`;
-        }
+        // Parameterized query
+        text += `$${i - removed}${strings[i] ?? ""}`;
+        finalValues.push(values.shift());
       }
     }
+
     if (usesContext) {
-      text = `BEGIN; ${text}`;
       // unset it for the next query. Later, make this smarter so a single request handles this well, or convert the `ClientManager` to use pools
-      if (text[text.length - 1] !== ";") {
+      if (!text.trim().endsWith(";")) {
         text += ";";
       }
-      text += `COMMIT;`;
+      text = `BEGIN; ${text} COMMIT;`;
     }
+
     const json = {
       text,
-      values: values as string[],
+      values: finalValues as string[],
     };
     let res;
     if (!dbInfo) {
@@ -237,3 +257,9 @@ export function getRow<T = Record<string, any>>(
     return res.rows[0] as T;
   }
 }
+
+export class RawSQL {
+  constructor(public value: string) {}
+}
+
+export const raw = (value: string) => new RawSQL(value);

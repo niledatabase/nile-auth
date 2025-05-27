@@ -1,5 +1,5 @@
 import { auth } from "@nile-auth/core";
-import { queryByReq, ErrorResultSet } from "@nile-auth/query";
+import { queryByReq, ErrorResultSet, raw } from "@nile-auth/query";
 import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 import { handleFailure } from "@nile-auth/query/utils";
@@ -113,9 +113,8 @@ export async function GET(req: NextRequest) {
  *   put:
  *     tags:
  *     - users
- *     summary: update the principal profile
- *     description: Update the principal in the associated with the session
- *       provided
+ *     summary: Update the principal profile
+ *     description: Update the principal associated with the provided session
  *     operationId: updateMe
  *     parameters:
  *       - name: database
@@ -123,6 +122,33 @@ export async function GET(req: NextRequest) {
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Jane Doe
+ *               familyName:
+ *                 type: string
+ *                 example: Doe
+ *               givenName:
+ *                 type: string
+ *                 example: Jane
+ *               picture:
+ *                 type: string
+ *                 format: uri
+ *                 example: https://example.com/avatar.jpg
+ *               emailVerified:
+ *                 type: boolean
+ *                 description: Whether the user's email is verified
+ *             required:
+ *               - name
+ *               - familyName
+ *               - givenName
  *     responses:
  *       "200":
  *         description: Identified user
@@ -145,6 +171,7 @@ export async function GET(req: NextRequest) {
  *     security:
  *     - sessionCookie: []
  */
+
 export async function PUT(req: NextRequest) {
   const [responder, reporter] = ResponseLogger(req, EventEnum.ME_UPDATE);
   try {
@@ -195,6 +222,7 @@ export async function PUT(req: NextRequest) {
         familyName: string;
         givenName: string;
         picture: string;
+        emailVerified: string;
       };
       const [updatedUser] = await sql`
         UPDATE users.users
@@ -202,7 +230,10 @@ export async function PUT(req: NextRequest) {
           name = ${body?.name ?? user.name},
           family_name = ${body?.familyName ?? user.familyName},
           given_name = ${body.givenName ?? user.givenName},
-          picture = ${body.picture ?? user.picture}
+          picture = ${body.picture ?? user.picture},
+          email_verified = ${body.emailVerified
+          ? raw("CURRENT_TIMESTAMP")
+          : user.emailVerified}
         WHERE
           id = ${session?.user?.id}
         RETURNING
