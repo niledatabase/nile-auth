@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import { ErrorResultSet } from "@nile-auth/query";
 import { handleFailure } from "@nile-auth/query/utils";
 import { ProviderMethods } from "@nile-auth/core";
-import { sendLoginAttemptEmail } from "@nile-auth/core/providers/email";
+import { sendVerifyEmail } from "@nile-auth/core/providers/email";
 import {
   getCallbackCookie,
   getCookie,
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
   try {
     const preserve = await req.clone();
     const body = await req.json();
-    const sql = await queryByReq(req);
+    const sql = await queryByReq(preserve);
     if (!body.email) {
       return responder("email is required", { status: 400 });
     }
@@ -108,29 +108,8 @@ export async function POST(req: NextRequest) {
       if (has_other_methods) {
         // user has an SSO, so the email *must* be verified. If it's not, send an email.
         if (!existingUser?.email_verified) {
-          const useSecureCookies = getSecureCookies(req);
-          const callbackCookie = decodeURIComponent(
-            String(
-              getCookie(getCallbackCookie(useSecureCookies).name, req.headers),
-            ),
-          ).replace(/\/$/, "");
-
-          if (!callbackCookie) {
-            return responder("Invalid callback cookie url", { status: 400 });
-          }
-          const callback = new URL(callbackCookie);
-          // the url that redirects
-          const url =
-            body.redirectUrl ?? `${callback.origin}/api/auth/verify-email`;
-
-          const callbackUrl = body.callbackUrl ?? callbackCookie;
-
-          return await sendLoginAttemptEmail({
-            req: preserve,
-            responder,
-            email: existingUser.email,
-            url,
-            callbackUrl,
+          return responder("Existing users must verify their email address.", {
+            status: 400,
           });
         }
       }

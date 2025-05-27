@@ -24,7 +24,9 @@ export function ResponseLogger(
       tinybird({ req, event, body, detail });
       reporter.end();
       const status = init?.status ?? 200;
-      if (status) {
+      if (body instanceof Response) {
+        reporter.response(status);
+      } else if (status) {
         reporter.response(status);
       }
       if (!(body instanceof Response)) {

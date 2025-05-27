@@ -12,6 +12,8 @@ import {
 import { Logger, ResponderFn } from "@nile-auth/logger";
 import { DbCreds } from "@nile-auth/query/getDbInfo";
 import { randomString } from "../../utils";
+import { findCallbackCookie } from "../cookies";
+import { validCsrfToken } from "../csrf";
 const { info, warn, debug } = Logger("emailProvider");
 
 export type Variable = { name: string; value?: string };
@@ -21,7 +23,9 @@ function isEmpty(row: ResultSet<Record<string, string>[]> | undefined) {
 }
 export default async function Email(
   creds: DbCreds,
-  config?: { emailTemplate: "email_invitation" | "password_reset" },
+  config?: {
+    emailTemplate: "email_invitation" | "password_reset" | "verify_email";
+  },
 ) {
   const sql = await queryByInfo(creds);
   const { emailTemplate = "email_invitation" } = config ?? {};
@@ -289,14 +293,38 @@ function validSender(
   return validEmail;
 }
 
-export async function sendLoginAttemptEmail(params: {
+export async function sendVerifyEmail(params: {
   req: Request;
   responder: ResponderFn;
-  email: string;
-  callbackUrl: string;
-  url: string;
 }) {
-  const { req, responder, email, callbackUrl, url } = params;
+  const { req, responder } = params;
+  const preserve = await req.clone();
+  const formData = await preserve.formData();
+  const email = String(formData.get("email"));
+  const callbackUrl = String(formData.get("resetUrl"));
+  const csrfToken = formData.get("csrfToken");
+  const redirectUrl = formData.get("redirectUrl");
+  const [hasValidToken, csrf] = await validCsrfToken(
+    req,
+    process.env.NEXTAUTH_SECRET,
+  );
+  if (!hasValidToken || csrf !== csrfToken) {
+    return responder("Request blocked", { status: 400 });
+  }
+  let callback;
+  try {
+    const callbackCookie = findCallbackCookie(req);
+    callback = new URL(callbackCookie);
+  } catch (e) {
+    return responder("Callback is not a valid url", { status: 400 });
+  }
+
+  // the url that redirects
+  const url =
+    typeof redirectUrl === "string"
+      ? redirectUrl
+      : `${callback.origin}/api/auth/verify-email`;
+
   const sqlOne = await queryBySingle({ req, responder });
   const sqlMany = await queryByReq(req as Request);
   const [variables] = await sqlMany`
@@ -323,7 +351,7 @@ export async function sendLoginAttemptEmail(params: {
     return responder(null, { status: 200 });
   }
   if (error) {
-    return error;
+    return responder(error);
   }
   const [
     {
@@ -341,7 +369,7 @@ export async function sendLoginAttemptEmail(params: {
       FROM
         auth.email_templates
       WHERE
-        name = 'login_attempt'
+        name = 'verify_email'
     `,
     sqlOne`
       SELECT
@@ -354,11 +382,16 @@ export async function sendLoginAttemptEmail(params: {
         1
     `,
   ]);
+
   if (templateError) {
-    return templateError;
+    return responder(
+      "Unable to send verification email, the template is missing",
+      { status: 400 },
+    );
   }
+
   if (serverError) {
-    return serverError;
+    return responder("Email sending is not configured", { status: 400 });
   }
 
   const FOUR_HOURS_FROM_NOW = new Date(
@@ -398,13 +431,22 @@ export async function sendLoginAttemptEmail(params: {
     url: `${url}?${searchParams.toString()}`,
   });
 
-  await sendEmail({
-    body,
-    to: user.email,
-    from,
-    subject,
-    url: String(server?.server),
-  });
+  try {
+    await sendEmail({
+      body,
+      to: user.email,
+      from,
+      subject,
+      url: String(server?.server),
+    });
+  } catch {
+    return responder(
+      "An email address that uses SSO must have their email verified in order to use credentials.",
+      {
+        status: 401,
+      },
+    );
+  }
 
   return responder(null, { status: 201 });
 }
@@ -453,10 +495,10 @@ export async function sendPasswordHasBeenReset(params: {
     `,
   ]);
   if (templateError) {
-    return templateError;
+    return responder(templateError);
   }
   if (serverError) {
-    return serverError;
+    return responder(serverError);
   }
   if (user.email && user.name) {
     const { from, body, subject } = await generateEmailBody({

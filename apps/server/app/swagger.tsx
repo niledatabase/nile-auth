@@ -29,10 +29,10 @@
  *     PasswordTokenPayload:
  *       type: object
  *       required:
- *         - callbackURL
+ *         - callbackUrl
  *         - email
  *       properties:
- *         callbackURL:
+ *         callbackUrl:
  *           type: string
  *         email:
  *           type: string

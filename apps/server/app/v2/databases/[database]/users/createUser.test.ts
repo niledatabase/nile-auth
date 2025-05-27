@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { POST } from "./route";
-import { sendLoginAttemptEmail } from "@nile-auth/core/providers/email";
 
 let runCommands: string[] = [];
 
@@ -40,17 +39,6 @@ const mockTenantUsers = [
     email: "no@no.com",
   },
 ];
-
-/*
-jest.mock(
-  "../../../../../../../packages/core/src/next-auth/providers/email",
-  () => ({
-    sendLoginAttemptEmail: jest
-      .fn()
-      .mockResolvedValue(new Response("email sent", { status: 200 })),
-  }),
-);
-*/
 
 jest.mock("../../../../../../../packages/query/src/query", () => ({
   getRow: jest.fn(),
@@ -256,18 +244,11 @@ describe("POST /users - user creation logic", () => {
     });
 
     const res = await POST(req as unknown as NextRequest);
-    expect(res.status).toEqual(201);
+    expect(res.status).toEqual(400);
 
     expect(runCommands).toEqual([
       "SELECT * FROM users.users WHERE email = existing@user.com",
       "SELECT EXISTS ( SELECT 1 FROM auth.credentials WHERE user_id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1 AND method <> 'EMAIL_PASSWORD' ) AS has_other_methods;",
-      "SELECT * FROM auth.template_variables",
-      "SELECT * FROM users.users WHERE email = no@no.com",
-      "SELECT * FROM auth.email_templates WHERE name = 'login_attempt'",
-      "SELECT * FROM auth.email_servers ORDER BY created DESC LIMIT 1",
-      expect.stringMatching(
-        /^INSERT INTO auth\.verification_tokens \(identifier, token, expires\) VALUES \( no@no\.com, [a-f0-9]{64}, .*Z \) ON CONFLICT \(identifier\) DO UPDATE SET token = EXCLUDED\.token, expires = EXCLUDED\.expires$/,
-      ),
     ]);
   });
 });
