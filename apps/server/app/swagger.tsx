@@ -31,12 +31,13 @@
  *       required:
  *         - callbackUrl
  *         - email
+ *         - redirectUrl
  *       properties:
  *         callbackUrl:
  *           type: string
  *         email:
  *           type: string
- *         redirectURL:
+ *         redirectUrl:
  *           type: string
  *     ResetPassword:
  *       type: object

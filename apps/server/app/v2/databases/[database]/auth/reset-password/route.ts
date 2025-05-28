@@ -81,24 +81,11 @@ export async function POST(req: NextRequest) {
   );
   const { warn } = Logger(EventEnum.RESET_PASSWORD_POST);
   try {
-    const useSecureCookies = getSecureCookies(req);
-    let callbackCookie = null;
-    const useableCookie = getCookie(
-      getCallbackCookie(useSecureCookies).name,
-      req.headers,
-    );
-
-    if (useableCookie) {
-      callbackCookie = decodeURIComponent(useableCookie).replace(/\/$/, "");
-    }
-
-    const callback = `${callbackCookie}/api/auth/reset-password`;
-
     const json = await req.json();
 
     const email = json.email;
-    const callbackUrl = json.callbackUrl ?? callback;
-    const redirectUrl = json.redirectUrl ?? callbackCookie;
+    const callbackUrl = json.callbackUrl;
+    const redirectUrl = json.redirectUrl;
 
     if (typeof email !== "string" || !email) {
       return responder("Email is required", { status: 400 });
@@ -212,13 +199,13 @@ export async function POST(req: NextRequest) {
       callbackUrl,
     });
 
-    const canRedirect = redirectUrl?.startsWith("http://") || callbackCookie;
+    const canRedirect = redirectUrl?.startsWith("http://") || callbackUrl;
     if (!canRedirect) {
       return responder(JSON.stringify({ message: "Invalid redirect" }), {
         status: 400,
       });
     }
-    const url = `${!redirectUrl?.startsWith("http://") ? `${callbackCookie}${redirectUrl}` : redirectUrl}?${searchParams.toString()}`;
+    const url = `${redirectUrl}?${searchParams.toString()}`;
 
     // if we are sending json, expect the client to do the right thing.
     if (sendJson === "true") {
@@ -443,7 +430,7 @@ export async function PUT(req: NextRequest) {
     const [token, resetTokenHash] = getCookieParts(resetCookie) ?? [];
 
     if (!token) {
-      return responder("Missing token", { status: 400 });
+      return responder("Missing reset token", { status: 400 });
     }
     const {
       rows: [identifier],

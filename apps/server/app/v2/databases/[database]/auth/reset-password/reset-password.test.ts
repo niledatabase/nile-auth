@@ -77,7 +77,11 @@ describe("generatePasswordToken", () => {
       url: "http://localhost",
       headers: new Headers({ cookie: "callback=http://localhost:3000" }),
       async json() {
-        return { name: "garbage", email: "email" };
+        return {
+          name: "garbage",
+          email: "email",
+          callbackUrl: "http://localhost:3000",
+        };
       },
     };
 
