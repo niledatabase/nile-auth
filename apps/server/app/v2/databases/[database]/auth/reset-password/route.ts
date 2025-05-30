@@ -199,11 +199,17 @@ export async function POST(req: NextRequest) {
       callbackUrl,
     });
 
-    const canRedirect = redirectUrl?.startsWith("http://") || callbackUrl;
+    const canRedirect =
+      redirectUrl?.startsWith("http://") ||
+      redirectUrl?.startsWith("https://") ||
+      callbackUrl;
     if (!canRedirect) {
-      return responder(JSON.stringify({ message: "Invalid redirect" }), {
-        status: 400,
-      });
+      return responder(
+        `Invalid ${redirectUrl ? `redirect ${redirectUrl}` : `callback ${callbackUrl}`}`,
+        {
+          status: 400,
+        },
+      );
     }
     const url = `${redirectUrl}?${searchParams.toString()}`;
 
