@@ -86,7 +86,7 @@ describe("update tenants", () => {
       "UPDATE public.tenants SET name = garbage WHERE id = 019073f4-75a6-72b9-a379-5ed38ca0d01a RETURNING *;",
     ]);
   });
-  fit("allows a user to update a tenant they are in", async () => {
+  it("allows a user to update a tenant they are in", async () => {
     const runCommands: string[] = [];
     // @ts-expect-error - test
     queryByReq.mockReturnValueOnce(async function sql(
