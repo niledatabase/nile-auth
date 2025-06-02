@@ -239,10 +239,10 @@ export function getRows<T = Record<string, any>>(
   let rows: T[] = [];
   let error: Response | undefined;
 
-  if (!res || !("rows" in res) || res.rows.length === 0) {
-    error = responder(null, { status: 404 });
-  } else if ("name" in res) {
+  if (res && "name" in res) {
     error = handleFailure(responder, res as unknown as ErrorResultSet);
+  } else if (!res || !("rows" in res) || res.rows.length === 0) {
+    error = responder(null, { status: 404 });
   } else {
     rows = res.rows as T[];
   }

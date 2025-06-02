@@ -10,7 +10,7 @@ import { ActionableErrors, AuthOptions } from "./types";
 import { findCallbackCookie } from "./next-auth/cookies";
 import { sendVerifyEmail } from "./next-auth/providers/email";
 import { validCsrfToken } from "./next-auth/csrf";
-import { HEADER_TENANT_ID } from "./next-auth/cookies/constants";
+import { TENANT_COOKIE } from "./next-auth/cookies/constants";
 
 export { maxAge } from "./nextOptions";
 
@@ -52,7 +52,7 @@ export default async function NileAuth(
   // if you make these calls server side, there is no origin, but we need
   // to use the request url as the value to be sure we use cookies correctly
   const origin = getOrigin(req);
-  const tenantId = req.headers.get(HEADER_TENANT_ID);
+  const tenantId = req.headers.get(TENANT_COOKIE);
 
   const isGoodUrl = isWellFormedUrl(String(origin));
   if (!isGoodUrl) {

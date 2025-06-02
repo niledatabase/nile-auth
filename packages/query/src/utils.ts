@@ -11,9 +11,10 @@ export enum ErrorCodes {
 }
 export function handleFailure(
   responder: ResponderFn,
-  pgData?: ErrorResultSet | Pick<ErrorResultSet, "code">,
+  pgData?: ErrorResultSet | Pick<ErrorResultSet, "code"> | { status: number },
   msg?: string,
 ) {
+  let status = pgData && "status" in pgData ? pgData?.status : 400;
   if (pgData && "code" in pgData) {
     if (pgData.code === ErrorCodes.invalid_authorization_specification) {
       return responder(`Unauthorized.`, { status: 401 });
@@ -49,5 +50,5 @@ export function handleFailure(
     return responder(`An error has occurred: ${msg}`, { status: 400 });
   }
 
-  return responder(`${msg}`, { status: 400 });
+  return responder(`${msg}`, { status });
 }
