@@ -10,6 +10,7 @@ import {
 } from "@nile-auth/core/cookies";
 import { getCsrfCookie, getCookieParts } from "@nile-auth/core/csrf";
 import { Logger } from "@nile-auth/logger";
+import { HEADER_ORIGIN } from "@nile-auth/core/cookies/constants";
 
 const { debug } = Logger("server side login");
 
@@ -35,7 +36,7 @@ export async function login(
 
   const baseHeaders = {
     host: sessionUrl.host,
-    [X_NILE_ORIGIN]: String(origin),
+    [HEADER_ORIGIN]: String(origin),
   };
 
   const [csrfToken] = getCookieParts(getCsrfCookie(req)) ?? [];
@@ -78,7 +79,7 @@ export async function login(
     params: { ...params, nextauth: ["callback", "credentials"] },
   });
   const authCookie = loginRes?.headers.get("set-cookie");
-  const details = {
+  const details: Record<string, unknown> = {
     signInCookie: cookie,
     csrfCookie,
     csrfToken,
@@ -92,6 +93,8 @@ export async function login(
   const [, token] =
     /((__Secure-)?nile\.session-token=.+?);/.exec(authCookie) ?? [];
   if (!token) {
+    details.loginHeaders = authCookie;
+    details.text = loginRes.clone().text();
     throw new LoginError("Server login failed", details);
   }
   return loginRes.headers;
