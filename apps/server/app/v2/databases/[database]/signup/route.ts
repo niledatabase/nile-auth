@@ -6,6 +6,8 @@ import { POST as USER_POST } from "../users/route";
 const { error } = Logger("signup route");
 import { login, LoginError } from "./login";
 import { validCsrfToken } from "@nile-auth/core/csrf";
+import { getOrigin, getSecureCookies } from "@nile-auth/core/cookies";
+import { HEADER_SECURE_COOKIES } from "@nile-auth/core/cookies/constants";
 /**
  * @swagger
  * /v2/databases/{database}/signup:
@@ -102,6 +104,17 @@ export async function POST(
         return responder(await userCreate.text(), { headers }, { ...swagBody });
       } catch (e) {
         if (e instanceof LoginError || e instanceof Error) {
+          // surface the most likely error -- cookies are messed up
+          if (e instanceof LoginError) {
+            const useSecureCookies = getSecureCookies(e.response);
+            const origin = getOrigin(e.response);
+            if (useSecureCookies !== origin.startsWith("https://")) {
+              return responder(
+                `Login failed. The protocol for ${origin} is mismatched against the header ${HEADER_SECURE_COOKIES}=${useSecureCookies}.`,
+                { status: 400 },
+              );
+            }
+          }
           reporter.error();
           error("Unable to login from sign up", {
             message: e.message,

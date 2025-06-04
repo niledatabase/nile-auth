@@ -120,7 +120,7 @@ export function defaultCookies(
   };
 }
 
-export function getSecureCookies(req: Request): boolean {
+export function getSecureCookies(req: Request | Response): boolean {
   const headerSecureCookies = req.headers?.get(HEADER_SECURE_COOKIES);
 
   if (headerSecureCookies != null) {
@@ -137,7 +137,7 @@ export function getSecureCookies(req: Request): boolean {
   return Boolean(String(origin).startsWith("https://"));
 }
 
-export function getOrigin(req: Request) {
+export function getOrigin(req: Request | Response) {
   const realOrigin = req.headers?.get(HEADER_ORIGIN);
   if (realOrigin) {
     return realOrigin;

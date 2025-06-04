@@ -88,23 +88,29 @@ export async function login(
   };
   debug("auth cookie", details);
   if (!authCookie) {
-    throw new LoginError("authentication failed", details);
+    throw new LoginError("authentication failed", details, loginRes);
   }
   const [, token] =
     /((__Secure-)?nile\.session-token=.+?);/.exec(authCookie) ?? [];
   if (!token) {
     details.loginHeaders = authCookie;
     details.text = loginRes.clone().text();
-    throw new LoginError("Server login failed", details);
+    throw new LoginError("Server login failed", details, loginRes);
   }
   return loginRes.headers;
 }
 
 export class LoginError extends Error {
   details: {};
-  constructor(message: string, details: Record<string, unknown>) {
+  response: Response;
+  constructor(
+    message: string,
+    details: Record<string, unknown>,
+    response: Response,
+  ) {
     super(message);
     this.name = "LoginError";
     this.details = details;
+    this.response = response;
   }
 }
