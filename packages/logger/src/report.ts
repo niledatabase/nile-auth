@@ -76,7 +76,7 @@ export function report(req: Request | string): Reporter {
       metric: Metrics,
       value: number,
       tags?: Partial<Tags>,
-      sendMetric?: true,
+      sendMetric = true,
     ) {
       // remove values for production logging
       const { values, ...remaining } = tags ?? {};
