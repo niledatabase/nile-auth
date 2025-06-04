@@ -296,7 +296,7 @@ export async function GET(
       }
 
       if (tenants && "rowCount" in tenants) {
-        return responder(JSON.stringify(tenants.rows[0]));
+        return responder(JSON.stringify(tenants.rows));
       } else {
         return responder(null, { status: 404 });
       }
