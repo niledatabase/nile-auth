@@ -97,6 +97,7 @@ export async function GET(req: NextRequest) {
           email_verified = CURRENT_TIMESTAMP
         WHERE
           email = ${identifier}
+          AND deleted IS NULL
       `;
 
       if (callbackUrl) {

@@ -443,17 +443,17 @@ export async function PUT(
         status: 400,
       });
     }
-    // since they accepted the invite, their email is verified.
 
+    // since they accepted the invite, their email is verified.
     await sql`
       UPDATE users.users
       SET
         email_verified = CURRENT_TIMESTAMP
+      WHERE
+        email = ${email}
+        AND deleted IS NULL
     `;
-    const {
-      rows: [user],
-      error: userInsertError,
-    } = await sql`
+    const { error: userInsertError } = await sql`
       INSERT INTO
         users.tenant_users (tenant_id, user_id, email)
       VALUES
