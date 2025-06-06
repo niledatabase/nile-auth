@@ -5,7 +5,7 @@ import { jwt } from "@nile-auth/core/utils";
 import {
   HEADER_ORIGIN,
   HEADER_SECURE_COOKIES,
-  HEADER_TENANT_ID,
+  TENANT_COOKIE,
   X_NILE_ORIGIN,
   X_SECURE_COOKIES,
 } from "./constants";
@@ -171,31 +171,31 @@ export function getCookie(cookieKey: void | string, headers: void | Headers) {
 }
 
 export function setTenantCookie(req: Request, rows: Record<string, string>[]) {
-  if (!getCookie(HEADER_TENANT_ID, req.headers)) {
+  if (!getCookie(TENANT_COOKIE, req.headers)) {
     const headers = new Headers();
     if (rows[0]?.id) {
       headers.set(
         "set-cookie",
-        `${HEADER_TENANT_ID}=${rows[0].id}; Path=/; SameSite=lax`,
+        `${TENANT_COOKIE}=${rows[0].id}; Path=/; SameSite=lax`,
       );
     }
     return headers;
   } else {
     // help the UI if a user is removed or cookies got changed poorly, doesn't actually auth anything.
-    const cookie = getCookie(HEADER_TENANT_ID, req.headers);
+    const cookie = getCookie(TENANT_COOKIE, req.headers);
     const exists = rows.some((r) => r.id === cookie);
     if (!exists) {
       const headers = new Headers();
       if (rows[0]?.id) {
         headers.set(
           "set-cookie",
-          `${HEADER_TENANT_ID}=${rows[0].id}; Path=/; SameSite=lax`,
+          `${TENANT_COOKIE}=${rows[0].id}; Path=/; SameSite=lax`,
         );
       } else {
         // the user doesn't have a tenant for the tenants we know, so remove the cookie
         headers.set(
           "set-cookie",
-          `${HEADER_TENANT_ID}=; Path=/; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+          `${TENANT_COOKIE}=; Path=/; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
         );
       }
       return headers;

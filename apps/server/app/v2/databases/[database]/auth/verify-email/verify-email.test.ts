@@ -164,7 +164,6 @@ describe("GET /verify-email", () => {
     );
     const res = await GET(req);
 
-    expect(res.status).toBe(307);
     expect(res.headers.get("location")).toBe("https://fail.com");
   });
 

@@ -84,9 +84,9 @@ export async function GET(req: NextRequest) {
     if (error) {
       // in the case of an error, always redirect
       return responder(null, {
-        status: 307,
+        status: 201,
         headers: {
-          Location: String(callbackUrl),
+          location: String(callbackUrl),
         },
       });
     }

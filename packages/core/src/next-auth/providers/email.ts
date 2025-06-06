@@ -4,6 +4,7 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { User as NextAuthUser } from "next-auth";
 
 import {
+  ErrorResultSet,
   queryByInfo,
   queryByReq,
   queryBySingle,
@@ -14,17 +15,25 @@ import { DbCreds } from "@nile-auth/query/getDbInfo";
 import { randomString } from "../../utils";
 import { findCallbackCookie } from "../cookies";
 import { validCsrfToken } from "../csrf";
+import { addContext } from "@nile-auth/query/context";
+import { handleFailure } from "@nile-auth/query/utils";
 const { info, warn, debug } = Logger("emailProvider");
 
 export type Variable = { name: string; value?: string };
 
+type EmailTemplate =
+  | "email_invitation"
+  | "password_reset"
+  | "verify_email"
+  | "invite_user"
+  | "password_alert";
 function isEmpty(row: ResultSet<Record<string, string>[]> | undefined) {
   return row && "rowCount" in row && row.rowCount === 0;
 }
 export default async function Email(
   creds: DbCreds,
   config?: {
-    emailTemplate: "email_invitation" | "password_reset" | "verify_email";
+    emailTemplate: EmailTemplate;
   },
 ) {
   const sql = await queryByInfo(creds);
@@ -139,13 +148,19 @@ export default async function Email(
         throw new Error("Unable to generate email from template");
       }
 
-      await sendEmail({
-        body,
-        url: String(server.server),
-        to: identifier,
-        from: from ? from : initialFrom,
-        subject,
-      });
+      try {
+        await sendEmail({
+          body,
+          url: String(server.server),
+          to: identifier,
+          from: from ? from : initialFrom,
+          subject,
+        });
+      } catch (e) {
+        if (e instanceof Error) {
+          warn("Unable to send email", { stack: e.stack, message: e.message });
+        }
+      }
     },
   });
 }
@@ -211,7 +226,8 @@ export type NileAuthFields =
   | "user.name"
   | "user.email"
   | "app_name"
-  | "sender";
+  | "sender"
+  | "tenant_name";
 
 export function generateEmailBody(params: {
   email: string;
@@ -219,8 +235,9 @@ export function generateEmailBody(params: {
   template: void | Template;
   variables: Variable[];
   url: string;
+  tenantName?: string;
 }) {
-  const { email, template, username, url } = params;
+  const { tenantName = "", email, template, username, url } = params;
 
   let api_url;
   try {
@@ -252,6 +269,7 @@ export function generateEmailBody(params: {
     { name: "user.email", value: email },
     { name: "sender", value: from },
     { name: "api_url", value: api_url },
+    { name: "tenant_name", value: tenantName },
   ] as Variable[];
 
   const subject = replaceVars(String(template?.subject), replacers);
@@ -275,14 +293,15 @@ function replaceVars(html: string, replacers: Variable[]) {
   return processedHtml;
 }
 
-function validSender(
+export function checkEmail(email: string) {
+  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+}
+export function validSender(
   email: string,
-  vars: Variable[],
-  template: void | Template,
+  vars?: Variable[],
+  template?: void | Template,
 ) {
-  const validEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(
-    email,
-  );
+  const validEmail = checkEmail(email);
   if (!validEmail) {
     info("Attempted to send email with invalid sender", {
       email,
@@ -457,6 +476,181 @@ export async function sendPasswordHasBeenReset(params: {
   user: NextAuthUser;
 }) {
   const { req, responder, user } = params;
+  const emailSetup = await setupEmail({
+    req,
+    responder,
+    template: "password_alert",
+  });
+  if (emailSetup instanceof Response) {
+    return emailSetup;
+  }
+  const [server, variables, template] = emailSetup;
+
+  if (user.email && user.name) {
+    const { from, body, subject } = await generateEmailBody({
+      email: user.email,
+      username: user.name,
+      template: template as Template,
+      variables:
+        variables && "rows" in variables ? (variables.rows as Variable[]) : [],
+      url: "", // a rare case where there is no app url to use
+    });
+    try {
+      await sendEmail({
+        body,
+        to: user.email,
+        from,
+        subject,
+        url: String(server?.server),
+      });
+    } catch (e) {
+      if (e instanceof Error) {
+        warn("Unable to send email", { stack: e.stack, message: e.message });
+        return responder(e.message, { status: 400 });
+      }
+    }
+  }
+}
+
+export async function sendTenantUserInvite(params: {
+  req: Request;
+  responder: ResponderFn;
+  tenantId: string;
+  userId: string;
+  json: {
+    callbackUrl: string;
+    redirectUrl: string | URL;
+    identifier: string;
+  };
+}): Promise<Response> {
+  const { json, req, responder, tenantId, userId } = params;
+  const token = randomString(32);
+
+  const sql = await queryByReq(req);
+  const sqlOne = await queryBySingle({ req, responder });
+
+  // the next query will deal with permission
+  const {
+    rows: [tenant],
+    error: tenantError,
+  } = await sqlOne`
+    SELECT
+      *
+    FROM
+      public.tenants
+    WHERE
+      id = ${tenantId}
+  `;
+
+  if (tenantError) {
+    return responder(tenantError);
+  }
+  const {
+    rows: [user],
+    error: userError,
+  } = await sqlOne`
+    SELECT
+      *
+    FROM
+      users.users
+    WHERE
+      email = ${json.identifier}
+  `;
+  if (userError) {
+    return userError;
+  }
+
+  // check if the user is already in the tenant.
+  const [, person] = await sql`
+    ${addContext({ tenantId })};
+
+    SELECT
+      *
+    FROM
+      users.tenant_users
+    WHERE
+      user_id = ${user?.id}
+  `;
+  if (person && "rowCount" in person && person.rowCount > 0) {
+    return responder("User is already a member of the tenant", { status: 400 });
+  }
+
+  const [contextError, , invite] = await sql`
+    ${addContext({ tenantId })};
+
+    ${addContext({ userId })};
+
+    INSERT INTO
+      auth.invites (tenant_id, token, identifier, created_by, expires)
+    VALUES
+      (
+        ${tenantId},
+        ${token},
+        ${json.identifier},
+        ${userId},
+        NOW() + INTERVAL '7 days'
+      )
+    ON CONFLICT (tenant_id, identifier) DO UPDATE
+    SET
+      token = EXCLUDED.token,
+      expires = NOW() + INTERVAL '7 days'
+    RETURNING
+      *
+  `;
+  if (contextError) {
+    return handleFailure(responder, contextError as ErrorResultSet);
+  }
+  const callbackUrl = json.callbackUrl;
+  const redirectUrl = json.redirectUrl;
+  const validInvite = invite && "rows" in invite ? invite.rows[0] : undefined;
+  const searchParams = new URLSearchParams({
+    token,
+    identifier: json.identifier,
+    callbackUrl,
+  });
+
+  const setup = await setupEmail({
+    req,
+    responder,
+    template: "invite_user",
+  });
+
+  if (setup instanceof Response) {
+    return setup;
+  }
+  const [server, variables, template] = setup;
+  const { from, body, subject } = await generateEmailBody({
+    email: json.identifier,
+    template,
+    variables,
+    url: `${redirectUrl}?${searchParams.toString()}`,
+    tenantName: tenant?.name,
+  });
+
+  try {
+    await sendEmail({
+      body,
+      to: json.identifier,
+      from,
+      subject,
+      url: server.server,
+    });
+  } catch (e) {
+    if (e instanceof Error) {
+      warn("Unable to send email", { stack: e.stack, message: e.message });
+      return responder(e.message, { status: 400 });
+    }
+  }
+
+  return responder(JSON.stringify(validInvite), { status: 201 });
+}
+
+async function setupEmail(params: {
+  req: Request;
+  responder: ResponderFn;
+  template: EmailTemplate;
+}): Promise<Response | [{ server: string }, Variable[], Template]> {
+  const { req, responder, template } = params;
   const sqlOne = await queryBySingle({ req, responder });
   const sqlMany = await queryByReq(req as Request);
   const [variables] = await sqlMany`
@@ -467,7 +661,7 @@ export async function sendPasswordHasBeenReset(params: {
   `;
   const [
     {
-      rows: [template],
+      rows: [templateString],
       error: templateError,
     },
     {
@@ -481,7 +675,7 @@ export async function sendPasswordHasBeenReset(params: {
       FROM
         auth.email_templates
       WHERE
-        name = 'password_alert'
+        name = ${template}
     `,
     sqlOne`
       SELECT
@@ -495,26 +689,18 @@ export async function sendPasswordHasBeenReset(params: {
     `,
   ]);
   if (templateError) {
-    return responder(templateError);
+    return responder(`Unable to find email template ${template}`, {
+      status: 404,
+    });
   }
   if (serverError) {
-    return responder(serverError);
-  }
-  if (user.email && user.name) {
-    const { from, body, subject } = await generateEmailBody({
-      email: user.email,
-      username: user.name,
-      template: template as Template,
-      variables:
-        variables && "rows" in variables ? (variables.rows as Variable[]) : [],
-      url: "", // a rare case where there is no app url to use
-    });
-    await sendEmail({
-      body,
-      to: user.email,
-      from,
-      subject,
-      url: String(server?.server),
+    return responder("Email sending is not configured for this database.", {
+      status: 400,
     });
   }
+  return [
+    server as { server: string },
+    variables && "rows" in variables ? (variables.rows as Variable[]) : [],
+    templateString as Template,
+  ];
 }
