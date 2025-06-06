@@ -543,11 +543,12 @@ export async function sendTenantUserInvite(params: {
   `;
 
   if (tenantError) {
+    debug(`missing tenant ${tenantId}`);
     return responder(tenantError);
   }
+  // a missing user is ok
   const {
     rows: [user],
-    error: userError,
   } = await sqlOne`
     SELECT
       *
@@ -556,23 +557,24 @@ export async function sendTenantUserInvite(params: {
     WHERE
       email = ${json.identifier}
   `;
-  if (userError) {
-    return userError;
-  }
 
   // check if the user is already in the tenant.
-  const [, person] = await sql`
-    ${addContext({ tenantId })};
+  if (user) {
+    const [, person] = await sql`
+      ${addContext({ tenantId })};
 
-    SELECT
-      *
-    FROM
-      users.tenant_users
-    WHERE
-      user_id = ${user?.id}
-  `;
-  if (person && "rowCount" in person && person.rowCount > 0) {
-    return responder("User is already a member of the tenant", { status: 400 });
+      SELECT
+        *
+      FROM
+        users.tenant_users
+      WHERE
+        user_id = ${user.id}
+    `;
+    if (person && "rowCount" in person && person.rowCount > 0) {
+      return responder("User is already a member of the tenant", {
+        status: 400,
+      });
+    }
   }
 
   const [contextError, , invite] = await sql`

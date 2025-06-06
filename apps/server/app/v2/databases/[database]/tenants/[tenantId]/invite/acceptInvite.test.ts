@@ -148,7 +148,7 @@ describe("accept invite", () => {
       expect.stringMatching(
         /^INSERT INTO users\.users \(email, email_verified\) VALUES \( user@example\.com, CURRENT_TIMESTAMP \) RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated, email_verified AS "emailVerified"$/,
       ),
-      "UPDATE users.users SET email_verified = CURRENT_TIMESTAMP",
+      "UPDATE users.users SET email_verified = CURRENT_TIMESTAMP WHERE email = user@example.com AND deleted IS NULL",
       "INSERT INTO users.tenant_users (tenant_id, user_id, email) VALUES ( 019073f4-75a6-72b9-a379-5ed38ca0d01a, new-user-id, user@example.com ) RETURNING *",
     ]);
   });

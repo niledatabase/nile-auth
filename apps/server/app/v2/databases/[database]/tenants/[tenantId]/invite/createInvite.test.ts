@@ -108,7 +108,6 @@ describe("list invites", () => {
     expect(commands).toEqual([
       "SELECT * FROM public.tenants WHERE id = 019073f4-75a6-72b9-a379-5ed38ca0d01a",
       "SELECT * FROM users.users WHERE email = user@example.com",
-      ":SET LOCAL nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; SELECT * FROM users.tenant_users WHERE user_id = undefined",
       expect.stringMatching(
         /^:SET LOCAL nile\.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET LOCAL nile\.user_id = 'some-uuid'; INSERT INTO auth\.invites \(tenant_id, token, identifier, created_by, expires\) VALUES \( 019073f4-75a6-72b9-a379-5ed38ca0d01a, [a-z0-9]+, user@example\.com, some-uuid, NOW\(\) \+ INTERVAL '7 days' \) ON CONFLICT \(tenant_id, identifier\) DO UPDATE SET token = EXCLUDED\.token, expires = NOW\(\) \+ INTERVAL '7 days' RETURNING \*$/,
       ),
@@ -202,7 +201,6 @@ describe("list invites", () => {
     expect(commands).toEqual([
       "SELECT * FROM public.tenants WHERE id = 019073f4-75a6-72b9-a379-5ed38ca0d01a",
       "SELECT * FROM users.users WHERE email = user@example.com",
-      ":SET LOCAL nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; SELECT * FROM users.tenant_users WHERE user_id = undefined",
       expect.stringMatching(
         /^:SET LOCAL nile\.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; :SET LOCAL nile\.user_id = 'some-uuid'; INSERT INTO auth\.invites \(tenant_id, token, identifier, created_by, expires\) VALUES \( 019073f4-75a6-72b9-a379-5ed38ca0d01a, [a-z0-9]+, user@example\.com, some-uuid, NOW\(\) \+ INTERVAL '7 days' \) ON CONFLICT \(tenant_id, identifier\) DO UPDATE SET token = EXCLUDED\.token, expires = NOW\(\) \+ INTERVAL '7 days' RETURNING \*$/,
       ),

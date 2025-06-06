@@ -146,7 +146,7 @@ describe("GET /verify-email", () => {
     expect(res.status).toBe(200);
     expect(runCommands).toEqual([
       "SELECT * FROM auth.verification_tokens WHERE identifier = test@example.com AND token = abc123",
-      "UPDATE users.users SET email_verified = CURRENT_TIMESTAMP WHERE email = test@example.com",
+      "UPDATE users.users SET email_verified = CURRENT_TIMESTAMP WHERE email = test@example.com AND deleted IS NULL",
     ]);
   });
 
