@@ -320,7 +320,7 @@ export async function sendVerifyEmail(params: {
   const preserve = await req.clone();
   const formData = await preserve.formData();
   const email = String(formData.get("email"));
-  const callbackUrl = String(formData.get("resetUrl"));
+  const callbackUrl = String(formData.get("callbackUrl"));
   const csrfToken = formData.get("csrfToken");
   const redirectUrl = formData.get("redirectUrl");
   const [hasValidToken, csrf] = await validCsrfToken(
