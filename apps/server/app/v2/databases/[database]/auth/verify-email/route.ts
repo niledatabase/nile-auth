@@ -141,11 +141,11 @@ export async function GET(req: NextRequest) {
  *                 type: string
  *                 format: email
  *                 example: user@example.com
- *               resetUrl:
+ *               callbackUrl:
  *                 type: string
  *                 format: uri
  *                 description: URL the user is sent to after resetting
- *                 example: https://example.com/reset
+ *                 example: https://example.com/callback
  *               csrfToken:
  *                 type: string
  *                 description: CSRF protection token
