@@ -24,7 +24,7 @@ jest.mock(
 
 describe("accept invite", () => {
   const commands: string[] = [];
-  it("successfully creates a user from a valid invite", async () => {
+  fit("successfully creates a user from a valid invite", async () => {
     const sql = async (strings: TemplateStringsArray, ...values: any[]) => {
       let text = strings[0] ?? "";
 

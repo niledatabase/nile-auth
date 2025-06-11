@@ -87,6 +87,11 @@ export async function login(
     baseHeaders,
   };
   debug("auth cookie", details);
+  // if email is required to be verified, we have a location header
+  const location = loginRes.headers.get("location");
+  if (location) {
+    throw new EmailVerificationError("Email is required", loginRes);
+  }
   if (!authCookie) {
     throw new LoginError("authentication failed", details, loginRes);
   }
@@ -111,6 +116,15 @@ export class LoginError extends Error {
     super(message);
     this.name = "LoginError";
     this.details = details;
+    this.response = response;
+  }
+}
+
+export class EmailVerificationError extends Error {
+  response: Response;
+  constructor(message: string, response: Response) {
+    super(message);
+    this.name = "EmailVerificationError";
     this.response = response;
   }
 }

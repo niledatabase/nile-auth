@@ -148,6 +148,11 @@ export function getOrigin(req: Request | Response) {
     return origin;
   }
 
+  // in the case of a redirect, it is in `headers.location`
+  const location = req.headers?.get("location");
+  if (location) {
+    return new URL(location).origin;
+  }
   return new URL(req.url).origin;
 }
 export function getCookie(cookieKey: void | string, headers: void | Headers) {

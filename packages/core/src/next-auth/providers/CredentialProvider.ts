@@ -4,7 +4,12 @@ import bcrypt from "bcryptjs";
 import CredentialProvider from "next-auth/providers/credentials";
 import { Pool } from "pg";
 
-import { ActionableErrors, CredentialRow, ProviderMethods } from "../../types";
+import {
+  ActionableErrors,
+  CredentialRow,
+  ProviderMethods,
+  ProviderNames,
+} from "../../types";
 
 const { debug, warn, error } = Logger("[credential provider]");
 
@@ -52,11 +57,30 @@ export default function CredProvider({ pool }: Params) {
             email: string;
           }>[] = creds && "rows" in creds ? creds.rows : null;
 
-      const emailProvider = providers?.find(
+      const emailCredential = providers?.find(
         (p) => p.method === ProviderMethods.EMAIL_PASSWORD,
       );
 
-      const credPayload = emailProvider?.payload;
+      // be sure the email is verified, if configured.
+      const ep = await sql`
+        SELECT
+          *
+        FROM
+          auth.oidc_providers
+        WHERE
+          name = ${ProviderNames.Email}
+      `;
+      const emailProvider = ep && "rows" in ep ? ep.rows[0] : null;
+      if (emailProvider) {
+        const { forceVerified } = emailProvider.config;
+        if (forceVerified) {
+          if (forceVerified && !user.email_verified) {
+            throw new Error(ActionableErrors.notVerified);
+          }
+        }
+      }
+
+      const credPayload = emailCredential?.payload;
       // if the user hash is missing, it means they have not enabled the credentials provider
       if (!credPayload?.hash) {
         // look to see if there are SSO providers, need to pass a better error back that user should be
