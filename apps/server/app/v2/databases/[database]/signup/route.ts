@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import { POST as USER_POST } from "../users/route";
 
 const { error } = Logger("signup route");
-import { login, LoginError } from "./login";
+import { EmailVerificationError, login, LoginError } from "./login";
 import { validCsrfToken } from "@nile-auth/core/csrf";
 import { getOrigin, getSecureCookies } from "@nile-auth/core/cookies";
 import { HEADER_SECURE_COOKIES } from "@nile-auth/core/cookies/constants";
@@ -114,6 +114,12 @@ export async function POST(
                 { status: 400 },
               );
             }
+          }
+          if (e instanceof EmailVerificationError) {
+            return responder("Email verification is required for sign in.", {
+              headers: e.response.headers,
+              status: 400,
+            });
           }
           reporter.error();
           error("Unable to login from sign up", {

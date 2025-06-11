@@ -90,7 +90,7 @@ export default async function NileAuth(
         // Send an email to that user forcing them to verify themselves
         if (error === ActionableErrors.notVerified) {
           return await sendVerifyEmail({
-            req,
+            req: preserve,
             responder,
           });
         }
