@@ -1,15 +1,8 @@
 import { NextRequest } from "next/server";
-import { serialize } from "cookie";
 
 import NileAuth from "@nile-auth/core";
 import { EventEnum, Logger, ResponseLogger } from "@nile-auth/logger";
-import {
-  findCallbackCookie,
-  getCallbackCookie,
-  getOrigin,
-  getSecureCookies,
-} from "@nile-auth/core/cookies";
-import { HEADER_ORIGIN } from "@nile-auth/core/cookies/constants";
+import { getOrigin, getSecureCookies } from "@nile-auth/core/cookies";
 
 const log = Logger(EventEnum.NILE_AUTH);
 
