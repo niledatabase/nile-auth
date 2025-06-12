@@ -11,6 +11,7 @@ import {
 import { getCsrfCookie, getCookieParts } from "@nile-auth/core/csrf";
 import { Logger } from "@nile-auth/logger";
 import { HEADER_ORIGIN } from "@nile-auth/core/cookies/constants";
+import { ActionableErrors } from "@nile-auth/core";
 
 const { debug } = Logger("server side login");
 
@@ -87,19 +88,25 @@ export async function login(
     baseHeaders,
   };
   debug("auth cookie", details);
-  // if email is required to be verified, we have a location header
-  const location = loginRes.headers.get("location");
-  if (location) {
-    throw new EmailVerificationError(
-      "Email verification is required for sign in",
-      loginRes,
-    );
-  }
+
   if (!authCookie) {
-    throw new LoginError("authentication failed", details, loginRes);
+    const location = loginRes.headers.get("location");
+    if (location) {
+      const locationUrl = new URL(location);
+      const possibleError = locationUrl.searchParams.get("error");
+      if (possibleError === ActionableErrors.notVerified) {
+        throw new EmailVerificationError(
+          "Email verification is required for sign in",
+          loginRes,
+        );
+      }
+    }
+    throw new LoginError("Authentication failed", details, loginRes);
   }
+
   const [, token] =
     /((__Secure-)?nile\.session-token=.+?);/.exec(authCookie) ?? [];
+
   if (!token) {
     details.loginHeaders = authCookie;
     details.text = loginRes.clone().text();
