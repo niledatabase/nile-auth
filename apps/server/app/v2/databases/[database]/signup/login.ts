@@ -89,7 +89,7 @@ export async function login(
   debug("auth cookie", details);
   // if email is required to be verified, we have a location header
   const location = loginRes.headers.get("location");
-  if (location) {
+  if (location && !authCookie) {
     throw new EmailVerificationError(
       "Email verification is required for sign in",
       loginRes,
