@@ -300,9 +300,31 @@ export async function PUT(
     const cbUrl = formData.get("callbackUrl");
     const callbackCookie = findCallbackCookie(req);
 
-    let callbackUrl;
+    let callbackUrl: URL | undefined;
+
     try {
-      callbackUrl = new URL(typeof cbUrl === "string" ? cbUrl : callbackCookie);
+      const raw = typeof cbUrl === "string" ? cbUrl : callbackCookie;
+
+      try {
+        callbackUrl = new URL(raw);
+      } catch {
+        // relative path
+        const baseSource =
+          typeof cbUrl === "string" && cbUrl.startsWith("http")
+            ? new URL(cbUrl)
+            : typeof callbackCookie === "string" &&
+                callbackCookie.startsWith("http")
+              ? new URL(callbackCookie)
+              : null;
+
+        if (!baseSource) {
+          return responder("Invalid callback url: missing base", {
+            status: 400,
+          });
+        }
+
+        callbackUrl = new URL(raw, baseSource.origin);
+      }
     } catch {
       return responder("Invalid callback url", { status: 400 });
     }
