@@ -4,7 +4,7 @@ import NextAuth, { AuthOptions as NextAuthOptions } from "next-auth";
 import { buildOptions } from "./utils";
 import { nextOptions } from "./nextOptions";
 import getDbInfo from "@nile-auth/query/getDbInfo";
-import { getOrigin } from "./next-auth/cookies";
+import { getOrigin, getTenantCookie } from "./next-auth/cookies";
 import { isFQDN } from "validator";
 import { ActionableErrors, AuthOptions } from "./types";
 import { findCallbackCookie } from "./next-auth/cookies";
@@ -52,7 +52,7 @@ export default async function NileAuth(
   // if you make these calls server side, there is no origin, but we need
   // to use the request url as the value to be sure we use cookies correctly
   const origin = getOrigin(req);
-  const tenantId = req.headers.get(TENANT_COOKIE);
+  const tenantId = getTenantCookie(req);
 
   const isGoodUrl = isWellFormedUrl(String(origin));
   if (!isGoodUrl) {

@@ -175,6 +175,15 @@ export function getCookie(cookieKey: void | string, headers: void | Headers) {
   return null;
 }
 
+export function getTenantCookie(req: Request) {
+  const cookie = getCookie(TENANT_COOKIE, req.headers);
+  if (cookie) {
+    if (isValidUUID(cookie)) {
+      return cookie;
+    }
+  }
+  return null;
+}
 export function setTenantCookie(req: Request, rows: Record<string, string>[]) {
   if (!getCookie(TENANT_COOKIE, req.headers)) {
     const headers = new Headers();
@@ -255,3 +264,11 @@ export async function makeNewSessionJwt(req: Request, user: User) {
   return cookie;
 }
 export { X_NILE_ORIGIN };
+
+function isValidUUID(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}

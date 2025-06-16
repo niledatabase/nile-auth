@@ -37,6 +37,7 @@ export default function CredProvider({ pool }: Params) {
       const user = await getUserByEmail(credentials?.email, pool);
 
       if (!user || !credentials?.password) {
+        debug("user or credentials are missing", { user, credentials });
         throw new Error("Login failed.");
       }
       const sql = query(pool);
