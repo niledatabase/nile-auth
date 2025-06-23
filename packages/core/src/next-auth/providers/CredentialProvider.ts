@@ -73,7 +73,7 @@ export default function CredProvider({ pool }: Params) {
       `;
       const emailProvider = ep && "rows" in ep ? ep.rows[0] : null;
       if (emailProvider) {
-        const { forceVerified } = emailProvider.config;
+        const { forceVerified } = emailProvider?.config ?? {};
         if (forceVerified && !user.email_verified) {
           throw new Error(ActionableErrors.notVerified);
         }
