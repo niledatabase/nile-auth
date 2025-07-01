@@ -336,13 +336,18 @@ export async function GET(req: NextRequest) {
     if (error) {
       // in the case of an error, always redirect
       return responder(null, {
-        status: 307,
+        status: 200,
         headers: {
-          Location: String(callbackUrl),
+          location: `${callbackUrl}${callbackUrl?.includes("?") ? "&" : "?"}error=${encodeURIComponent("Token is invalid")}`,
         },
       });
     }
     if (new Date(verificationToken?.expires) > new Date()) {
+      await sql`
+        DELETE FROM auth.verification_tokens
+        WHERE
+          identifier = ${verificationToken?.identifier}
+      `;
       if (callbackUrl) {
         const headers = new Headers();
         if (redirect !== "false") {
