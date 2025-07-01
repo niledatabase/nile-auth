@@ -175,6 +175,12 @@ export async function POST(req: NextRequest) {
     const newToken = randomString(32);
 
     const identifier = email;
+    // remove all traces of the identifier
+    await sqlOne`
+      DELETE FROM auth.verification_tokens
+      WHERE
+        identifier = ${identifier}
+    `;
     await sqlOne`
       INSERT INTO
         auth.verification_tokens (identifier, token, expires)
@@ -184,10 +190,6 @@ export async function POST(req: NextRequest) {
           ${newToken},
           ${FOUR_HOURS_FROM_NOW}
         )
-      ON CONFLICT (identifier) DO UPDATE
-      SET
-        token = EXCLUDED.token,
-        expires = EXCLUDED.expires
     `;
 
     const requestUrl = new URL(req.url);

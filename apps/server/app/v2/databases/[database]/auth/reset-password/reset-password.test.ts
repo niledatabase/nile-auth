@@ -93,6 +93,7 @@ describe("generatePasswordToken", () => {
       "SELECT * FROM users.users WHERE email = email",
       "SELECT * FROM auth.email_templates WHERE name = 'password_reset'",
       "SELECT * FROM auth.email_servers ORDER BY created DESC LIMIT 1",
+      "DELETE FROM auth.verification_tokens WHERE identifier = email",
       expect.stringMatching(
         /INSERT INTO auth.verification_tokens.*VALUES \( email, .*, .*\)/, // Dynamically match token and expiration values
       ),
