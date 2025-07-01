@@ -139,6 +139,7 @@ describe("generatePasswordToken", () => {
     const response = await GET(req as NextRequest);
     expect(runCommands).toEqual([
       "SELECT * FROM auth.verification_tokens WHERE identifier = identifier AND token = token",
+      "DELETE FROM auth.verification_tokens WHERE identifier = identifier",
     ]);
 
     const responseHeaders = new Headers(response.headers);
