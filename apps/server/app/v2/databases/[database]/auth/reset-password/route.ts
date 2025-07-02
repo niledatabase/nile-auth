@@ -10,14 +10,12 @@ import {
   Template,
   Variable,
 } from "@nile-auth/core/providers/email";
-import { User } from "next-auth";
 import {
   createHash,
   getCookieParts,
   validCsrfToken,
 } from "@nile-auth/core/csrf";
 import {
-  getCallbackCookie,
   getCookie,
   getPasswordResetCookie,
   getSecureCookies,
@@ -345,11 +343,6 @@ export async function GET(req: NextRequest) {
       });
     }
     if (new Date(verificationToken?.expires) > new Date()) {
-      await sql`
-        DELETE FROM auth.verification_tokens
-        WHERE
-          identifier = ${verificationToken?.identifier}
-      `;
       if (callbackUrl) {
         const headers = new Headers();
         if (redirect !== "false") {
@@ -456,6 +449,7 @@ export async function PUT(req: NextRequest) {
       WHERE
         token = ${token}
     `;
+
     if (error) {
       return error;
     }
@@ -463,15 +457,8 @@ export async function PUT(req: NextRequest) {
       `${token}${identifier?.identifier}${process.env.NEXTAUTH_SECRET}`,
     );
 
-    const body = await req.json();
-
     // nice try
-    if (
-      expectedToken !== resetTokenHash ||
-      !identifier?.identifier ||
-      body.email?.trim().toLowerCase() !==
-        identifier.identifier.trim().toLowerCase()
-    ) {
+    if (expectedToken !== resetTokenHash || !identifier?.identifier) {
       return responder("Unable to process request", { status: 400 });
     }
 
@@ -488,19 +475,20 @@ export async function PUT(req: NextRequest) {
     const {
       rows: [user],
       error: userError,
-    } = await sql<User>`
+    } = await sql<{ id: string; email: string }>`
       SELECT
         *
       FROM
         users.users
       WHERE
-        email = ${body.email}
+        email = ${identifier.identifier}
     `;
     if (userError) {
       return responder(userError);
     }
 
-    if (user?.id) {
+    if (user) {
+      const body = await req.json();
       // you can now reset your password
       // all the other passwords are bad
       await sql`
@@ -527,7 +515,7 @@ export async function PUT(req: NextRequest) {
                 public.gen_salt ('bf', 8)
               ),
               'email',
-              ${body.email}::text
+              ${user.email}::text
             )
           )
         RETURNING
