@@ -404,7 +404,7 @@ export async function sendVerifyEmail(params: {
 
   if (templateError) {
     return responder(
-      "Unable to send verification email, the template is missing",
+      "Unable to send verification email, the 'verify_email' template is missing from auth.email_templates",
       { status: 400 },
     );
   }
