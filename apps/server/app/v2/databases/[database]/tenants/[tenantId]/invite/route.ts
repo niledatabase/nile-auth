@@ -172,7 +172,7 @@ export async function POST(
 /**
  * @swagger
  * /v2/databases/{database}/tenants/{tenantId}/invite:
- *   PUT:
+ *   put:
  *     tags:
  *       - tenants
  *     summary: Accepts a tenant invite
