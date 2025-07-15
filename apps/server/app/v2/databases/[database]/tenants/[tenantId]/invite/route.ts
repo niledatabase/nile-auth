@@ -14,7 +14,7 @@ import { NextRequest } from "next/server";
 /**
  * @swagger
  * /v2/databases/{database}/tenants/{tenantId}/invite:
- * post:
+ *  post:
  *   tags:
  *     - tenants
  *   summary: Invite a user to a tenant
