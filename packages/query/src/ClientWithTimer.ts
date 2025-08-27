@@ -8,9 +8,7 @@ export default class ClientWithTimer {
   backupTimer: void | NodeJS.Timeout;
   id: string;
   removeSelf: (id: string) => void;
-  hasError: Error | void;
   client: Client;
-  tries: number;
   config: ClientConfig;
   logger: LoggerType;
   constructor(
@@ -23,7 +21,6 @@ export default class ClientWithTimer {
     this.timer = undefined;
     this.backupTimer = undefined;
     this.startTimer();
-    this.tries = 0;
     this.removeSelf = function (id) {
       removeSelf(id);
     };
@@ -31,7 +28,6 @@ export default class ClientWithTimer {
     this.logger = logger;
 
     this.config = config;
-    this.hasError = undefined;
     this.client.on("error", (e) => {
       this.logger.warn("Client has gone away", { error: e });
       removeSelf(id);
@@ -44,9 +40,7 @@ export default class ClientWithTimer {
         ...this.config,
         password: Boolean(this.config.password),
       });
-      await this.client.end();
-      this.tries++;
-      this.hasError = e;
+      this.removeSelf(this.id);
     });
   }
 
