@@ -90,7 +90,7 @@ export default function getDbInfo(
     database,
     host,
   };
-  debug(`connecting using ${JSON.stringify(dbInfo)}`);
+  debug(`connecting using ${JSON.stringify({ port, user, database, host })}`);
 
   return dbInfo;
 }
