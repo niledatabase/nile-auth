@@ -23,7 +23,7 @@
     "cookie": "^1.0.2",
     "dotenv": "^16.4.5",
     "next": "^14.2.30",
-    "nodemailer": "^6.9.15",
+    "nodemailer": "^7.0.7",
     "oauth": "^0.10.0",
     "oauth4webapi": "^3.1.0",
     "openid-client": "^5.7.0",
