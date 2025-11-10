@@ -69,9 +69,15 @@ export default function CredProvider({ pool }: Params) {
         FROM
           auth.oidc_providers
         WHERE
-          name = ${ProviderNames.Email}
+          name IN (
+            ${ProviderNames.Email},
+            ${ProviderNames.MultiFactor}
+          )
+        ORDER BY
+          name
       `;
       const emailProvider = ep && "rows" in ep ? ep.rows[0] : null;
+
       if (emailProvider) {
         const { forceVerified } = emailProvider?.config ?? {};
         if (forceVerified && !user.email_verified) {
@@ -83,11 +89,13 @@ export default function CredProvider({ pool }: Params) {
       // if the user hash is missing, it means they have not enabled the credentials provider
       if (!credPayload?.hash) {
         // look to see if there are SSO providers, need to pass a better error back that user should be
+        // because of the 2fa provider, this logic is screwed!
         if (providers && providers.length > 0) {
           warn("user is not verified and attempted login with an SSO account");
           throw new Error(ActionableErrors.notVerified);
         }
         warn(`No password in db for ${user.email}`);
+
         throw new Error("Login failed.");
       } else {
         // if they have a hash and even 1 provider, they must be verified.

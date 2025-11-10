@@ -12,6 +12,8 @@ import { query } from "@nile-auth/query";
 import handleGoogleRefresh from "./next-auth/providers/google";
 import handleGithubRefresh from "./next-auth/providers/github";
 import { Params, PartyResultSet } from "./next-auth/providers/types";
+import { ensureMfaChallenge } from "./mfa";
+import { buildMfaError, encodeMfaPayload } from "./mfa/utils";
 
 const { info, error, debug, warn } = Logger("nile-auth/RouteWrapper");
 
@@ -144,7 +146,7 @@ export async function jwt(params: {
   return token;
 }
 
-export function buildOptions(cfg?: AuthOptions) {
+export function buildOptions(req: Request, cfg?: AuthOptions) {
   const dbInfo = getDbInfo(cfg);
   const config = cfg ? cfg : ({} as AuthOptions);
   config.adapter = Adapter({
@@ -152,6 +154,18 @@ export function buildOptions(cfg?: AuthOptions) {
     ...dbInfo,
   });
   config.callbacks = {
+    signIn: async function signIn(params) {
+      const challenge = await ensureMfaChallenge({
+        req,
+        dbInfo,
+        user: params.user as AdapterUser,
+      });
+      if (challenge) {
+        const encoded = encodeMfaPayload(challenge);
+        throw buildMfaError(encoded);
+      }
+      return true;
+    },
     jwt,
     session: async function session(params) {
       const { session, token, user } = params;

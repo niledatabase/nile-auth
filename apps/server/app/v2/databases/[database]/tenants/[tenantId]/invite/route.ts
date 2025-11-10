@@ -432,7 +432,8 @@ export async function PUT(
         picture,
         created,
         updated,
-        email_verified AS "emailVerified"
+        email_verified AS "emailVerified",
+        multi_factor AS "multiFactor"
     `;
 
     let userId = newUser?.id;

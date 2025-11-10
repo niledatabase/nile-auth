@@ -4,12 +4,6 @@ import { NextRequest } from "next/server";
 import { ErrorResultSet } from "@nile-auth/query";
 import { handleFailure } from "@nile-auth/query/utils";
 import { ProviderMethods } from "@nile-auth/core";
-import { sendVerifyEmail } from "@nile-auth/core/providers/email";
-import {
-  getCallbackCookie,
-  getCookie,
-  getSecureCookies,
-} from "@nile-auth/core/cookies";
 
 /**
  *
@@ -101,7 +95,7 @@ export async function POST(req: NextRequest) {
               auth.credentials
             WHERE
               user_id = ${existingUser.id}
-              AND method <> 'EMAIL_PASSWORD'
+              AND method NOT IN ('EMAIL_PASSWORD', 'MFA')
           ) AS has_other_methods;
       `;
       const { has_other_methods } = getRow(hasSso) ?? {};
@@ -133,6 +127,7 @@ export async function POST(req: NextRequest) {
         id,
         email,
         email_verified AS "emailVerified",
+        multi_factor AS "multiFactor",
         name,
         family_name AS "familyName",
         given_name AS "givenName",

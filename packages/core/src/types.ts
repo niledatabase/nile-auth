@@ -20,6 +20,7 @@ export enum ProviderNames {
   LinkedIn = "linkedIn",
   Slack = "slack",
   X = "x (twitter)",
+  MultiFactor = "multifactor",
 }
 
 export type Provider = {
@@ -59,8 +60,12 @@ export type CredentialRow<T = OidcPayload> = {
 export enum ProviderMethods {
   EMAIL_PASSWORD = "EMAIL_PASSWORD",
   OIDC = "OIDC",
+  PASSWORD = "PASSWORD",
+  PLAIN_TEXT = "PLAIN_TEXT",
+  MFA = "MFA",
 }
 
 export enum ActionableErrors {
   notVerified = "Not verified",
+  mfaRequired = "mfaRequired",
 }

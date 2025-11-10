@@ -59,7 +59,8 @@ export async function GET(req: NextRequest) {
             picture,
             created,
             updated,
-            email_verified AS "emailVerified"
+            email_verified AS "emailVerified",
+            multi_factor AS "multiFactor"
           FROM
             users.users
           WHERE
@@ -189,7 +190,8 @@ export async function PUT(req: NextRequest) {
             picture,
             created,
             updated,
-            email_verified AS "emailVerified"
+            email_verified AS "emailVerified",
+            multi_factor AS "multiFactor"
           FROM
             users.users
           WHERE
@@ -245,7 +247,8 @@ export async function PUT(req: NextRequest) {
           picture,
           created,
           updated,
-          email_verified AS "emailVerified"
+          email_verified AS "emailVerified",
+          multi_factor AS "multiFactor"
       `;
 
       if (

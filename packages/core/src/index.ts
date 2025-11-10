@@ -7,11 +7,9 @@ import getDbInfo from "@nile-auth/query/getDbInfo";
 import { getOrigin, getTenantCookie } from "./next-auth/cookies";
 import { isFQDN } from "validator";
 import { ActionableErrors, AuthOptions } from "./types";
-import { findCallbackCookie } from "./next-auth/cookies";
 import { sendVerifyEmail } from "./next-auth/providers/email";
-import { validCsrfToken } from "./next-auth/csrf";
-import { TENANT_COOKIE } from "./next-auth/cookies/constants";
-
+import { buildProviderMfaResponse } from "./mfa/providerResponse";
+import { decodeMfaPayload } from "./mfa/utils";
 export { maxAge } from "./nextOptions";
 
 const { warn } = Logger("[nile-auth]");
@@ -22,7 +20,6 @@ type AppParams = {
   params: {
     nextauth: string[];
   };
-  responder: ResponderFn;
 };
 
 function isWellFormedUrl(input: string) {
@@ -38,9 +35,10 @@ function isWellFormedUrl(input: string) {
   }
 }
 
+// Do not give NileAuth the `responder`, just return basic responses, let the wrappers handle the logging
 export default async function NileAuth(
   req: Request,
-  { responder, params }: AppParams,
+  { params }: AppParams,
   config?: AuthOptions,
 ) {
   const dbInfo = getDbInfo(undefined, req);
@@ -70,7 +68,7 @@ export default async function NileAuth(
     );
   }
   const cfg: AuthOptions = { ...options, ...dbInfo, ...config } as AuthOptions;
-  const opts = buildOptions(cfg);
+  const opts = buildOptions(req, cfg);
   try {
     const preserve = await req.clone();
     const handler = await NextAuth(
@@ -79,6 +77,22 @@ export default async function NileAuth(
       opts as unknown as NextAuthOptions,
     );
 
+    // 401 is ok for MFA, because its a sign in that was expectedly rejected.
+    const segments = params?.nextauth ?? [];
+    const isCallbackRoute = segments[0] === "callback";
+    const isCredentials = segments[1] === "credentials";
+    if (handler.status < 402 && isCallbackRoute && isCredentials) {
+      const providerMfaResponse = await buildProviderMfaResponse(
+        await preserve.clone(),
+        handler,
+        dbInfo,
+        params,
+      );
+      if (providerMfaResponse) {
+        return providerMfaResponse;
+      }
+    }
+
     if (handler.status === 401) {
       const checker = handler.clone();
       const checkerBody = await checker.json();
@@ -86,12 +100,33 @@ export default async function NileAuth(
         const searchParams = new URL(checkerBody.url).searchParams;
         const error = searchParams.get("error");
 
+        if (error?.startsWith(`${ActionableErrors.mfaRequired}:`)) {
+          const encoded = error.split(":")[1];
+          if (encoded) {
+            try {
+              const payload = decodeMfaPayload(encoded);
+              return new Response(JSON.stringify({ mfa: payload }), {
+                status: 401,
+                headers: {
+                  "content-type": "application/json",
+                },
+              });
+            } catch (mfaError) {
+              if (mfaError instanceof Error) {
+                warn("Failed to decode MFA payload", {
+                  message: mfaError.message,
+                  stack: mfaError.stack,
+                });
+              }
+            }
+          }
+        }
+
         // The user exists (SSO), but tried to login with username/password.
         // Send an email to that user forcing them to verify themselves
         if (error === ActionableErrors.notVerified) {
           return await sendVerifyEmail({
             req: preserve,
-            responder,
           });
         }
       }

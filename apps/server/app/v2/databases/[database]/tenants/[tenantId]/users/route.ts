@@ -78,7 +78,8 @@ export async function GET(
           family_name AS "familyName",
           given_name AS "givenName",
           picture,
-          email_verified AS "emailVerified"
+          email_verified AS "emailVerified",
+          multi_factor AS "multiFactor"
         FROM
           users.users u
           JOIN users.tenant_users tu ON u.id = tu.user_id
@@ -242,7 +243,8 @@ export async function POST(
           picture,
           created,
           updated,
-          email_verified AS "emailVerified"
+          email_verified AS "emailVerified",
+          multi_factor AS "multiFactor"
       `;
       if (!newUser) {
         return responder(null, { status: 404 });

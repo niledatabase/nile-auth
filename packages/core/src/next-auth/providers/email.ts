@@ -10,7 +10,12 @@ import {
   queryBySingle,
   ResultSet,
 } from "@nile-auth/query";
-import { Logger, ResponderFn } from "@nile-auth/logger";
+import {
+  EventEnum,
+  Logger,
+  ResponderFn,
+  ResponseLogger,
+} from "@nile-auth/logger";
 import { DbCreds } from "@nile-auth/query/getDbInfo";
 import { randomString } from "../../utils";
 import { findCallbackCookie } from "../cookies";
@@ -19,6 +24,16 @@ import { addContext } from "@nile-auth/query/context";
 import { handleFailure } from "@nile-auth/query/utils";
 const { info, warn, debug } = Logger("emailProvider");
 
+export class EmailError extends Error {
+  public cause?: unknown;
+
+  constructor(message: string, cause?: unknown) {
+    super(message);
+    this.name = "EmailError";
+    this.cause = cause;
+  }
+}
+
 export type Variable = { name: string; value?: string };
 
 type EmailTemplate =
@@ -26,7 +41,8 @@ type EmailTemplate =
   | "password_reset"
   | "verify_email"
   | "invite_user"
-  | "password_alert";
+  | "password_alert"
+  | "mfa_code";
 function isEmpty(row: ResultSet<Record<string, string>[]> | undefined) {
   return row && "rowCount" in row && row.rowCount === 0;
 }
@@ -312,11 +328,9 @@ export function validSender(
   return validEmail;
 }
 
-export async function sendVerifyEmail(params: {
-  req: Request;
-  responder: ResponderFn;
-}) {
-  const { req, responder } = params;
+export async function sendVerifyEmail(params: { req: Request }) {
+  const { req } = params;
+  const [responder] = ResponseLogger(req, EventEnum.VERIFY_EMAIL);
   const preserve = await req.clone();
   const formData = await preserve.formData();
   const email = String(formData.get("email"));
@@ -705,4 +719,55 @@ async function setupEmail(params: {
     variables && "rows" in variables ? (variables.rows as Variable[]) : [],
     templateString as Template,
   ];
+}
+
+/**
+ * This is called from inside NileAuth() , so the "responder" is fake, but necessary to handle internal failures
+ * @param params
+ * @returns
+ */
+export async function send2FaEmail(params: {
+  req: Request;
+  json: {
+    email: string;
+    name?: string;
+    otp: string;
+  };
+}) {
+  const { req, json } = params;
+  const [responder] = ResponseLogger(req, EventEnum.MFA);
+  const setup = await setupEmail({
+    req,
+    responder,
+    template: "mfa_code",
+  });
+
+  if (setup instanceof Response) {
+    return setup;
+  }
+  const [server, variables, template] = setup;
+  const { from, body, subject } = await generateEmailBody({
+    email: json.email,
+    template,
+    variables: [...variables, { name: "token", value: json.otp }],
+    url: "", // URL should be blank, because this email is just 1 way.
+  });
+
+  try {
+    await sendEmail({
+      body,
+      to: json.email,
+      from,
+      subject,
+      url: server.server,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unable to send email";
+    warn("Unable to send email", {
+      message,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw new EmailError(message, error);
+  }
 }

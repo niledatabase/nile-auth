@@ -146,7 +146,7 @@ describe("accept invite", () => {
       ":SET LOCAL nile.tenant_id = '019073f4-75a6-72b9-a379-5ed38ca0d01a'; DELETE FROM auth.invites WHERE id = user-uuid",
       "SELECT * FROM users.tenant_users WHERE user_id = 123 AND tenant_id = 019073f4-75a6-72b9-a379-5ed38ca0d01a",
       expect.stringMatching(
-        /^INSERT INTO users\.users \(email, email_verified\) VALUES \( user@example\.com, CURRENT_TIMESTAMP \) RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated, email_verified AS "emailVerified"$/,
+        /^INSERT INTO users\.users \(email, email_verified\) VALUES \( user@example\.com, CURRENT_TIMESTAMP \) RETURNING id, email, name, family_name AS "familyName", given_name AS "givenName", picture, created, updated, email_verified AS "emailVerified", multi_factor AS "multiFactor"$/,
       ),
       "UPDATE users.users SET email_verified = CURRENT_TIMESTAMP WHERE email = user@example.com AND deleted IS NULL",
       "INSERT INTO users.tenant_users (tenant_id, user_id, email) VALUES ( 019073f4-75a6-72b9-a379-5ed38ca0d01a, new-user-id, user@example.com ) RETURNING *",

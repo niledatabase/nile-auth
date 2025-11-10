@@ -100,7 +100,7 @@ export function Logger(endpoint: string): {
   return {
     info: logger.info.bind(logger),
     warn: logger.warn.bind(logger),
-    debug: logger.debug,
+    debug: logger.debug.bind(logger),
     error: (...msg: any) => {
       const metadata = formatError(msg);
       if (typeof msg[1] === "object") {
