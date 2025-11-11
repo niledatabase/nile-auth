@@ -40,7 +40,7 @@ export async function GET(
 ) {
   const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_GET);
   try {
-    const res = await NileAuth(req, { params, responder });
+    const res = await NileAuth(req, { params });
 
     const details = await getDetails(req, res);
 
@@ -85,7 +85,7 @@ export async function POST(
 ) {
   const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_POST);
   try {
-    const res = await NileAuth(req, { params, responder });
+    const res = await NileAuth(req, { params });
     const details = await getDetails(req, res);
 
     if (res.status > 303) {

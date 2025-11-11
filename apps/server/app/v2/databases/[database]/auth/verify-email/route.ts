@@ -179,7 +179,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const [responder, reporter] = ResponseLogger(req, EventEnum.VERIFY_EMAIL);
   try {
-    return await sendVerifyEmail({ req, responder });
+    return await sendVerifyEmail({ req });
   } catch (e) {
     reporter.error(e);
     return responder(e instanceof Error ? e.message : "Internal server error", {

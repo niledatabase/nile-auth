@@ -8,6 +8,10 @@
     "./cookies/constants": "./src/next-auth/cookies/constants.ts",
     "./csrf": "./src/next-auth/csrf.ts",
     "./utils": "./src/utils.ts",
+    "./nextOptions": "./src/nextOptions.ts",
+    "./mfa": "./src/mfa/index.ts",
+    "./mfa/recoveryKeys": "./src/mfa/recoveryKeys.ts",
+    "./types": "./src/types.ts",
     "./providers/email": "./src/next-auth/providers/email.ts"
   },
   "scripts": {
@@ -39,6 +43,7 @@
     "bcryptjs": "^2.4.3",
     "next-auth": "^4.24.8",
     "nodemailer": "^6.9.16",
+    "otplib": "^12.0.1",
     "pg": "^8.13.1",
     "validator": "^13.15.0"
   }

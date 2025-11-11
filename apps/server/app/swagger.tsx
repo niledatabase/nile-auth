@@ -164,4 +164,104 @@
  *           format: date-time
  *     APIError:
  *       type: string
+ *     MfaVerifyRequest:
+ *       type: object
+ *       required:
+ *         - token
+ *         - code
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: Base64URL encoded MFA challenge token issued during login or setup.
+ *         code:
+ *           type: string
+ *           description: Time-bound one time passcode (email OTP or authenticator TOTP) that proves possession of the second factor.
+ *     MfaVerifyResponse:
+ *       type: object
+ *       required:
+ *         - ok
+ *         - scope
+ *       properties:
+ *         ok:
+ *           type: boolean
+ *           description: Indicates that the MFA challenge was satisfied.
+ *         scope:
+ *           type: string
+ *           description: Identifies whether the challenge corresponded to a login flow or an MFA setup flow.
+ *           enum:
+ *             - challenge
+ *             - setup
+ *     MfaSetupResponse:
+ *       type: object
+ *       required:
+ *         - ok
+ *         - method
+ *         - token
+ *         - expiresAt
+ *         - scope
+ *       properties:
+ *         ok:
+ *           type: boolean
+ *         method:
+ *           type: string
+ *           enum:
+ *             - authenticator
+ *             - email
+ *         token:
+ *           type: string
+ *         expiresAt:
+ *           type: string
+ *           format: date-time
+ *         scope:
+ *           type: string
+ *           enum:
+ *             - setup
+ *         otpauthUrl:
+ *           type: string
+ *           description: Present when the user is enrolling an authenticator app.
+ *         secret:
+ *           type: string
+ *           description: Base32 secret returned for authenticator enrollment.
+ *         maskedEmail:
+ *           type: string
+ *           description: Masked email address used for email OTP delivery.
+ *     MfaDisableRequest:
+ *       type: object
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: Raw MFA challenge token issued during login or setup. Required when verifying email MFA.
+ *         scope:
+ *           type: string
+ *           enum:
+ *             - challenge
+ *             - setup
+ *           description: Indicates the origin of the token.
+ *         method:
+ *           type: string
+ *           enum:
+ *             - authenticator
+ *             - email
+ *           description: Expected MFA method for the disable request.
+ *         code:
+ *           type: string
+ *           description: One-time passcode submitted to confirm MFA ownership.
+ *         requireCode:
+ *           type: boolean
+ *           description: Forces the server to verify `code` before disabling MFA.
+ *     MfaDisableResponse:
+ *       type: object
+ *       required:
+ *         - ok
+ *         - method
+ *       properties:
+ *         ok:
+ *           type: boolean
+ *           description: Indicates that MFA has been disabled for the user.
+ *         method:
+ *           type: string
+ *           enum:
+ *             - authenticator
+ *             - email
+ *           description: MFA method that was removed.
  */

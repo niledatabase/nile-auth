@@ -8,6 +8,8 @@ import { EmailVerificationError, login, LoginError } from "./login";
 import { validCsrfToken } from "@nile-auth/core/csrf";
 import { getOrigin, getSecureCookies } from "@nile-auth/core/cookies";
 import { HEADER_SECURE_COOKIES } from "@nile-auth/core/cookies/constants";
+import getDbInfo from "@nile-auth/query/getDbInfo";
+
 /**
  * @swagger
  * /v2/databases/{database}/signup:
@@ -99,9 +101,24 @@ export async function POST(
         });
       }
 
+      let createdUserId: string | null = null;
       try {
-        const headers = await login(cloned, { params });
-        return responder(await userCreate.text(), { headers }, { ...swagBody });
+        const parsed = await userCreate.clone().json();
+        createdUserId = parsed?.id ?? null;
+      } catch (e) {
+        // no-op, non JSON response
+      }
+
+      try {
+        const dbInfo = getDbInfo(undefined, req);
+        if (dbInfo && createdUserId) {
+          const headers = await login(cloned, { params });
+          return responder(
+            await userCreate.text(),
+            { headers },
+            { ...swagBody },
+          );
+        }
       } catch (e) {
         if (e instanceof LoginError || e instanceof Error) {
           // surface the most likely error -- cookies are messed up

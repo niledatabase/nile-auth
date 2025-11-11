@@ -160,7 +160,7 @@ describe("POST /users - user creation logic", () => {
 
     expect(runCommands).toEqual([
       "SELECT * FROM users.users WHERE email = test@test.com",
-      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, email_verified AS "emailVerified", name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
+      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, email_verified AS "emailVerified", multi_factor AS "multiFactor", name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
     ]);
   });
 
@@ -175,7 +175,7 @@ describe("POST /users - user creation logic", () => {
     expect(json).toEqual(expectedUserResponse());
     expect(runCommands).toEqual([
       "SELECT * FROM users.users WHERE email = test@test.com",
-      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, email_verified AS "emailVerified", name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
+      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, email_verified AS "emailVerified", multi_factor AS "multiFactor", name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
       "INSERT INTO tenants (name) VALUES (foo) RETURNING id;",
       "INSERT INTO users.tenant_users (tenant_id, user_id, email) VALUES ( 019073f4-75a6-72b9-a379-5ed38ca0d01a, 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, test@test.com )",
     ]);
@@ -196,7 +196,7 @@ describe("POST /users - user creation logic", () => {
 
     expect(runCommands).toEqual([
       "SELECT * FROM users.users WHERE email = test@test.com",
-      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, email_verified AS "emailVerified", name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
+      'INSERT INTO users.users (email, name, family_name, given_name, picture) VALUES ( test@test.com, test@test.com, test@test.com, test@test.com, test@test.com ) RETURNING id, email, email_verified AS "emailVerified", multi_factor AS "multiFactor", name, family_name AS "familyName", given_name AS "givenName", picture, created, updated;',
       "INSERT INTO users.tenant_users (tenant_id, user_id, email) VALUES ( 12345, 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1, test@test.com )",
     ]);
   });
@@ -248,7 +248,7 @@ describe("POST /users - user creation logic", () => {
 
     expect(runCommands).toEqual([
       "SELECT * FROM users.users WHERE email = existing@user.com",
-      "SELECT EXISTS ( SELECT 1 FROM auth.credentials WHERE user_id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1 AND method <> 'EMAIL_PASSWORD' ) AS has_other_methods;",
+      "SELECT EXISTS ( SELECT 1 FROM auth.credentials WHERE user_id = 0190b7cd-661a-76d4-ba6e-6ae2c383e3c1 AND method NOT IN ('EMAIL_PASSWORD', 'MFA') ) AS has_other_methods;",
     ]);
   });
 });
