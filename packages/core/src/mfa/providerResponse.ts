@@ -3,7 +3,6 @@ import { findCallbackCookie } from "../next-auth/cookies";
 import { ProviderNames } from "../types";
 import { ChallengeScope, SetupChallengeResult } from ".";
 import { query } from "@nile-auth/query";
-import { debug, info, warn } from "console";
 import { Pool } from "pg";
 import { fetchMfaUser, fetchProviderConfig } from "./sql";
 import {
@@ -27,6 +26,8 @@ import { CHALLENGE_PREFIX, DEFAULT_ISSUER, SETUP_PREFIX } from "./constants";
 import { storeAuthenticatorSecret } from "./recoveryKeys";
 import { createHash } from "../next-auth/csrf";
 
+import { Logger } from "@nile-auth/logger";
+const { info, warn, debug } = Logger("[MFA provider response]");
 export async function buildProviderMfaResponse(
   req: Request,
   handler: Response,
@@ -161,7 +162,7 @@ export async function getMfaResponse(params: {
 
     const method = storedMethod ?? resolveConfigMethod(config);
     if (!method) {
-      warn("No method set to MFA");
+      debug("No method set to MFA");
       return null;
     }
 
@@ -172,11 +173,13 @@ export async function getMfaResponse(params: {
       method,
     });
 
-    debug("Issued MFA setup challenge", {
-      userId: user.id,
-      method: setup.method,
-      expiresAt: setup.expiresAt,
-    });
+    debug(
+      `Issued MFA setup challenge ${JSON.stringify({
+        userId: user.id,
+        method: setup.method,
+        expiresAt: setup.expiresAt,
+      })}`,
+    );
 
     return setup;
   } finally {

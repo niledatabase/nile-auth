@@ -20,9 +20,25 @@ jest.mock("@nile-auth/core/csrf", () => {
   };
 });
 
-jest.mock("../../../../../../../../packages/query/src/query", () => ({
-  queryBySingle: jest.fn(),
-}));
+jest.mock("../../../../../../../../packages/query/src/multiFactorColumn", () => {
+  const actual = jest.requireActual(
+    "../../../../../../../../packages/query/src/multiFactorColumn",
+  );
+  return {
+    ...actual,
+    hasMultiFactorColumn: jest.fn(),
+  };
+});
+
+jest.mock("../../../../../../../../packages/query/src/query", () => {
+  const actual = jest.requireActual(
+    "../../../../../../../../packages/query/src/query",
+  );
+  return {
+    ...actual,
+    queryBySingle: jest.fn(),
+  };
+});
 
 jest.mock("@nile-auth/core/cookies", () => ({
   getSecureCookies: jest.fn(() => false),
@@ -39,6 +55,12 @@ jest.mock("@nile-auth/core/cookies", () => ({
 jest.mock("@nile-auth/core", () => ({
   auth: jest.fn(),
 }));
+
+const { hasMultiFactorColumn } = jest.requireMock(
+  "../../../../../../../../packages/query/src/multiFactorColumn",
+) as {
+  hasMultiFactorColumn: jest.Mock;
+};
 
 const { queryBySingle } = jest.requireMock(
   "../../../../../../../../packages/query/src/query",
@@ -57,6 +79,7 @@ describe("PUT /auth/mfa", () => {
     jest.clearAllMocks();
     getMfaResponseSpy.mockReset();
     process.env.NEXTAUTH_SECRET = "super-secret";
+    hasMultiFactorColumn.mockResolvedValue(true);
   });
 
   it("deletes challenge when email code is invalid", async () => {
@@ -99,6 +122,12 @@ describe("PUT /auth/mfa", () => {
         text = text.replace(`$${idx + 1}`, replacement);
       });
       const normalized = text.replace(/(\n\s+)/g, " ").trim();
+      if (normalized.includes("information_schema.columns")) {
+        return {
+          rows: [{ exists: 1 }],
+          error: undefined,
+        };
+      }
       runCommands.push(normalized);
 
       if (normalized.includes("FROM auth.verification_tokens")) {
@@ -191,6 +220,12 @@ describe("PUT /auth/mfa", () => {
         text = text.replace(`$${idx + 1}`, replacement);
       });
       const normalized = text.replace(/(\n\s+)/g, " ").trim();
+      if (normalized.includes("information_schema.columns")) {
+        return {
+          rows: [{ exists: 1 }],
+          error: undefined,
+        };
+      }
       runCommands.push(normalized);
 
       if (normalized.includes("FROM auth.verification_tokens")) {
@@ -301,6 +336,12 @@ describe("PUT /auth/mfa", () => {
         text = text.replace(`$${idx + 1}`, replacement);
       });
       const normalized = text.replace(/(\n\s+)/g, " ").trim();
+      if (normalized.includes("information_schema.columns")) {
+        return {
+          rows: [{ exists: 1 }],
+          error: undefined,
+        };
+      }
       runCommands.push(normalized);
 
       if (
@@ -450,6 +491,12 @@ describe("PUT /auth/mfa", () => {
         text = text.replace(`$${idx + 1}`, replacement);
       });
       const normalized = text.replace(/(\n\s+)/g, " ").trim();
+      if (normalized.includes("information_schema.columns")) {
+        return {
+          rows: [{ exists: 1 }],
+          error: undefined,
+        };
+      }
       runCommands.push(normalized);
 
       if (normalized.includes("FROM auth.verification_tokens")) {
@@ -749,6 +796,12 @@ describe("DELETE /auth/mfa", () => {
         text = text.replace(`$${idx + 1}`, replacement);
       });
       const normalized = text.replace(/(\n\s+)/g, " ").trim();
+      if (normalized.includes("information_schema.columns")) {
+        return {
+          rows: [{ exists: 1 }],
+          error: undefined,
+        };
+      }
       runCommands.push(normalized);
 
       if (normalized.startsWith("SELECT id, email, multi_factor FROM users.users")) {
@@ -869,6 +922,12 @@ describe("DELETE /auth/mfa", () => {
         text = text.replace(`$${idx + 1}`, replacement);
       });
       const normalized = text.replace(/(\n\s+)/g, " ").trim();
+      if (normalized.includes("information_schema.columns")) {
+        return {
+          rows: [{ exists: 1 }],
+          error: undefined,
+        };
+      }
       runCommands.push(normalized);
 
       if (normalized.startsWith("SELECT id, email, multi_factor FROM users.users")) {
@@ -955,6 +1014,12 @@ describe("DELETE /auth/mfa", () => {
         text = text.replace(`$${idx + 1}`, replacement);
       });
       const normalized = text.replace(/(\n\s+)/g, " ").trim();
+      if (normalized.includes("information_schema.columns")) {
+        return {
+          rows: [{ exists: 1 }],
+          error: undefined,
+        };
+      }
       runCommands.push(normalized);
 
       if (normalized.startsWith("SELECT id, email, multi_factor FROM users.users")) {
@@ -1083,6 +1148,12 @@ describe("DELETE /auth/mfa", () => {
         text = text.replace(`$${idx + 1}`, replacement);
       });
       const normalized = text.replace(/(\n\s+)/g, " ").trim();
+      if (normalized.includes("information_schema.columns")) {
+        return {
+          rows: [{ exists: 1 }],
+          error: undefined,
+        };
+      }
       runCommands.push(normalized);
 
       if (normalized.startsWith("SELECT id, email, multi_factor FROM users.users")) {

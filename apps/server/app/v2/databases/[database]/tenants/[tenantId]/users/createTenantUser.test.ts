@@ -1,14 +1,36 @@
 import { NextRequest } from "next/server";
 
 import { auth } from "../../../../../../../../../packages/core/src/auth";
-import { queryByReq } from "@nile-auth/query";
+import { queryByReq, raw } from "@nile-auth/query";
 
 import { POST } from "./route";
 
-jest.mock("../../../../../../../../../packages/query/src/query", () => ({
-  handleFailure: jest.fn(),
-  queryByReq: jest.fn(),
-}));
+jest.mock(
+  "../../../../../../../../../packages/query/src/multiFactorColumn",
+  () => {
+    const actual = jest.requireActual(
+      "../../../../../../../../../packages/query/src/multiFactorColumn",
+    );
+    return {
+      ...actual,
+      multiFactorColumn: jest.fn(),
+    };
+  },
+);
+const { multiFactorColumn: mockMultiFactorColumn } = jest.requireMock(
+  "../../../../../../../../../packages/query/src/multiFactorColumn",
+) as { multiFactorColumn: jest.Mock };
+
+jest.mock("../../../../../../../../../packages/query/src/query", () => {
+  const actual = jest.requireActual(
+    "../../../../../../../../../packages/query/src/query",
+  );
+  return {
+    ...actual,
+    handleFailure: jest.fn(),
+    queryByReq: jest.fn(),
+  };
+});
 jest.mock("../../../../../../../../../packages/core/src/auth", () => ({
   auth: jest.fn(),
 }));
@@ -41,6 +63,9 @@ const tenantUsers = [
 
 describe("create users", () => {
   it("404s if the user is not in the tenant", async () => {
+    mockMultiFactorColumn.mockResolvedValue(
+      raw('multi_factor AS "multiFactor"'),
+    );
     const runCommands: string[] = [];
     // @ts-expect-error - test
     queryByReq.mockReturnValueOnce(async function sql(
@@ -53,9 +78,16 @@ describe("create users", () => {
         text += `$${i}${strings[i] ?? ""}`;
       }
       values.map((val, idx) => {
-        text = text.replace(`$${idx + 1}`, val);
+        const normalized =
+          val && typeof val === "object" && "value" in (val as Record<string, any>)
+            ? (val as { value: string }).value
+            : val;
+        text = text.replace(`$${idx + 1}`, normalized as string);
       });
       text = text.replace(/(\n\s+)/g, " ").trim();
+      if (text.includes("information_schema.columns")) {
+        return [{ rowCount: 1, rows: [{ exists: 1 }] }];
+      }
       runCommands.push(text);
 
       if (text.includes("SELECT COUNT(*)")) {
@@ -89,6 +121,9 @@ describe("create users", () => {
     ]);
   });
   it("returns a created user", async () => {
+    mockMultiFactorColumn.mockResolvedValue(
+      raw('multi_factor AS "multiFactor"'),
+    );
     const runCommands: string[] = [];
     // @ts-expect-error - test
     queryByReq.mockReturnValueOnce(async function sql(
@@ -101,9 +136,16 @@ describe("create users", () => {
         text += `$${i}${strings[i] ?? ""}`;
       }
       values.map((val, idx) => {
-        text = text.replace(`$${idx + 1}`, val);
+        const normalized =
+          val && typeof val === "object" && "value" in (val as Record<string, any>)
+            ? (val as { value: string }).value
+            : val;
+        text = text.replace(`$${idx + 1}`, normalized as string);
       });
       text = text.replace(/(\n\s+)/g, " ").trim();
+      if (text.includes("information_schema.columns")) {
+        return [{ rowCount: 1, rows: [{ exists: 1 }] }];
+      }
       runCommands.push(text);
 
       if (text.includes("auth.credentials")) {

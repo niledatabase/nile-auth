@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { raw } from "@nile-auth/query";
 import { POST } from "./route";
 
 let runCommands: string[] = [];
@@ -40,60 +41,105 @@ const mockTenantUsers = [
   },
 ];
 
-jest.mock("../../../../../../../packages/query/src/query", () => ({
-  getRow: jest.fn(),
-  handleFailure: jest.fn(),
-  queryBySingle: async () =>
-    async function sql(strings: TemplateStringsArray, ...values: string[]) {
-      let text = strings[0] ?? "";
-      for (let i = 1; i < strings.length; i++) {
-        text += `$${i}${strings[i] ?? ""}`;
-      }
-      values.forEach((val, idx) => {
-        text = text.replace(`$${idx + 1}`, val);
-      });
-      text = text.replace(/(\n\s+)/g, " ").trim();
-      runCommands.push(text);
+jest.mock("../../../../../../../packages/query/src/multiFactorColumn", () => {
+  const actual = jest.requireActual(
+    "../../../../../../../packages/query/src/multiFactorColumn",
+  );
+  return {
+    ...actual,
+    multiFactorColumn: jest.fn(),
+  };
+});
+const { multiFactorColumn: mockMultiFactorColumn } = jest.requireMock(
+  "../../../../../../../packages/query/src/multiFactorColumn",
+) as { multiFactorColumn: jest.Mock };
 
-      if (text.includes("users.users")) {
-        return { rows: mockUser, rowCount: 1 };
-      }
-      if (text.includes("auth.email_templates")) {
-        return { rows: mockUser, rowCount: 1 };
-      }
-      if (text.includes("auth.email_servers")) {
-        return { rows: mockTenantUsers };
-      }
-    },
-  queryByReq: async () =>
-    async function sql(strings: TemplateStringsArray, ...values: string[]) {
-      let text = strings[0] ?? "";
-      for (let i = 1; i < strings.length; i++) {
-        text += `$${i}${strings[i] ?? ""}`;
-      }
-      values.forEach((val, idx) => {
-        text = text.replace(`$${idx + 1}`, val);
-      });
-      text = text.replace(/(\n\s+)/g, " ").trim();
-      runCommands.push(text);
+jest.mock("../../../../../../../packages/query/src/query", () => {
+  const actual = jest.requireActual(
+    "../../../../../../../packages/query/src/query",
+  );
+  return {
+    ...actual,
+    getRow: jest.fn(),
+    handleFailure: jest.fn(),
+    queryBySingle: jest
+      .fn()
+      .mockImplementation(
+        () =>
+          async function sql(strings: TemplateStringsArray, ...values: string[]) {
+            let text = strings[0] ?? "";
+            for (let i = 1; i < strings.length; i++) {
+              text += `$${i}${strings[i] ?? ""}`;
+            }
+            values.forEach((val, idx) => {
+              const normalized =
+                val &&
+                typeof val === "object" &&
+                "value" in (val as Record<string, any>)
+                  ? (val as { value: string }).value
+                  : val;
+              text = text.replace(`$${idx + 1}`, normalized as string);
+            });
+            text = text.replace(/(\n\s+)/g, " ").trim();
+            if (text.includes("information_schema.columns")) {
+              return { rows: [{ exists: 1 }], rowCount: 1 };
+            }
+            runCommands.push(text);
 
-      if (text.includes("tenants")) {
-        return [{ rows: mockTenant, rowCount: 1 }];
-      }
-      if (text.includes("users.users")) {
-        return [{ rows: mockUser, rowCount: 1 }];
-      }
-      if (text.includes("users.tenant_users")) {
-        return [{ rows: mockTenantUsers }];
-      }
-      if (text.includes("has_other_methods")) {
-        return [{ rows: [{ has_other_methods: true }] }];
-      }
-      if (text.includes("auth.template_variables")) {
-        return [{ rows: [] }];
-      }
-    },
-}));
+            if (text.includes("users.users")) {
+              return { rows: mockUser, rowCount: 1 };
+            }
+            if (text.includes("auth.email_templates")) {
+              return { rows: mockUser, rowCount: 1 };
+            }
+            if (text.includes("auth.email_servers")) {
+              return { rows: mockTenantUsers };
+            }
+          },
+      ),
+    queryByReq: jest
+      .fn()
+      .mockImplementation(
+        () =>
+          async function sql(strings: TemplateStringsArray, ...values: string[]) {
+            let text = strings[0] ?? "";
+            for (let i = 1; i < strings.length; i++) {
+              text += `$${i}${strings[i] ?? ""}`;
+            }
+            values.forEach((val, idx) => {
+              const normalized =
+                val &&
+                typeof val === "object" &&
+                "value" in (val as Record<string, any>)
+                  ? (val as { value: string }).value
+                  : val;
+              text = text.replace(`$${idx + 1}`, normalized as string);
+            });
+            text = text.replace(/(\n\s+)/g, " ").trim();
+            if (text.includes("information_schema.columns")) {
+              return [{ rows: [{ exists: 1 }], rowCount: 1 }];
+            }
+            runCommands.push(text);
+
+            if (text.includes("tenants")) {
+              return [{ rows: mockTenant, rowCount: 1 }];
+            }
+            if (text.includes("users.users")) {
+              return [{ rows: mockUser, rowCount: 1 }];
+            }
+            if (text.includes("users.tenant_users")) {
+              return [{ rows: mockTenantUsers }];
+            }
+            if (text.includes("has_other_methods")) {
+              return [{ rows: [{ has_other_methods: true }] }];
+            }
+            if (text.includes("auth.template_variables")) {
+              return [{ rows: [] }];
+            }
+          },
+      ),
+  };
+});
 
 jest.mock("../../../../../../../packages/core/src/next-auth/cookies", () => ({
   getSecureCookies: jest.fn(() => false),
@@ -143,6 +189,9 @@ function expectedUserResponse() {
 describe("POST /users - user creation logic", () => {
   beforeEach(() => {
     runCommands = [];
+    mockMultiFactorColumn.mockResolvedValue(
+      raw('multi_factor AS "multiFactor"'),
+    );
   });
 
   const defaultBody = {

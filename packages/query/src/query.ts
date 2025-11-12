@@ -5,7 +5,11 @@ import getDbInfo, { DbCreds } from "./getDbInfo";
 import { fixPrepare } from "./context";
 import { ErrorResultSet, ErrorResultSet as ErrorSet } from "./types";
 import { handleFailure } from "./utils";
+import { Primitive, RawSQL } from "./sqlTypes";
 export { formatTime } from "./formatTime";
+export { raw } from "./sqlTypes";
+export type { Primitive } from "./sqlTypes";
+export { hasMultiFactorColumn, multiFactorColumn } from "./multiFactorColumn";
 const { debug, error, warn } = Logger("adaptor sql");
 
 export enum Commands {
@@ -40,14 +44,6 @@ export type ResultSet<T = Record<string, string>[]> =
   | ErrorSet
   | ValidResultSet<T>;
 
-export type Primitive =
-  | string
-  | number
-  | boolean
-  | string[]
-  | Date
-  | null
-  | RawSQL;
 export type SqlTemplateFn = (
   strings: TemplateStringsArray,
   ...values: Primitive[]
@@ -257,9 +253,3 @@ export function getRow<T = Record<string, any>>(
     return res.rows[0] as T;
   }
 }
-
-export class RawSQL {
-  constructor(public value: string) {}
-}
-
-export const raw = (value: string) => new RawSQL(value);

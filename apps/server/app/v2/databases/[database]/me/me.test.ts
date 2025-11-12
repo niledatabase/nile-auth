@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { raw } from "@nile-auth/query";
 import { GET } from "./route";
 
 const users = [
@@ -19,8 +20,25 @@ const tenants = ["019073f4-75a6-72b9-a379-5ed38ca0d01a"];
 
 let runCommands: string[] = [];
 
-jest.mock("../../../../../../../packages/query/src/query", () => {
+jest.mock("../../../../../../../packages/query/src/multiFactorColumn", () => {
+  const actual = jest.requireActual(
+    "../../../../../../../packages/query/src/multiFactorColumn",
+  );
   return {
+    ...actual,
+    multiFactorColumn: jest.fn(),
+  };
+});
+const { multiFactorColumn: mockMultiFactorColumn } = jest.requireMock(
+  "../../../../../../../packages/query/src/multiFactorColumn",
+) as { multiFactorColumn: jest.Mock };
+
+jest.mock("../../../../../../../packages/query/src/query", () => {
+  const actual = jest.requireActual(
+    "../../../../../../../packages/query/src/query",
+  );
+  return {
+    ...actual,
     handleFailure: jest.fn(),
     queryByReq: async function handler() {
       return async function sql(
@@ -33,9 +51,21 @@ jest.mock("../../../../../../../packages/query/src/query", () => {
           text += `$${i}${strings[i] ?? ""}`;
         }
         values.map((val, idx) => {
-          text = text.replace(`$${idx + 1}`, val);
+          const normalized =
+            val && typeof val === "object" && "value" in (val as Record<string, any>)
+              ? (val as { value: string }).value
+              : val;
+          text = text.replace(`$${idx + 1}`, normalized as string);
         });
         text = text.replace(/(\n\s+)/g, " ").trim();
+        if (text.includes("information_schema.columns")) {
+          return [
+            {
+              rowCount: 1,
+              rows: [{ exists: 1 }],
+            },
+          ];
+        }
         runCommands.push(text);
         if (text.includes("users.users")) {
           return [
@@ -72,6 +102,9 @@ jest.mock("../../../../../../../packages/core/src/auth", () => ({
 describe("me", () => {
   beforeEach(() => {
     runCommands = [];
+    mockMultiFactorColumn.mockResolvedValue(
+      raw('multi_factor AS "multiFactor"'),
+    );
   });
   it("returns the session user", async () => {
     const req = {

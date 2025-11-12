@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { EventEnum, Logger, ResponseLogger } from "@nile-auth/logger";
-import { queryBySingle } from "@nile-auth/query";
+import { hasMultiFactorColumn, queryBySingle } from "@nile-auth/query";
 import getDbInfo from "@nile-auth/query/getDbInfo";
 import {
   verifyAuthenticatorToken,
@@ -130,6 +130,13 @@ export async function PUT(req: NextRequest) {
     const challengeMethod = method as MultiFactorMethod;
     const challengeScope = getChallengeScope(scope);
     const sql = await queryBySingle({ req, responder });
+    const hasColumn = await hasMultiFactorColumn(sql);
+    if (!hasColumn) {
+      return responder(
+        "Multi-factor authentication requires the latest database schema. Apply the pending migrations and try again.",
+        { status: 503 },
+      );
+    }
 
     const identifier = mfaIdentifier(scope, token);
 
@@ -539,6 +546,13 @@ export async function DELETE(req: NextRequest) {
     const { token, scope, method, code, requireCode } = body ?? {};
 
     const sql = await queryBySingle({ req, responder });
+    const hasColumn = await hasMultiFactorColumn(sql);
+    if (!hasColumn) {
+      return responder(
+        "Multi-factor authentication requires the latest database schema. Apply the pending migrations and try again.",
+        { status: 503 },
+      );
+    }
 
     const {
       rows: [user],
