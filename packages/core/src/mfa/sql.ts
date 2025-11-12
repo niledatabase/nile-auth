@@ -1,9 +1,9 @@
+import { multiFactorColumn, query } from "@nile-auth/query";
 import { DbCreds } from "@nile-auth/query/getDbInfo";
 import { ProviderNames } from "../types";
 import { MfaConfig, MfaIdentifier, MfaUserRow, SqlClient } from "./types";
 import { normalizeProviderKey, normalizeConfig } from "./utils";
 import { Pool } from "pg";
-import { query } from "@nile-auth/query";
 
 export async function fetchMfaUser(
   sql: SqlClient,
@@ -14,13 +14,14 @@ export async function fetchMfaUser(
     return null;
   }
 
+  const multiFactorSelect = await multiFactorColumn(sql);
   const result = userId
     ? await sql`
         SELECT
           id,
           email,
           name,
-          multi_factor
+          ${multiFactorSelect}
         FROM
           users.users
         WHERE
@@ -32,7 +33,7 @@ export async function fetchMfaUser(
           id,
           email,
           name,
-          multi_factor
+          ${multiFactorSelect}
         FROM
           users.users
         WHERE

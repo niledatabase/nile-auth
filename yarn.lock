@@ -9805,14 +9805,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postgres-bytea@npm:~1.0.0":
-  version: 1.0.0
-  resolution: "postgres-bytea@npm:1.0.0"
-  checksum: 10c0/febf2364b8a8953695cac159eeb94542ead5886792a9627b97e33f6b5bb6e263bc0706ab47ec221516e79fbd6b2452d668841830fb3b49ec6c0fc29be61892ce
-  languageName: node
-  linkType: hard
-
-"postgres-bytea@npm:~3.0.0":
+"postgres-bytea@npm:3.0.0":
   version: 3.0.0
   resolution: "postgres-bytea@npm:3.0.0"
   dependencies:

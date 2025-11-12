@@ -10,9 +10,13 @@ jest.mock("pg", () => ({
   }),
 }));
 
-jest.mock("@nile-auth/query", () => ({
-  query: jest.fn(),
-}));
+jest.mock("@nile-auth/query", () => {
+  const actual = jest.requireActual("@nile-auth/query");
+  return {
+    ...actual,
+    query: jest.fn(),
+  };
+});
 
 import { query } from "@nile-auth/query";
 import * as utils from "./utils";
@@ -47,14 +51,20 @@ describe("mfa/sql", () => {
         name: "User",
         multi_factor: null,
       };
-      const sqlMock = jest.fn().mockResolvedValue({
-        rowCount: 1,
-        rows: [row],
-      });
+      const sqlMock = jest
+        .fn()
+        .mockResolvedValueOnce({
+          rowCount: 1,
+          rows: [{ exists: 1 }],
+        })
+        .mockResolvedValueOnce({
+          rowCount: 1,
+          rows: [row],
+        });
 
       const result = await fetchMfaUser(sqlMock as any, { userId: "user-1" });
 
-      expect(sqlMock).toHaveBeenCalledTimes(1);
+      expect(sqlMock).toHaveBeenCalledTimes(2);
       expect(result).toEqual(row);
     });
 
@@ -65,24 +75,36 @@ describe("mfa/sql", () => {
         name: "Person",
         multi_factor: null,
       };
-      const sqlMock = jest.fn().mockResolvedValue({
-        rowCount: 1,
-        rows: [row],
-      });
+      const sqlMock = jest
+        .fn()
+        .mockResolvedValueOnce({
+          rowCount: 1,
+          rows: [{ exists: 1 }],
+        })
+        .mockResolvedValueOnce({
+          rowCount: 1,
+          rows: [row],
+        });
 
       const result = await fetchMfaUser(sqlMock as any, {
         email: "person@example.com",
       });
 
-      expect(sqlMock).toHaveBeenCalledTimes(1);
+      expect(sqlMock).toHaveBeenCalledTimes(2);
       expect(result).toEqual(row);
     });
 
     it("returns null when no rows are returned", async () => {
-      const sqlMock = jest.fn().mockResolvedValue({
-        rowCount: 0,
-        rows: [],
-      });
+      const sqlMock = jest
+        .fn()
+        .mockResolvedValueOnce({
+          rowCount: 1,
+          rows: [{ exists: 1 }],
+        })
+        .mockResolvedValueOnce({
+          rowCount: 0,
+          rows: [],
+        });
 
       const result = await fetchMfaUser(sqlMock as any, { userId: "missing" });
 

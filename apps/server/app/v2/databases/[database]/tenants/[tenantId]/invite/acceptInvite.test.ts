@@ -1,13 +1,35 @@
 import { NextRequest } from "next/server";
 
 import { auth } from "../../../../../../../../../packages/core/src/auth";
-import { queryBySingle, queryByReq } from "@nile-auth/query";
+import { queryBySingle, queryByReq, raw } from "@nile-auth/query";
 import { PUT } from "./route";
 
-jest.mock("../../../../../../../../../packages/query/src/query", () => ({
-  queryBySingle: jest.fn(),
-  queryByReq: jest.fn(),
-}));
+jest.mock(
+  "../../../../../../../../../packages/query/src/multiFactorColumn",
+  () => {
+    const actual = jest.requireActual(
+      "../../../../../../../../../packages/query/src/multiFactorColumn",
+    );
+    return {
+      ...actual,
+      multiFactorColumn: jest.fn(),
+    };
+  },
+);
+const { multiFactorColumn: mockMultiFactorColumn } = jest.requireMock(
+  "../../../../../../../../../packages/query/src/multiFactorColumn",
+) as { multiFactorColumn: jest.Mock };
+
+jest.mock("../../../../../../../../../packages/query/src/query", () => {
+  const actual = jest.requireActual(
+    "../../../../../../../../../packages/query/src/query",
+  );
+  return {
+    ...actual,
+    queryBySingle: jest.fn(),
+    queryByReq: jest.fn(),
+  };
+});
 const mockResponder = jest.fn();
 const mockReporter = { error: jest.fn() };
 jest.mock("../../../../../../../../../packages/core/src/auth", () => ({
@@ -25,6 +47,9 @@ jest.mock(
 describe("accept invite", () => {
   const commands: string[] = [];
   it("successfully creates a user from a valid invite", async () => {
+    mockMultiFactorColumn.mockResolvedValue(
+      raw('multi_factor AS "multiFactor"'),
+    );
     const sql = async (strings: TemplateStringsArray, ...values: any[]) => {
       let text = strings[0] ?? "";
 
@@ -33,10 +58,20 @@ describe("accept invite", () => {
       }
 
       values.forEach((val, idx) => {
-        text = text.replace(`$${idx + 1}`, val);
+        const normalized =
+          val && typeof val === "object" && "value" in (val as Record<string, any>)
+            ? (val as { value: string }).value
+            : val;
+        text = text.replace(`$${idx + 1}`, normalized as string);
       });
 
       text = text.replace(/(\n\s+)/g, " ").trim();
+      if (text.includes("information_schema.columns")) {
+        return {
+          rows: [{ exists: 1 }],
+          error: null,
+        };
+      }
       commands.push(text);
 
       if (text.includes("FROM auth.invites")) {
@@ -93,9 +128,16 @@ describe("accept invite", () => {
         text += `$${i}${strings[i] ?? ""}`;
       }
       values.forEach((val, i) => {
-        text = text.replace(`$${i + 1}`, val);
+        const normalized =
+          val && typeof val === "object" && "value" in (val as Record<string, any>)
+            ? (val as { value: string }).value
+            : val;
+        text = text.replace(`$${i + 1}`, normalized as string);
       });
       text = text.replace(/\n\s+/g, " ").trim();
+      if (text.includes("information_schema.columns")) {
+        return [{ rowCount: 1, rows: [{ exists: 1 }] }];
+      }
       commands.push(text);
 
       if (text.includes("DELETE")) {

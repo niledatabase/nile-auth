@@ -20,7 +20,8 @@
   },
   "resolutions": {
     "prismjs": "^1.30.0",
-    "@nestjs/common": "^10.4.16"
+    "@nestjs/common": "^10.4.16",
+    "postgres-bytea": "3.0.0"
   },
   "engines": {
     "node": ">=20"

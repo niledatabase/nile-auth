@@ -6,7 +6,12 @@ import {
   sendTenantUserInvite,
 } from "@nile-auth/core/providers/email";
 import { EventEnum, ResponseLogger } from "@nile-auth/logger";
-import { ErrorResultSet, queryByReq, queryBySingle } from "@nile-auth/query";
+import {
+  ErrorResultSet,
+  multiFactorColumn,
+  queryByReq,
+  queryBySingle,
+} from "@nile-auth/query";
 import { addContext } from "@nile-auth/query/context";
 import { handleFailure } from "@nile-auth/query/utils";
 import { NextRequest } from "next/server";
@@ -339,6 +344,9 @@ export async function PUT(
 
     const sqlMany = await queryByReq(req);
     const sql = await queryBySingle({ req, responder });
+    const multiFactorSelect = await multiFactorColumn(sql, {
+      alias: "multiFactor",
+    });
     const [inviteContextError, possibleInvite] = await sqlMany`
       ${addContext({ tenantId })};
 
@@ -433,7 +441,7 @@ export async function PUT(
         created,
         updated,
         email_verified AS "emailVerified",
-        multi_factor AS "multiFactor"
+        ${multiFactorSelect}
     `;
 
     let userId = newUser?.id;
