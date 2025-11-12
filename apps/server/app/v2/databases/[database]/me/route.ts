@@ -1,5 +1,10 @@
 import { auth } from "@nile-auth/core";
-import { queryByReq, ErrorResultSet, raw } from "@nile-auth/query";
+import {
+  queryByReq,
+  ErrorResultSet,
+  raw,
+  multiFactorColumn,
+} from "@nile-auth/query";
 import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 import { handleFailure } from "@nile-auth/query/utils";
@@ -48,8 +53,11 @@ export async function GET(req: NextRequest) {
     const [session] = await auth(req);
     if (session && session?.user?.id) {
       const sql = await queryByReq(req);
+      const multiFactorSelect = await multiFactorColumn(sql, {
+        alias: "multiFactor",
+      });
       const [[user], [tenants]] = await Promise.all([
-        await sql`
+        sql`
           SELECT
             id,
             email,
@@ -60,14 +68,14 @@ export async function GET(req: NextRequest) {
             created,
             updated,
             email_verified AS "emailVerified",
-            multi_factor AS "multiFactor"
+            ${multiFactorSelect}
           FROM
             users.users
           WHERE
             id = ${session.user.id}
             AND deleted IS NULL
         `,
-        await sql`
+        sql`
           SELECT DISTINCT
             t.id
           FROM
@@ -92,7 +100,7 @@ export async function GET(req: NextRequest) {
         return responder(
           JSON.stringify({
             ...user.rows[0],
-            tenants: tenants?.rows.map(({ id }: { id: string }) => id) ?? [],
+            tenants: tenants?.rows?.map(({ id }) => id) ?? [],
           }),
         );
       } else {
@@ -179,8 +187,11 @@ export async function PUT(req: NextRequest) {
     const [session] = await auth(req);
     if (session && session?.user?.id) {
       const sql = await queryByReq(req);
+      const multiFactorSelect = await multiFactorColumn(sql, {
+        alias: "multiFactor",
+      });
       const [[userRows], [tenants]] = await Promise.all([
-        await sql`
+        sql`
           SELECT
             id,
             email,
@@ -191,14 +202,14 @@ export async function PUT(req: NextRequest) {
             created,
             updated,
             email_verified AS "emailVerified",
-            multi_factor AS "multiFactor"
+            ${multiFactorSelect}
           FROM
             users.users
           WHERE
             id = ${session.user.id}
             AND deleted IS NULL
         `,
-        await sql`
+        sql`
           SELECT DISTINCT
             t.id
           FROM
@@ -248,7 +259,7 @@ export async function PUT(req: NextRequest) {
           created,
           updated,
           email_verified AS "emailVerified",
-          multi_factor AS "multiFactor"
+          ${multiFactorSelect}
       `;
 
       if (

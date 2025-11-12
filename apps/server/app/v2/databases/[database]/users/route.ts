@@ -1,7 +1,11 @@
-import { getRow, queryByReq } from "@nile-auth/query";
+import {
+  ErrorResultSet,
+  getRow,
+  multiFactorColumn,
+  queryByReq,
+} from "@nile-auth/query";
 import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
-import { ErrorResultSet } from "@nile-auth/query";
 import { handleFailure } from "@nile-auth/query/utils";
 import { ProviderMethods } from "@nile-auth/core";
 
@@ -112,6 +116,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const multiFactorSelect = await multiFactorColumn(sql, {
+      alias: "multiFactor",
+    });
     const [newUser] = await sql`
       INSERT INTO
         users.users (email, name, family_name, given_name, picture)
@@ -127,7 +134,7 @@ export async function POST(req: NextRequest) {
         id,
         email,
         email_verified AS "emailVerified",
-        multi_factor AS "multiFactor",
+        ${multiFactorSelect},
         name,
         family_name AS "familyName",
         given_name AS "givenName",

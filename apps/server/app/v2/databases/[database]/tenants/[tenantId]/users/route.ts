@@ -1,10 +1,13 @@
 import { auth } from "@nile-auth/core";
-import { queryByReq } from "@nile-auth/query";
+import {
+  ErrorResultSet,
+  multiFactorColumn,
+  queryByReq,
+} from "@nile-auth/query";
 import { handleFailure } from "@nile-auth/query/utils";
 import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 
-import { ErrorResultSet } from "@nile-auth/query";
 import { addContext } from "@nile-auth/query/context";
 
 /**
@@ -65,6 +68,9 @@ export async function GET(
         return handleFailure(responder, undefined, "tenantId is required.");
       }
       const sql = await queryByReq(req);
+      const multiFactorSelect = await multiFactorColumn(sql, {
+        alias: "multiFactor",
+      });
 
       const [contextError, , users] = await sql`
         ${addContext({ tenantId })};
@@ -79,7 +85,7 @@ export async function GET(
           given_name AS "givenName",
           picture,
           email_verified AS "emailVerified",
-          multi_factor AS "multiFactor"
+          ${multiFactorSelect}
         FROM
           users.users u
           JOIN users.tenant_users tu ON u.id = tu.user_id
@@ -223,6 +229,9 @@ export async function POST(
         );
       }
 
+      const multiFactorSelect = await multiFactorColumn(sql, {
+        alias: "multiFactor",
+      });
       const [newUser] = await sql`
         INSERT INTO
           users.users (email, name, family_name, given_name, picture)
@@ -244,7 +253,7 @@ export async function POST(
           created,
           updated,
           email_verified AS "emailVerified",
-          multi_factor AS "multiFactor"
+          ${multiFactorSelect}
       `;
       if (!newUser) {
         return responder(null, { status: 404 });
