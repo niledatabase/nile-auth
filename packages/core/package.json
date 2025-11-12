@@ -41,7 +41,7 @@
     "@nile-auth/logger": "*",
     "@nile-auth/query": "*",
     "bcryptjs": "^2.4.3",
-    "next-auth": "^4.24.8",
+    "next-auth": "^4.24.12",
     "nodemailer": "^6.9.16",
     "otplib": "^12.0.1",
     "pg": "^8.13.1",
