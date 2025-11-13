@@ -52,9 +52,19 @@ export type SqlTemplateFn = (
 export function query(pool: Pool): SqlTemplateFn {
   return async function sqlTemplate(strings, ...values) {
     let text = strings[0] ?? "";
+    const finalValues: Primitive[] = [];
+    let paramIndex = 1;
 
     for (let i = 1; i < strings.length; i++) {
-      text += `$${i}${strings[i] ?? ""}`;
+      const value = values[i - 1];
+      if (value instanceof RawSQL) {
+        text += `${value.value}${strings[i] ?? ""}`;
+        continue;
+      }
+
+      text += `$${paramIndex}${strings[i] ?? ""}`;
+      finalValues.push(value as string);
+      paramIndex++;
     }
     const client = await pool.connect().catch((e) => {
       error(
@@ -68,14 +78,14 @@ export function query(pool: Pool): SqlTemplateFn {
 
       reporter.start();
       // @ts-expect-error - allows for null args in function, but not in query
-      const result = await client.query(text, values).catch((e) => {
+      const result = await client.query(text, finalValues).catch((e) => {
         warn(
           "[nile-auth][error][QUERY FAILED] Unable to run query on database.",
-          { stack: e.stack, message: e.message, text, values },
+          { stack: e.stack, message: e.message, text, values: finalValues },
         );
       });
 
-      reporter.end("pg.latency", { values: values.toString() }, false);
+      reporter.end("pg.latency", { values: finalValues.toString() }, false);
 
       return result;
     } catch (e) {
