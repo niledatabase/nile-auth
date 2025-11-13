@@ -481,7 +481,9 @@ export async function sendVerifyEmail(params: { req: Request }) {
     );
   }
 
-  return responder(null, { status: 201 });
+  return responder("Email verification sent", {
+    status: 201,
+  });
 }
 
 export async function sendPasswordHasBeenReset(params: {

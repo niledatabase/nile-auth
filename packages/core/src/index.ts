@@ -84,9 +84,7 @@ export default async function NileAuth(
     if (handler.status < 402 && isCallbackRoute && isCredentials) {
       const providerMfaResponse = await buildProviderMfaResponse(
         await preserve.clone(),
-        handler,
         dbInfo,
-        params,
       );
       if (providerMfaResponse) {
         return providerMfaResponse;

@@ -30,21 +30,8 @@ import { Logger } from "@nile-auth/logger";
 const { info, warn, debug } = Logger("[MFA provider response]");
 export async function buildProviderMfaResponse(
   req: Request,
-  handler: Response,
   dbInfo: DbCreds,
-  params: { nextauth: string[] },
 ): Promise<Response | null> {
-  const segments = params?.nextauth ?? [];
-  const isCallbackRoute = segments[0] === "callback";
-  const isCredentials = segments[1] === "credentials";
-  if (!isCallbackRoute || !isCredentials) {
-    return null;
-  }
-  // 401 is ok, because its a sign in that was rejected.
-  if (handler.status > 401) {
-    return null;
-  }
-
   let email;
   let callback;
   let callbackCookie = findCallbackCookie(req);
@@ -57,9 +44,12 @@ export async function buildProviderMfaResponse(
       callback = cb;
     }
   } catch {
-    // I don't think this is possible with sign in, its a form post
-    const json = await req.json();
-    email = json.email;
+    try {
+      const json = await req.clone().json();
+      email = json.email;
+    } catch {
+      // ignore missing/invalid body
+    }
   }
 
   if (!email) {
@@ -73,7 +63,6 @@ export async function buildProviderMfaResponse(
       email: String(email),
       provider: ProviderNames.MultiFactor,
     });
-
     if (!mfaResponse) {
       return null;
     }
@@ -96,7 +85,7 @@ export async function buildProviderMfaResponse(
       },
     });
   } catch (e) {
-    console.log(e);
+    warn((e as Error).message);
     return null;
   }
 }
