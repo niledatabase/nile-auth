@@ -18,6 +18,7 @@ export enum ProviderNames {
   Google = "google",
   HubSpot = "hubSpot",
   LinkedIn = "linkedIn",
+  Okta = "okta",
   Slack = "slack",
   X = "x (twitter)",
   MultiFactor = "multifactor",

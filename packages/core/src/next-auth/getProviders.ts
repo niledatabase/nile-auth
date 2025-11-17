@@ -10,6 +10,7 @@ import HubspotProvider from "next-auth/providers/hubspot";
 import LinkedInProvider, {
   LinkedInProfile,
 } from "next-auth/providers/linkedin";
+import OktaProvider from "next-auth/providers/okta";
 import SlackProvider from "next-auth/providers/slack";
 import TwitterProvider from "next-auth/providers/twitter";
 
@@ -217,6 +218,13 @@ export async function getProviders(
                   scope: "openid profile email",
                 },
               },
+              allowDangerousEmailAccountLinking: true,
+            });
+          case ProviderNames.Okta:
+            return OktaProvider({
+              clientId: row.client_id,
+              clientSecret: row.client_secret,
+              issuer: row?.config?.["issuer"],
               allowDangerousEmailAccountLinking: true,
             });
           case ProviderNames.Slack:
