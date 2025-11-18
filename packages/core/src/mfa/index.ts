@@ -13,6 +13,7 @@ const { warn } = Logger("[mfa]");
 
 authenticator.options = {
   step: 30,
+  window: 1, // allow +/- one 30s window to account for drift
 };
 
 export async function ensureMfaChallenge(params: {
