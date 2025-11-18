@@ -184,37 +184,44 @@ export function getTenantCookie(req: Request) {
   }
   return null;
 }
-export function setTenantCookie(req: Request, rows: Record<string, string>[]) {
-  if (!getCookie(TENANT_COOKIE, req.headers)) {
+
+export function setTenantCookie(req: Request, _rows: Record<string, string>[]) {
+  const rows = _rows as unknown as { id: string; name: string }[];
+  const tenantCookie = getCookie(TENANT_COOKIE, req.headers);
+  const mostRecentTenantId = rows[0]?.id;
+
+  if (!tenantCookie) {
+    if (!mostRecentTenantId) {
+      return;
+    }
     const headers = new Headers();
-    if (rows[0]?.id) {
-      headers.set(
-        "set-cookie",
-        `${TENANT_COOKIE}=${rows[0].id}; Path=/; SameSite=lax`,
-      );
-    }
+    headers.set(
+      "set-cookie",
+      `${TENANT_COOKIE}=${mostRecentTenantId}; Path=/; SameSite=lax`,
+    );
     return headers;
-  } else {
-    // help the UI if a user is removed or cookies got changed poorly, doesn't actually auth anything.
-    const cookie = getCookie(TENANT_COOKIE, req.headers);
-    const exists = rows.some((r) => r.id === cookie);
-    if (!exists) {
-      const headers = new Headers();
-      if (rows[0]?.id) {
-        headers.set(
-          "set-cookie",
-          `${TENANT_COOKIE}=${rows[0].id}; Path=/; SameSite=lax`,
-        );
-      } else {
-        // the user doesn't have a tenant for the tenants we know, so remove the cookie
-        headers.set(
-          "set-cookie",
-          `${TENANT_COOKIE}=; Path=/; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
-        );
-      }
-      return headers;
-    }
   }
+
+  // help the UI if a user is removed or cookies got changed poorly, doesn't actually auth anything.
+  if (rows.some((r) => r.id === tenantCookie)) {
+    return;
+  }
+
+  const headers = new Headers();
+  if (mostRecentTenantId) {
+    headers.set(
+      "set-cookie",
+      `${TENANT_COOKIE}=${mostRecentTenantId}; Path=/; SameSite=lax`,
+    );
+    return headers;
+  }
+
+  // the user doesn't have a tenant for the tenants we know, so remove the cookie
+  headers.set(
+    "set-cookie",
+    `${TENANT_COOKIE}=; Path=/; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+  );
+  return headers;
 }
 
 export function findCallbackCookie(req: Request) {
