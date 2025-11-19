@@ -21,7 +21,8 @@
   "resolutions": {
     "prismjs": "^1.30.0",
     "@nestjs/common": "^10.4.16",
-    "postgres-bytea": "3.0.0"
+    "postgres-bytea": "3.0.0",
+    "thirty-two@npm:^1.0.2": "patch:thirty-two@npm%3A1.0.2#./.yarn/patches/thirty-two-npm-1.0.2-9d9270aa34.patch"
   },
   "engines": {
     "node": ">=20"

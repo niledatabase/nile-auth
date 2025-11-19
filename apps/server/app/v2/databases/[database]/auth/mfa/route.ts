@@ -141,7 +141,6 @@ export async function PUT(req: NextRequest) {
     const identifier = mfaIdentifier(scope, token);
 
     const deleteChallenge = async () => {
-      console.log("removed verification token for some reason");
       await sql`
         DELETE FROM auth.verification_tokens
         WHERE
@@ -367,7 +366,6 @@ export async function PUT(req: NextRequest) {
     headers.set("content-type", "application/json");
 
     if (challengeScope === ChallengeScope.Challenge) {
-      console.log("should be setting the cookie now");
       const expires = new Date(Date.now() + maxAge * 1000);
       const sessionToken = randomString(64);
 
@@ -959,7 +957,8 @@ export async function POST(req: NextRequest) {
 
     const dbInfo = getDbInfo(undefined, req);
     const resolvedConfig =
-      methodCandidate && Object.values(MultiFactorMethod).includes(methodCandidate)
+      methodCandidate &&
+      Object.values(MultiFactorMethod).includes(methodCandidate)
         ? {
             authenticator: methodCandidate === MultiFactorMethod.Authenticator,
             email: methodCandidate === MultiFactorMethod.Email,
