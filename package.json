@@ -21,7 +21,8 @@
   "resolutions": {
     "prismjs": "^1.30.0",
     "@nestjs/common": "^10.4.16",
-    "postgres-bytea": "3.0.0"
+    "postgres-bytea": "3.0.0",
+    "obuf@npm:~1.1.2": "patch:obuf@npm%3A1.1.2#./.yarn/patches/obuf-npm-1.1.2-8db5fae8dd.patch"
   },
   "engines": {
     "node": ">=20"
