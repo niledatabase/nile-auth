@@ -1,0 +1,32 @@
+diff --git a/lib/thirty-two/thirty-two.js b/lib/thirty-two/thirty-two.js
+index f8843772825eaa466caf30ff1b4190e911dd0df0..438f65602acf7d24b51fadbf91eee625766ff877 100644
+--- a/lib/thirty-two/thirty-two.js
++++ b/lib/thirty-two/thirty-two.js
+@@ -42,13 +42,13 @@ function quintetCount(buff) {
+ 
+ exports.encode = function(plain) {
+     if(!Buffer.isBuffer(plain)){
+-    	plain = new Buffer(plain);
++    	plain = Buffer.from(plain);
+     }
+     var i = 0;
+     var j = 0;
+     var shiftIndex = 0;
+     var digit = 0;
+-    var encoded = new Buffer(quintetCount(plain) * 8);
++    var encoded = Buffer.alloc(quintetCount(plain) * 8);
+ 
+     /* byte by byte isn't as pretty as quintet by quintet but tests a bit
+         faster. will have to revisit. */
+@@ -84,9 +84,9 @@ exports.decode = function(encoded) {
+     var plainChar;
+     var plainPos = 0;
+     if(!Buffer.isBuffer(encoded)){
+-    	encoded = new Buffer(encoded);
++    	encoded = Buffer.from(encoded);
+     }
+-    var decoded = new Buffer(Math.ceil(encoded.length * 5 / 8));
++    var decoded = Buffer.alloc(Math.ceil(encoded.length * 5 / 8));
+ 
+     /* byte by byte isn't as pretty as octet by octet but tests a bit
+         faster. will have to revisit. */

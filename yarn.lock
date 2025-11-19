@@ -9339,17 +9339,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"obuf@npm:1.1.2":
+"obuf@npm:~1.1.2":
   version: 1.1.2
   resolution: "obuf@npm:1.1.2"
   checksum: 10c0/520aaac7ea701618eacf000fc96ae458e20e13b0569845800fc582f81b386731ab22d55354b4915d58171db00e79cfcd09c1638c02f89577ef092b38c65b7d81
-  languageName: node
-  linkType: hard
-
-"obuf@patch:obuf@npm%3A1.1.2#./.yarn/patches/obuf-npm-1.1.2-8db5fae8dd.patch::locator=%40nile-auth%2Fpackage%40workspace%3A.":
-  version: 1.1.2
-  resolution: "obuf@patch:obuf@npm%3A1.1.2#./.yarn/patches/obuf-npm-1.1.2-8db5fae8dd.patch::version=1.1.2&hash=0a4560&locator=%40nile-auth%2Fpackage%40workspace%3A."
-  checksum: 10c0/6321e07443faf3809db4590f375c20231a91fd010ea8442158d116f459433c827714d04e89ffdedb10ec3255da86480e7703d9bef35b5299b270779d6cea87f7
   languageName: node
   linkType: hard
 
@@ -11744,10 +11737,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"thirty-two@npm:^1.0.2":
+"thirty-two@npm:1.0.2":
   version: 1.0.2
   resolution: "thirty-two@npm:1.0.2"
   checksum: 10c0/a6f8c69a153a1aa4d6948eabe004f5a38e45cb869d7d6c535df7460fc44c95c596a60efc56cce56b5e4f0988601db1298be5d1b6ae3fe12dcdeb461c9aeadd17
+  languageName: node
+  linkType: hard
+
+"thirty-two@patch:thirty-two@npm%3A1.0.2#./.yarn/patches/thirty-two-npm-1.0.2-9d9270aa34.patch::locator=%40nile-auth%2Fpackage%40workspace%3A.":
+  version: 1.0.2
+  resolution: "thirty-two@patch:thirty-two@npm%3A1.0.2#./.yarn/patches/thirty-two-npm-1.0.2-9d9270aa34.patch::version=1.0.2&hash=8261e7&locator=%40nile-auth%2Fpackage%40workspace%3A."
+  checksum: 10c0/5ca0d94ae7f91866f8a024c0c4814534f98211ac00abb8ad262d565cba9cdfe5257a91d201011d0c13f5218beedb0fd6341ac1587a637be7b92b2102221f8ae4
   languageName: node
   linkType: hard
 

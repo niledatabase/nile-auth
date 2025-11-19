@@ -89,7 +89,16 @@ export async function POST(
     const details = await getDetails(req, res);
 
     if (res.status > 303) {
-      log.warn("Bad nextauth post", { details });
+      let mfaRes;
+      try {
+        const possibleOK = res.clone();
+        mfaRes = await possibleOK.json();
+      } catch {
+        //noop
+      }
+      if (!("token" in mfaRes)) {
+        log.warn("Bad nextauth post", { details });
+      }
     }
 
     if (res.status === 302) {
