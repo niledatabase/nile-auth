@@ -1356,7 +1356,7 @@ __metadata:
     bcryptjs: "npm:^2.4.3"
     eslint: "npm:^9.13.0"
     jest: "npm:^29.7.0"
-    next-auth: "npm:^4.24.8"
+    next-auth: "npm:^4.24.12"
     nodemailer: "npm:^6.9.16"
     otplib: "npm:^12.0.1"
     pg: "npm:^8.13.1"
@@ -8918,9 +8918,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"next-auth@npm:^4.24.8":
-  version: 4.24.11
-  resolution: "next-auth@npm:4.24.11"
+"next-auth@npm:^4.24.12":
+  version: 4.24.13
+  resolution: "next-auth@npm:4.24.13"
   dependencies:
     "@babel/runtime": "npm:^7.20.13"
     "@panva/hkdf": "npm:^1.0.2"
@@ -8932,9 +8932,9 @@ __metadata:
     preact-render-to-string: "npm:^5.1.19"
     uuid: "npm:^8.3.2"
   peerDependencies:
-    "@auth/core": 0.34.2
-    next: ^12.2.5 || ^13 || ^14 || ^15
-    nodemailer: ^6.6.5
+    "@auth/core": 0.34.3
+    next: ^12.2.5 || ^13 || ^14 || ^15 || ^16
+    nodemailer: ^7.0.7
     react: ^17.0.2 || ^18 || ^19
     react-dom: ^17.0.2 || ^18 || ^19
   peerDependenciesMeta:
@@ -8942,7 +8942,7 @@ __metadata:
       optional: true
     nodemailer:
       optional: true
-  checksum: 10c0/56142678cfb8e751ae24f1396b3659aac7b1831f4f2283bcb2035224ebfd7ae82b62839383cf4029835d511cec339aad9665afcd1e711a631359fe123d970c0d
+  checksum: 10c0/33a03d71951c30007aacfdb589afabd361440c95635068e4270108bfcdd155cf76b0ab3f82fa99d8c747888f250f0e6c675a8c4f9a2d80ad7f5bcacd8542a5c6
   languageName: node
   linkType: hard
 
