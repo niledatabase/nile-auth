@@ -4,12 +4,17 @@ import NextAuth, { AuthOptions as NextAuthOptions } from "next-auth";
 import { buildOptions } from "./utils";
 import { nextOptions } from "./nextOptions";
 import getDbInfo from "@nile-auth/query/getDbInfo";
-import { getOrigin, getTenantCookie } from "./next-auth/cookies";
+import {
+  getOrigin,
+  getTenantCookie,
+  setTenantCookie,
+} from "./next-auth/cookies";
 import { isFQDN } from "validator";
 import { ActionableErrors, AuthOptions } from "./types";
 import { sendVerifyEmail } from "./next-auth/providers/email";
 import { buildProviderMfaResponse } from "./mfa/providerResponse";
 import { decodeMfaPayload } from "./mfa/utils";
+import { queryByReq } from "@nile-auth/query";
 export { maxAge } from "./nextOptions";
 
 const { warn } = Logger("[nile-auth]");
@@ -33,6 +38,41 @@ function isWellFormedUrl(input: string) {
     warn("Invalid nile origin url sent", { input });
     return false;
   }
+}
+
+function normalizeCredentialIdentifier(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
+
+async function getCredentialIdentifier(req: Request): Promise<string | null> {
+  try {
+    const formData = await req.clone().formData();
+    const fromForm =
+      normalizeCredentialIdentifier(formData.get("email")) ??
+      normalizeCredentialIdentifier(formData.get("identifier"));
+    if (fromForm) {
+      return fromForm;
+    }
+  } catch {
+    // ignore parsing form errors
+  }
+
+  try {
+    const jsonData = (await req.clone().json()) as Record<string, unknown>;
+    const fromJson =
+      normalizeCredentialIdentifier(jsonData?.email) ??
+      normalizeCredentialIdentifier(jsonData?.identifier);
+    if (fromJson) {
+      return fromJson;
+    }
+  } catch {
+    // ignore parsing json errors
+  }
+  return null;
 }
 
 // Do not give NileAuth the `responder`, just return basic responses, let the wrappers handle the logging
@@ -81,6 +121,49 @@ export default async function NileAuth(
     const segments = params?.nextauth ?? [];
     const isCallbackRoute = segments[0] === "callback";
     const isCredentials = segments[1] === "credentials";
+
+    const identifier = await getCredentialIdentifier(preserve);
+    if (identifier) {
+      try {
+        const sql = await queryByReq(preserve);
+        const [tenantRows] = await sql`
+          SELECT DISTINCT
+            t.id,
+            t.name
+          FROM
+            public.tenants t
+            JOIN users.tenant_users tu ON t.id = tu.tenant_id
+            JOIN users.users u ON u.id = tu.user_id
+          WHERE
+            LOWER(u.email) = LOWER(${identifier})
+            AND tu.deleted IS NULL
+            AND t.deleted IS NULL
+            AND u.deleted IS NULL
+        `;
+
+        if (tenantRows && "name" in tenantRows) {
+          warn("Failed to fetch tenants when setting tenant cookie", {
+            tenantRows,
+          });
+        }
+
+        if (tenantRows && "rowCount" in tenantRows) {
+          const tenantHeaders = setTenantCookie(req, tenantRows.rows);
+          const tenantCookie = tenantHeaders?.get("set-cookie");
+          if (tenantCookie) {
+            handler.headers.append("set-cookie", tenantCookie);
+          }
+        }
+      } catch (tenantError) {
+        if (tenantError instanceof Error) {
+          warn("Unable to set tenant cookie after credentials callback", {
+            message: tenantError.message,
+            stack: tenantError.stack,
+          });
+        }
+      }
+    }
+
     if (handler.status < 402 && isCallbackRoute && isCredentials) {
       const providerMfaResponse = await buildProviderMfaResponse(
         await preserve.clone(),

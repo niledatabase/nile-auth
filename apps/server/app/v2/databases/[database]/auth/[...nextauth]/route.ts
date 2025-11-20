@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import NileAuth from "@nile-auth/core";
 import { EventEnum, Logger, ResponseLogger } from "@nile-auth/logger";
-import { getOrigin, getSecureCookies } from "@nile-auth/core/cookies";
+import { getOrigin } from "@nile-auth/core/cookies";
 
 const log = Logger(EventEnum.NILE_AUTH);
 
