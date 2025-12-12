@@ -1,5 +1,8 @@
 import { getToken, JWT } from "next-auth/jwt";
 import { Logger } from "@nile-auth/logger";
+import { Pool } from "pg";
+import getDbInfo from "@nile-auth/query/getDbInfo";
+import { query } from "@nile-auth/query";
 import { getSecureCookies } from "./next-auth/cookies";
 
 type SessionUser = { user?: { id?: string } };
@@ -31,7 +34,38 @@ export async function buildFetch(
       !isNaN(token.exp) &&
       token.exp > now
     ) {
-      return [{ user: { id: String(token.id) } }];
+      try {
+        if (typeof token.jti !== "string") {
+          throw new Error("JWT missing jti");
+        }
+        const dbInfo = getDbInfo(undefined, req);
+        const pool = new Pool(dbInfo);
+        const sql = await query(pool);
+        const sessions = await sql`
+          SELECT
+            expires_at
+          FROM
+            auth.sessions
+          WHERE
+            session_token = ${token.jti}
+        `;
+        if (
+          sessions &&
+          "rowCount" in sessions &&
+          sessions.rowCount > 0 &&
+          sessions.rows[0]?.expires_at &&
+          new Date(sessions.rows[0].expires_at).getTime() > Date.now()
+        ) {
+          return [{ user: { id: String(token.id) } }];
+        }
+      } catch (e) {
+        if (e instanceof Error) {
+          warn("revocation check failed", {
+            message: e.message,
+            stack: e.stack,
+          });
+        }
+      }
     }
   }
   const url = new URL(req.url);

@@ -2,6 +2,7 @@ import { CookieOption, CookiesOptions, User } from "next-auth";
 import { encode } from "next-auth/jwt";
 import { maxAge } from "../../nextOptions";
 import { jwt } from "@nile-auth/core/utils";
+import getDbInfo from "@nile-auth/query/getDbInfo";
 import {
   HEADER_ORIGIN,
   HEADER_SECURE_COOKIES,
@@ -235,17 +236,20 @@ export async function makeNewSessionJwt(req: Request, user: User) {
   const useSecureCookies = getSecureCookies(req);
   const sessionCookie = getSessionTokenCookie(useSecureCookies);
   let newToken = "";
+  const dbInfo = getDbInfo(undefined, req);
 
   const defaultToken = {
     name: user.name,
     email: user.email,
     picture: user.image,
     sub: user.id?.toString(),
+    exp: Math.floor(Date.now() / 1000) + maxAge,
   };
   const token = await jwt({
     token: defaultToken,
     user: user as User,
     account: null, // not oauth
+    dbInfo,
   });
   if (process.env.NEXTAUTH_SECRET) {
     // no salt for session cookie

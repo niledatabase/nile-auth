@@ -386,7 +386,6 @@ export async function PUT(req: NextRequest) {
       `;
 
       if (sessionError) {
-        console.log(sessionError);
         return sessionError;
       }
 
