@@ -22,7 +22,7 @@
     "bcryptjs": "^2.4.3",
     "cookie": "^1.0.2",
     "dotenv": "^16.4.5",
-    "next": "^14.2.30",
+    "next": "^14.2.35",
     "nodemailer": "^6.9.15",
     "oauth": "^0.10.0",
     "oauth4webapi": "^3.1.0",
