@@ -15,6 +15,7 @@ export function getSessionAndUser(pool: Pool) {
     if (sessionToken === undefined) {
       return null;
     }
+    const sql = await query(pool);
 
     // try doing jwt first, its maybe faster?
     try {
@@ -25,12 +26,30 @@ export function getSessionAndUser(pool: Pool) {
       if (
         typeof parsed?.email === "string" &&
         typeof parsed?.id === "string" &&
-        typeof parsed.exp === "number"
+        typeof parsed.exp === "number" &&
+        typeof parsed.jti === "string"
       ) {
+        const sessions = await sql`
+          SELECT
+            expires_at
+          FROM
+            auth.sessions
+          WHERE
+            session_token = ${parsed.jti}
+        `;
+        if (!(sessions && "rowCount" in sessions && sessions.rowCount > 0)) {
+          return null;
+        }
+        const expires = sessions.rows[0]?.expires_at
+          ? new Date(sessions.rows[0].expires_at)
+          : null;
+        if (expires && expires.getTime() < Date.now()) {
+          return null;
+        }
         return {
           user: { id: parsed.id, email: parsed.email, emailVerified: null },
           session: {
-            sessionToken,
+            sessionToken: parsed.jti,
             userId: parsed.id,
             expires: new Date(parsed.exp * 1000),
           },
@@ -40,7 +59,6 @@ export function getSessionAndUser(pool: Pool) {
       // do nothing, they may have a valid session (non JWT)
     }
 
-    const sql = query(pool);
     const sessions = await sql`
       SELECT
         *

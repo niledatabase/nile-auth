@@ -2,6 +2,7 @@ import { Account, DefaultSession, Profile, Session, User } from "next-auth";
 import { AdapterUser } from "next-auth/adapters";
 import { Pool } from "pg";
 import { JWT } from "next-auth/jwt";
+import { randomUUID } from "crypto";
 
 import { Logger } from "@nile-auth/logger";
 import getDbInfo, { DbCreds } from "@nile-auth/query/getDbInfo";
@@ -135,6 +136,7 @@ export async function jwt(params: {
   trigger?: "signIn" | "signUp" | "update";
   isNewUser?: boolean;
   session?: any;
+  dbInfo?: DbCreds;
 }): Promise<JWT> {
   const { user, token } = params;
   if (user) {
@@ -143,7 +145,65 @@ export async function jwt(params: {
     token.picture = user.image;
   }
   debug("JWT CALLBACK", { token, user });
+  if (!token.jti) {
+    token.jti = randomUUID();
+  }
+  const exp =
+    typeof token.exp === "number" && !isNaN(token.exp) ? token.exp : null;
+  if (params.dbInfo && token.id && exp) {
+    await persistJwtSession({
+      token,
+      dbInfo: params.dbInfo,
+      userId: String(token.id),
+      expiresAt: new Date(exp * 1000),
+    });
+  }
   return token;
+}
+
+async function persistJwtSession({
+  token,
+  dbInfo,
+  userId,
+  expiresAt,
+}: {
+  token: JWT;
+  dbInfo: DbCreds;
+  userId: string;
+  expiresAt: Date;
+}) {
+  try {
+    const pool = new Pool(dbInfo);
+    pool.on("error", (e: Error) => {
+      info("Unexpected error on client", {
+        stack: e.stack,
+        message: e.message,
+      });
+    });
+    const sql = await query(pool);
+    await sql`
+      INSERT INTO
+        auth.sessions (user_id, expires_at, session_token)
+      VALUES
+        (
+          ${userId},
+          ${expiresAt},
+          ${token.jti}
+        )
+      ON CONFLICT (session_token) DO
+      UPDATE
+      SET
+        user_id = EXCLUDED.user_id,
+        expires_at = EXCLUDED.expires_at
+    `;
+  } catch (e) {
+    if (e instanceof Error) {
+      warn("Failed to persist JWT session", {
+        message: e.message,
+        stack: e.stack,
+      });
+    }
+  }
 }
 
 export function buildOptions(req: Request, cfg?: AuthOptions) {
@@ -166,7 +226,11 @@ export function buildOptions(req: Request, cfg?: AuthOptions) {
       }
       return true;
     },
-    jwt,
+    jwt: async (params) =>
+      jwt({
+        ...params,
+        dbInfo,
+      }),
     session: async function session(params) {
       const { session, token, user } = params;
       debug("session CALLBACK");
@@ -188,6 +252,29 @@ export function buildOptions(req: Request, cfg?: AuthOptions) {
         return handleRefreshTokens(params, dbInfo);
       }
       return { expires: new Date().toISOString() };
+    },
+  };
+  config.events = {
+    async signOut(message) {
+      if (!message?.token?.jti) {
+        return;
+      }
+      try {
+        const pool = new Pool(dbInfo);
+        const sql = await query(pool);
+        await sql`
+          DELETE FROM auth.sessions
+          WHERE
+            session_token = ${message.token.jti}
+        `;
+      } catch (e) {
+        if (e instanceof Error) {
+          warn("Failed to revoke JWT session", {
+            message: e.message,
+            stack: e.stack,
+          });
+        }
+      }
     },
   };
   return {

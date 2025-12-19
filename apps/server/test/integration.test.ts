@@ -19,6 +19,10 @@ const primaryUser = {
   email: "delete@me.com",
   password: "deleteme",
 };
+const staleJwtUser = {
+  email: "delete4@me.com",
+  password: "deleteme",
+};
 const newUser = {
   email: "delete2@me.com",
   password: "deleteme",
@@ -165,23 +169,63 @@ describe("api integration", () => {
     await nile.db.query("delete from tenants where id = $1", [newTenant.id]);
     await nile.clearConnections();
   }, 10000);
+
+  test("revoked JWT cannot be reused after sign out", async () => {
+    const nile = new Server(config);
+    await initialDebugCleanup(nile);
+
+    const user = (await nile.api.users.createUser(
+      staleJwtUser,
+    )) as unknown as { id: string };
+    expect(user.id).toBeTruthy();
+
+    await nile.api.login(staleJwtUser, { returnResponse: true });
+
+    const activeMe = await nile.api.users.me<{ email: string }>();
+    expect(activeMe.email).toEqual(staleJwtUser.email);
+
+    // capture the auth cookies before revocation
+    const staleHeaders = new Headers(nile.api.headers);
+
+    const signOutRes = (await nile.api.auth.signOut({
+      callbackUrl: "http://localhost:3000",
+    })) as Response | { url: string };
+    if (signOutRes instanceof Response) {
+      expect(signOutRes.status).toEqual(200);
+    } else {
+      expect(signOutRes.url).toEqual("http://localhost:3000");
+    }
+
+    const staleMe = (await nile.api.users.me<Response>(
+      staleHeaders,
+    )) as Response;
+    expect(staleMe.status).toEqual(401);
+
+    await nile.db.query("delete from auth.credentials where user_id = $1", [
+      user.id,
+    ]);
+    await nile.db.query("delete from users.users where id = $1", [user.id]);
+    await nile.clearConnections();
+  }, 10000);
 });
 
 async function initialDebugCleanup(nile: Server) {
   // remove the users 1st, fk constraints
-  const existing = [primaryUser, newUser, tenantUser].map(async (u) => {
-    const exists = await nile.db.query(
-      "select * from users.users where email = $1",
-      [u.email],
-    );
-    if (exists.rows.length > 0) {
-      const id = exists.rows[0].id;
-      await nile.db.query("delete from auth.credentials where user_id = $1", [
-        id,
-      ]);
-      await nile.db.query("delete from users.users where id= $1", [id]);
-    }
-  });
+  const existing = [primaryUser, newUser, tenantUser, staleJwtUser].map(
+    async (u) => {
+      const exists = await nile.db.query(
+        "select * from users.users where email = $1",
+        [u.email],
+      );
+      if (exists.rows.length > 0) {
+        const id = exists.rows[0].id;
+        await nile.db.query("delete from auth.credentials where user_id = $1", [
+          id,
+        ]);
+        await nile.db.query("delete from users.users where id= $1", [id]);
+      }
+    },
+  );
   await Promise.all(existing);
   const tenants = await nile.db.query("select * from tenants;");
   const commands = tenants.rows.reduce((accum, t) => {
