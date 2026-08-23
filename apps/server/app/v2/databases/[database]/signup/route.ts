@@ -1,7 +1,7 @@
 import { Logger, EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 
-import { POST as USER_POST } from "../users/route";
+import { createUser as USER_POST } from "../users/route";
 
 const { error } = Logger("signup route");
 import { EmailVerificationError, login, LoginError } from "./login";
@@ -93,7 +93,7 @@ export async function POST(
       //noop
     }
 
-    const userCreate = await USER_POST(req);
+    const userCreate = await USER_POST(req, responder, reporter);
     if (userCreate) {
       if (userCreate.status > 201) {
         return responder(await userCreate.text(), {
