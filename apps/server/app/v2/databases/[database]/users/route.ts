@@ -4,10 +4,38 @@ import {
   multiFactorColumn,
   queryByReq,
 } from "@nile-auth/query";
-import { EventEnum, ResponseLogger } from "@nile-auth/logger";
+import { addContext } from "@nile-auth/query/context";
+import { EventEnum, ResponseLogger, ResponderFn } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 import { handleFailure } from "@nile-auth/query/utils";
-import { ProviderMethods } from "@nile-auth/core";
+import { auth, ProviderMethods } from "@nile-auth/core";
+
+type SqlFn = Awaited<ReturnType<typeof queryByReq>>;
+
+async function isTenantMember(
+  sql: SqlFn,
+  userId: string,
+  tenantId: string,
+): Promise<boolean> {
+  const [contextError, , membership] = await sql`
+    ${addContext({ tenantId })};
+
+    ${addContext({ userId })};
+
+    SELECT
+      COUNT(*)
+    FROM
+      users.tenant_users
+    WHERE
+      deleted IS NULL
+      AND user_id = ${userId}
+      AND tenant_id = ${tenantId}
+  `;
+  if (contextError) {
+    return false;
+  }
+  return Number(membership?.rows?.[0]?.count ?? 0) > 0;
+}
 
 /**
  *
@@ -57,8 +85,11 @@ import { ProviderMethods } from "@nile-auth/core";
  *         description: Unauthorized
  *         content: {}
  */
-export async function POST(req: NextRequest) {
-  const [responder, reporter] = ResponseLogger(req, EventEnum.CREATE_USER);
+export async function createUser(
+  req: NextRequest,
+  responder: ResponderFn,
+  reporter: ReturnType<typeof ResponseLogger>[1],
+): Promise<Response> {
   try {
     const preserve = await req.clone();
     const body = await req.json();
@@ -73,6 +104,21 @@ export async function POST(req: NextRequest) {
     if (!validEmail) {
       return handleFailure(responder, undefined, "Invalid email address");
     }
+
+    // anonymous callers may create users, but never join an existing tenant
+    let tenantId = new URL(req.url).searchParams.get("tenantId");
+    if (tenantId) {
+      const [session] = await auth(req);
+      if (!session?.user?.id) {
+        return responder(null, { status: 401 });
+      }
+      if (!(await isTenantMember(sql, session.user.id, tenantId))) {
+        return responder("You are not a member of this tenant.", {
+          status: 403,
+        });
+      }
+    }
+
     const [oldUser] = await sql`
       SELECT
         *
@@ -198,9 +244,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const sps = new URL(req.url).searchParams;
-    let tenantId = sps.get("tenantId");
-    const newTenantName = sps.get("newTenantName");
+    const newTenantName = new URL(req.url).searchParams.get("newTenantName");
 
     if (newTenantName) {
       const [tenant] = await sql`
@@ -265,4 +309,9 @@ export async function POST(req: NextRequest) {
       status: 500,
     });
   }
+}
+
+export async function POST(req: NextRequest) {
+  const [responder, reporter] = ResponseLogger(req, EventEnum.CREATE_USER);
+  return createUser(req, responder, reporter);
 }
