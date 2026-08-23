@@ -31,9 +31,9 @@ async function isTenantMember(
       AND user_id = ${userId}
       AND tenant_id = ${tenantId}
   `;
-  if (contextError) {
-    return false;
-  }
+
+  if (contextError) return false;
+
   return Number(membership?.rows?.[0]?.count ?? 0) > 0;
 }
 
@@ -109,10 +109,10 @@ export async function createUser(
     let tenantId = new URL(req.url).searchParams.get("tenantId");
     if (tenantId) {
       const [session] = await auth(req);
-      if (!session?.user?.id) {
-        return responder(null, { status: 401 });
-      }
-      if (!(await isTenantMember(sql, session.user.id, tenantId))) {
+      if (!session?.user?.id) return responder(null, { status: 401 });
+
+      const isMember = await isTenantMember(sql, session.user.id, tenantId);
+      if (!isMember) {
         return responder("You are not a member of this tenant.", {
           status: 403,
         });
