@@ -1,3 +1,3 @@
-// Preload this before Next.js so its modules can be instrumented when loaded.
-// DD_ENV, DD_SERVICE and the agent settings are read from the environment.
+// Initialize before Next.js, using the service tags and agent socket settings
+// already injected by the cluster's Datadog admission controller.
 require("dd-trace").init();

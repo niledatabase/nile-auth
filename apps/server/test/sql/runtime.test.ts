@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { createServer, Server } from "node:http";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { Client, QueryResult } from "pg";
 import ClientManager from "../../../../packages/query/src/ClientManager";
@@ -9,7 +12,9 @@ type SqlTestApp = Awaited<ReturnType<typeof startSqlTestApp>>;
 let app: SqlTestApp;
 let manager: ClientManager;
 let agent: Server;
+let agentDirectory: string;
 const payloads: Buffer[] = [];
+const metrics: Buffer[] = [];
 const contentTypes: Array<string | undefined> = [];
 const logger = {
   debug: jest.fn(),
@@ -35,16 +40,22 @@ beforeAll(async () => {
     if (request.url === "/v0.4/traces") {
       contentTypes.push(request.headers["content-type"]);
       payloads.push(Buffer.concat(chunks));
+    } else if (request.url === "/dogstatsd/v2/proxy") {
+      metrics.push(Buffer.concat(chunks));
     }
     response.setHeader("content-type", "application/json");
     response.end(JSON.stringify({ rate_by_service: {} }));
   });
-  await new Promise<void>((resolve) => agent.listen(0, "127.0.0.1", resolve));
-  const address = agent.address();
-  if (!address || typeof address === "string")
-    throw new Error("No trace agent port");
+  // The deployed admission controller supplies Unix sockets, not localhost TCP.
+  agentDirectory = await mkdtemp(join(tmpdir(), "nile-auth-dd-"));
+  const socket = join(agentDirectory, "apm.socket");
+  await new Promise<void>((resolve, reject) => {
+    agent.once("error", reject);
+    agent.listen(socket, resolve);
+  });
   app = await startSqlTestApp({
-    traceAgentUrl: `http://127.0.0.1:${address.port}`,
+    traceAgentUrl: `unix://${socket}`,
+    dogstatsdUrl: `unix://${join(agentDirectory, "dsd.socket")}`,
   });
 });
 
@@ -54,6 +65,8 @@ afterAll(async () => {
     await new Promise<void>((resolve, reject) =>
       agent.close((error) => (error ? reject(error) : resolve())),
     );
+  if (agentDirectory)
+    await rm(agentDirectory, { recursive: true, force: true });
 });
 
 beforeEach(() => {
@@ -67,7 +80,7 @@ afterEach(async () => {
   jest.restoreAllMocks();
 });
 
-it("instruments Next.js requests from the production Docker startup command", async () => {
+it("instruments Next.js requests using the injected agent Unix socket configuration", async () => {
   const path = "/v2/ready";
   const response = await fetch(new URL(path, app.url));
   expect(response.status).toBe(200);
@@ -83,6 +96,9 @@ it("instruments Next.js requests from the production Docker startup command", as
     ),
   );
   expect(contentTypes).toContain("application/msgpack");
+  expect(
+    payloads.some((body) => body.includes(Buffer.from("nile-auth-sql-test"))),
+  ).toBe(true);
 });
 
 it("runs concurrent contextual commands on one connection without pg's deprecated queue", async () => {
@@ -260,5 +276,28 @@ it("serves concurrent user creation requests without the pg warning", async () =
   expect(saved.rows.map(({ email }) => email).sort()).toEqual(emails.sort());
   expect(app.diagnostics()).not.toMatch(
     /Calling client\.query\(\).*deprecated/,
+  );
+});
+
+it("delivers HTTP metrics through the injected agent Unix socket", async () => {
+  const response = await fetch(`${app.url}/users`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: `${randomUUID()}@metrics.example.test`,
+      password: "metrics-test-password",
+    }),
+  });
+  await response.text();
+  expect(response.status).toBe(201);
+  // The Node SDK flushes custom metrics every ten seconds via the agent proxy.
+  await until(
+    () =>
+      metrics.some(
+        (body) =>
+          body.includes(Buffer.from("http.response.count:")) &&
+          body.includes(Buffer.from("service:nile-auth-sql-test")),
+      ),
+    20000,
   );
 });

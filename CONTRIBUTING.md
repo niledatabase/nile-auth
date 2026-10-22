@@ -107,9 +107,12 @@ local fake Datadog agent verifies that the Docker startup command emits Next.js
 request spans. The standalone build is copied outside the checkout before
 starting it, so missing packaged dependencies cannot resolve from source files.
 
-`yarn dev`, `yarn start:server`, and the Docker entrypoint preload
-`apps/server/tracing.cjs` before Next.js. Configure the tracer with `DD_ENV`,
-`DD_SERVICE`, and the usual Datadog agent environment variables.
+The deployed containers already receive Datadog service tags and agent Unix
+socket settings from the cluster's admission controller. The Docker entrypoint
+preloads `apps/server/tracing.cjs` before Next.js and inherits those settings;
+deployment does not require additional Datadog environment configuration. The
+runtime regression tests verify request spans and HTTP metrics over an agent
+Unix socket, matching that deployed transport.
 
 ## Dependency security
 

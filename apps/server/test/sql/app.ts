@@ -48,7 +48,7 @@ async function stopApp(app: ChildProcess) {
 }
 
 export async function startSqlTestApp(
-  options: { traceAgentUrl?: string } = {},
+  options: { traceAgentUrl?: string; dogstatsdUrl?: string } = {},
 ) {
   const connectionString = process.env.SQL_TEST_DATABASE_URL;
   if (!connectionString) {
@@ -113,7 +113,9 @@ export async function startSqlTestApp(
       env: {
         ...process.env,
         NODE_ENV: "production",
-        NODE_OPTIONS: "--throw-deprecation",
+        NODE_OPTIONS: [process.env.NODE_OPTIONS, "--throw-deprecation"]
+          .filter(Boolean)
+          .join(" "),
         PORT: new URL(origin).port,
         HOSTNAME: "127.0.0.1",
         NEXT_TELEMETRY_DISABLED: "1",
@@ -130,7 +132,7 @@ export async function startSqlTestApp(
         DD_TRACE_FLUSH_INTERVAL: "100",
         DD_TRACE_SAMPLE_RATE: "1",
         DD_AGENT_HOST: "127.0.0.1",
-        DD_DOGSTATSD_URL: "udp://127.0.0.1:8125",
+        DD_DOGSTATSD_URL: options.dogstatsdUrl ?? "udp://127.0.0.1:8125",
         DD_SERVICE: "nile-auth-sql-test",
         DD_ENV: "test",
         DD_INSTRUMENTATION_TELEMETRY_ENABLED: "false",
