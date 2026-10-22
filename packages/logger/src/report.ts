@@ -15,15 +15,6 @@ type Metrics =
   | "http.response.count"
   | "http.failure";
 
-try {
-  tracer.init({
-    tags: { env: process.env.DD_ENV, service: process.env.DD_SERVICE },
-  });
-  tracer.use("next");
-} catch (e) {
-  warn("failed to configure UDS. NOT LOGGING TO DATADOG");
-}
-
 export type Reporter = {
   time: [number, number];
   url: string | void;

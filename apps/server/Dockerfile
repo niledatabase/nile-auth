@@ -57,4 +57,5 @@ COPY --from=installer --chown=nextjs:nodejs /app/apps/server/.next/static ./apps
 EXPOSE 3001
 
 ENV PORT=3001
-CMD ["dumb-init", "node", "apps/server/server.js"]
+ENV NODE_ENV=production
+CMD ["dumb-init", "node", "--require", "./apps/server/tracing.cjs", "apps/server/server.js"]

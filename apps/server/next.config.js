@@ -9,6 +9,10 @@ const nextConfig = {
     "@nile-auth/query",
   ],
   outputFileTracingRoot: path.join(__dirname, "../../"),
+  serverExternalPackages: ["dd-trace"],
+  outputFileTracingIncludes: {
+    "/*": ["./tracing.cjs"],
+  },
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = [
@@ -16,9 +20,6 @@ const nextConfig = {
         "graphql/language/visitor",
         "graphql/language/printer",
         "graphql/utilities",
-        "dd-trace",
-        "dd-trace/packages/datadog-plugin-openai",
-        "dd-trace/packages/datadog-plugin-graphql",
       ];
     }
     return config;

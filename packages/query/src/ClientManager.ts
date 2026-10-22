@@ -34,12 +34,11 @@ export default class ClientManager {
       this.logger.debug(
         `reusing existing client. total clients: ${this.clients.size}`,
       );
-      existing.startTimer();
       return existing;
     }
     const client = new ClientWithTimer(
       configId,
-      (id) => this.removeSelf(id),
+      (id) => this.removeSelf(id, client),
       config,
       this.logger,
     );
@@ -52,17 +51,15 @@ export default class ClientManager {
   }
 
   remove(config: ClientConfig) {
-    const configId = makeServerId(config);
-    this.clients.delete(configId);
-    this.logger.debug(
-      `removing client. Remaining clients: ${this.clients.size}`,
-    );
+    return this.removeSelf(makeServerId(config));
   }
 
-  async removeSelf(id: string) {
+  async removeSelf(id: string, expected?: ClientWithTimer) {
     const client = this.clients.get(id);
-    await client?.stop();
+    if (!client || (expected && client !== expected)) return;
+    // Evict before closing so new requests cannot reuse a retiring client.
     this.clients.delete(id);
+    await client.stop();
     this.logger.debug(
       `client removing itself. remaining clients: ${this.clients.size}`,
     );

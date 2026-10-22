@@ -100,6 +100,17 @@ it. These tests prove the covered queries execute on PostgreSQL and enforce the
 application's membership checks; Nile's native tenant isolation still needs
 testing against Nile.
 
+Runtime regression cases also check concurrent queries, per-request tenant and
+user context, rollback after a failed transaction, and idle or disconnected
+client recovery. The test runner and server fail on Node.js deprecations. A
+local fake Datadog agent verifies that the Docker startup command emits Next.js
+request spans. The standalone build is copied outside the checkout before
+starting it, so missing packaged dependencies cannot resolve from source files.
+
+`yarn dev`, `yarn start:server`, and the Docker entrypoint preload
+`apps/server/tracing.cjs` before Next.js. Configure the tracer with `DD_ENV`,
+`DD_SERVICE`, and the usual Datadog agent environment variables.
+
 ## Dependency security
 
 Run `yarn audit:security` to check every workspace and transitive dependency,

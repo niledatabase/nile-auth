@@ -1,3 +1,7 @@
+// Set this on Node's real process before Jest creates its sandboxed process.
+// In particular, pg's deprecated implicit query queue must fail this suite.
+process.throwDeprecation = true;
+
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
   preset: "ts-jest",
