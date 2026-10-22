@@ -81,10 +81,10 @@ describe("update tenant user", () => {
       url: "http://localhost",
     };
     const res = await PUT(req as NextRequest, {
-      params: {
+      params: Promise.resolve({
         userId: "0190b7cd-661a-76d4-ba6e-6ae2c383e3c1",
         tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a",
-      },
+      }),
     });
     expect(res.status).toEqual(404);
     expect(runCommands).toEqual([
@@ -159,10 +159,10 @@ describe("update tenant user", () => {
       },
     };
     const res = await PUT(req as NextRequest, {
-      params: {
+      params: Promise.resolve({
         userId: "0190b7cd-661a-76d4-ba6e-6ae2c383e3c1",
         tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a",
-      },
+      }),
     });
     expect(res.status).toEqual(200);
     expect(runCommands).toEqual([

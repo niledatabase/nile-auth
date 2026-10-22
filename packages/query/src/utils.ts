@@ -14,7 +14,7 @@ export function handleFailure(
   pgData?: ErrorResultSet | Pick<ErrorResultSet, "code"> | { status: number },
   msg?: string,
 ) {
-  let status = pgData && "status" in pgData ? pgData?.status : 400;
+  const status = pgData && "status" in pgData ? pgData?.status : 400;
   if (pgData && "code" in pgData) {
     if (pgData.code === ErrorCodes.invalid_authorization_specification) {
       return responder(`Unauthorized.`, { status: 401 });

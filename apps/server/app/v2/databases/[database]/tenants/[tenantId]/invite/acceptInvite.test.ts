@@ -175,7 +175,7 @@ describe("accept invite", () => {
     };
 
     await PUT(req as NextRequest, {
-      params: { tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a" },
+      params: Promise.resolve({ tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a" }),
     });
 
     expect(mockResponder).toHaveBeenCalledWith(null, {

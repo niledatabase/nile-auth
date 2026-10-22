@@ -87,10 +87,10 @@ describe("mark a user deleted", () => {
       },
     };
     await PUT(req as NextRequest, {
-      params: {
+      params: Promise.resolve({
         userId: "019073f4-75a6-72b9-a379-5ed38ca0d01a",
         tenantId: "whatever",
-      },
+      }),
     });
     expect(runCommands).toEqual([
       "SELECT * FROM users.users WHERE id = 019073f4-75a6-72b9-a379-5ed38ca0d01a AND deleted IS NULL",
@@ -142,10 +142,10 @@ describe("mark a user deleted", () => {
       },
     };
     await PUT(req as NextRequest, {
-      params: {
+      params: Promise.resolve({
         userId: "0190b7cd-661a-76d4-ba6e-6ae2c383e3c1",
         tenantId: "whatever",
-      },
+      }),
     });
 
     expect(runCommands).toEqual([

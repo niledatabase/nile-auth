@@ -1,6 +1,6 @@
 import { auth } from "@nile-auth/core";
 import { EventEnum, ResponseLogger } from "@nile-auth/logger";
-import { ErrorResultSet, formatTime, queryByReq } from "@nile-auth/query";
+import { ErrorResultSet, queryByReq } from "@nile-auth/query";
 import { addContext } from "@nile-auth/query/context";
 import { handleFailure } from "@nile-auth/query/utils";
 import { NextRequest } from "next/server";
@@ -55,10 +55,9 @@ import { NextRequest } from "next/server";
  */
 export async function PUT(
   req: NextRequest,
-  {
-    params,
-  }: { params: { database?: string; tenantId?: string; userId?: string } },
+  { params: paramsPromise }: { params: Promise<{ database?: string; tenantId?: string; userId?: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.LINK_USER);
   try {
     const [session] = await auth(req);
@@ -189,8 +188,9 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { userId?: string; tenantId: string } },
+  { params: paramsPromise }: { params: Promise<{ userId?: string; tenantId: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.UNLINK_USER);
   try {
     const [session] = await auth(req);
@@ -226,7 +226,7 @@ export async function DELETE(
       if (
         principalInTenant &&
         "rowCount" in principalInTenant &&
-        (Number(principalInTenant.rows[0]?.count) ?? 0) === 0
+        Number(principalInTenant.rows[0]?.count) === 0
       ) {
         return responder(null, { status: 404 });
       }

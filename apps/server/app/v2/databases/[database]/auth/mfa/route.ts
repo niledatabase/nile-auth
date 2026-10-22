@@ -571,9 +571,12 @@ export async function DELETE(req: NextRequest) {
         AND deleted IS NULL
     `;
 
-    if (userError || !user) {
-      log.debug("user not found");
+    if (userError) {
       return userError;
+    }
+    if (!user) {
+      log.debug("user not found");
+      return responder("User no longer exists", { status: 404 });
     }
 
     const storedMethod = user.multi_factor as MultiFactorMethod | null;

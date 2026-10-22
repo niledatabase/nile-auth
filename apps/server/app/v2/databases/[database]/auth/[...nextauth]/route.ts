@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import NileAuth from "@nile-auth/core";
 import { EventEnum, Logger, ResponseLogger } from "@nile-auth/logger";
-import { getOrigin, getSecureCookies } from "@nile-auth/core/cookies";
+import { getOrigin } from "@nile-auth/core/cookies";
 
 const log = Logger(EventEnum.NILE_AUTH);
 
@@ -36,8 +36,9 @@ const sanitizeBody = (body: string) => {
 };
 export async function GET(
   req: NextRequest,
-  { params }: { params: { database: string; nextauth: string[] } },
+  { params: paramsPromise }: { params: Promise<{ database: string; nextauth: string[] }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_GET);
   try {
     const res = await NileAuth(req, { params });
@@ -81,8 +82,9 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { database: string; nextauth: string[] } },
+  { params: paramsPromise }: { params: Promise<{ database: string; nextauth: string[] }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_POST);
   try {
     const res = await NileAuth(req, { params });

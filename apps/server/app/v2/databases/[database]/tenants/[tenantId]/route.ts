@@ -61,8 +61,9 @@ import { addContext } from "@nile-auth/query/context";
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { database?: string; tenantId?: string } },
+  { params: paramsPromise }: { params: Promise<{ database?: string; tenantId?: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.UPDATE_TENANT);
   try {
     const [session] = await auth(req);
@@ -77,7 +78,9 @@ export async function PUT(
       let body;
       try {
         body = await req.json();
-      } catch {}
+      } catch {
+        // Missing or invalid JSON is handled by the name validation below.
+      }
       if (!body?.name) {
         return handleFailure(responder, undefined, "name is required");
       }
@@ -102,7 +105,7 @@ export async function PUT(
       if (
         userInTenant &&
         "rowCount" in userInTenant &&
-        (Number(userInTenant.rows[0]?.count) ?? 0) === 0
+        Number(userInTenant.rows[0]?.count) === 0
       ) {
         return responder(null, { status: 404 });
       }
@@ -178,8 +181,9 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { database?: string; tenantId?: string } },
+  { params: paramsPromise }: { params: Promise<{ database?: string; tenantId?: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.DELETE_TENANT);
   try {
     const [session] = await auth(req);
@@ -210,7 +214,7 @@ export async function DELETE(
       if (
         userInTenant &&
         "rowCount" in userInTenant &&
-        (Number(userInTenant.rows[0]?.count) ?? 0) === 0
+        Number(userInTenant.rows[0]?.count) === 0
       ) {
         return responder(null, { status: 404 });
       }
@@ -286,8 +290,9 @@ export async function DELETE(
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { database?: string; tenantId?: string } },
+  { params: paramsPromise }: { params: Promise<{ database?: string; tenantId?: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.LIST_TENANT);
   try {
     const [session] = await auth(req);

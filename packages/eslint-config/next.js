@@ -1,42 +1,18 @@
-const { resolve } = require("node:path");
+const next = require("@next/eslint-plugin-next");
+const globals = require("globals");
+const library = require("./library");
 
-const project = resolve(process.cwd(), "tsconfig.json");
-
-/** @type {import("eslint").Linter.Config} */
-module.exports = {
-  extends: [
-    "eslint:recommended",
-    "prettier",
-    require.resolve("@vercel/style-guide/eslint/next"),
-    "turbo",
-    'plugin:@typescript-eslint/recommended'
-  ],
-  globals: {
-    React: true,
-    JSX: true,
-    jest: true
-  },
-  env: {
-    node: true,
-    browser: true,
-    jest: true
-  },
-  plugins: ["only-warn"],
-  settings: {
-    "import/resolver": {
-      typescript: {
-        project,
-      },
+/** @type {import("eslint").Linter.Config[]} */
+module.exports = [
+  ...library,
+  {
+    languageOptions: {
+      globals: globals.browser,
+    },
+    plugins: { "@next/next": next },
+    rules: {
+      ...next.configs.recommended.rules,
+      ...next.configs["core-web-vitals"].rules,
     },
   },
-  ignorePatterns: [
-    // Ignore dotfiles
-    ".*.js",
-    "node_modules/",
-  ],
-  rules: {
-    "@typescript-eslint/no-unused-vars": "error",
-    "no-unused-vars": "off"
-  },
-  overrides: [{ files: ["*.js?(x)", "*.ts?(x)"] }],
-};
+];

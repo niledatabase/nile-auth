@@ -1,5 +1,5 @@
 import { auth } from "@nile-auth/core";
-import { findCallbackCookie, getCallbackCookie } from "@nile-auth/core/cookies";
+import { findCallbackCookie } from "@nile-auth/core/cookies";
 import { validCsrfToken } from "@nile-auth/core/csrf";
 import {
   checkEmail,
@@ -106,8 +106,9 @@ import { NextRequest } from "next/server";
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { database?: string; tenantId?: string } },
+  { params: paramsPromise }: { params: Promise<{ database?: string; tenantId?: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.CREATE_INVITE);
   try {
     const [session] = await auth(req);
@@ -290,8 +291,9 @@ export async function POST(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { database?: string; tenantId?: string } },
+  { params: paramsPromise }: { params: Promise<{ database?: string; tenantId?: string }> },
 ): Promise<Response> {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.ACCEPT_INVITE);
   try {
     const { tenantId } = params;

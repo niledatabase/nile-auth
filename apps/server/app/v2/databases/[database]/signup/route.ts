@@ -60,8 +60,9 @@ import getDbInfo from "@nile-auth/query/getDbInfo";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { database: string; nextauth: string[] } },
+  { params: paramsPromise }: { params: Promise<{ database: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.SIGN_UP);
   try {
     const [hasValidToken] = await validCsrfToken(

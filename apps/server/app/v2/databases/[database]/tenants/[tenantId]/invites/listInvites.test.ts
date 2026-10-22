@@ -53,7 +53,7 @@ describe("list invites", () => {
       },
     };
     await GET(req as NextRequest, {
-      params: { tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a" },
+      params: Promise.resolve({ tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a" }),
     });
     expect(handleFailure).toHaveBeenCalled();
     expect(commands).toEqual([
@@ -96,7 +96,7 @@ describe("list invites", () => {
       },
     };
     const res = await GET(req as NextRequest, {
-      params: { tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a" },
+      params: Promise.resolve({ tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a" }),
     });
     expect(res?.status).toEqual(200);
     expect(runCommands).toEqual([
