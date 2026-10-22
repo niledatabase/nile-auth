@@ -11,5 +11,6 @@ module.exports = {
   testPathIgnorePatterns: [
     "/node_modules/",
     "<rootDir>/test/integration.test.ts",
+    "<rootDir>/test/sql/",
   ],
 };

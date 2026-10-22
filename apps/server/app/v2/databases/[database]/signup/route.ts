@@ -26,12 +26,12 @@ import getDbInfo from "@nile-auth/query/getDbInfo";
  *         schema:
  *           type: string
  *       - name: tenantId
- *         description: A tenant id to add the user to when they are created
+ *         description: An existing tenant the signed-in caller belongs to. Cannot be combined with newTenantName.
  *         in: query
  *         schema:
  *           type: string
  *       - name: newTenantName
- *         description: A tenant name to create, then the user to when they are created
+ *         description: A name for a new tenant to create and add the new user to. Cannot be combined with tenantId.
  *         in: query
  *         schema:
  *           type: string
@@ -55,6 +55,9 @@ import getDbInfo from "@nile-auth/query/getDbInfo";
  *               type: string
  *       "401":
  *         description: Unauthorized
+ *         content: {}
+ *       "403":
+ *         description: The caller is not an active member of the target tenant
  *         content: {}
  */
 
@@ -96,15 +99,18 @@ export async function POST(
 
     const userCreate = await USER_POST(req);
     if (userCreate) {
+      // Read once before calling the auth handler. Keep the response payload
+      // available for both the created user ID and the final signup response.
+      const userCreateBody = await userCreate.text();
       if (userCreate.status > 201) {
-        return responder(await userCreate.text(), {
+        return responder(userCreateBody, {
           status: userCreate.status,
         });
       }
 
       let createdUserId: string | null = null;
       try {
-        const parsed = await userCreate.clone().json();
+        const parsed = JSON.parse(userCreateBody);
         createdUserId = parsed?.id ?? null;
       } catch (e) {
         // no-op, non JSON response
@@ -114,11 +120,7 @@ export async function POST(
         const dbInfo = getDbInfo(undefined, req);
         if (dbInfo && createdUserId) {
           const headers = await login(cloned, { params });
-          return responder(
-            await userCreate.text(),
-            { headers },
-            { ...swagBody },
-          );
+          return responder(userCreateBody, { headers }, { ...swagBody });
         }
       } catch (e) {
         if (e instanceof LoginError || e instanceof Error) {

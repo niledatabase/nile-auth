@@ -9,6 +9,18 @@ on:
 jobs:
   test:
     runs-on: public-ubuntu-x64-2-core
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +38,10 @@ jobs:
 
       - name: test
         run: yarn test
+      - name: Test user creation against PostgreSQL
+        run: yarn test:sql
+        env:
+          SQL_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
   tag:
     runs-on: public-ubuntu-x64-2-core
     needs: [ "test" ]
