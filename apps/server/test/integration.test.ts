@@ -157,6 +157,7 @@ describe("api integration", () => {
     nile.tenantId = "";
 
     for (const id of [user.id, secondUser.id, newTenantUser.id]) {
+      await nile.db.query("delete from auth.sessions where user_id = $1", [id]);
       await nile.db.query("delete from auth.credentials where user_id = $1", [
         id,
       ]);
@@ -206,6 +207,7 @@ describe("api integration", () => {
     )) as Response;
     expect(staleMe.status).toEqual(401);
 
+    await nile.db.query("delete from auth.sessions where user_id = $1", [user.id]);
     await nile.db.query("delete from auth.credentials where user_id = $1", [
       user.id,
     ]);
@@ -224,6 +226,7 @@ async function initialDebugCleanup(nile: Server) {
       );
       if (exists.rows.length > 0) {
         const id = exists.rows[0].id;
+        await nile.db.query("delete from auth.sessions where user_id = $1", [id]);
         await nile.db.query("delete from auth.credentials where user_id = $1", [
           id,
         ]);
