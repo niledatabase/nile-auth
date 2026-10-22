@@ -72,6 +72,34 @@ drift window, MFA and recovery codes, and SMTP delivery to a local test server.
 The separate SDK integration test needs a configured database and is excluded
 from the default run.
 
+### SQL regression tests
+
+Run `yarn test:sql` against a disposable PostgreSQL 17 instance. This command
+builds and starts the production standalone server used by the Docker image,
+sends HTTP requests to `/users`, `/signup` and auth routes, and checks the saved
+rows and password hashes. It uses the production query and authentication code
+without mocking database results. CI runs it as a required step before tagging
+or publishing images.
+
+For example, start a local test database:
+
+```sh
+docker run --rm --detach --name nile-auth-sql-tests \
+  --publish 127.0.0.1:7433:5432 --env POSTGRES_PASSWORD=postgres postgres:17
+docker exec nile-auth-sql-tests pg_isready -U postgres
+SQL_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:7433/postgres yarn test:sql
+docker stop nile-auth-sql-tests
+```
+
+Wait for `pg_isready` to report that PostgreSQL is accepting connections before
+running the tests. The supplied connection needs `CREATE DATABASE` permission.
+Each run creates and drops a uniquely named database and starts the app on an
+available loopback port; it does not use the app's `.env` database credentials.
+An absent or unusable `SQL_TEST_DATABASE_URL` fails the suite instead of skipping
+it. These tests prove the covered queries execute on PostgreSQL and enforce the
+application's membership checks; Nile's native tenant isolation still needs
+testing against Nile.
+
 ## Dependency security
 
 Run `yarn audit:security` to check every workspace and transitive dependency,

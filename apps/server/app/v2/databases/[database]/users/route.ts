@@ -7,7 +7,7 @@ import {
 import { EventEnum, ResponseLogger } from "@nile-auth/logger";
 import { NextRequest } from "next/server";
 import { handleFailure } from "@nile-auth/query/utils";
-import { ProviderMethods } from "@nile-auth/core";
+import { auth, ProviderMethods } from "@nile-auth/core";
 
 /**
  *
@@ -26,12 +26,12 @@ import { ProviderMethods } from "@nile-auth/core";
  *         schema:
  *           type: string
  *       - name: tenantId
- *         description: A tenant id to add the user to when they are created
+ *         description: An existing tenant the signed-in caller belongs to. Cannot be combined with newTenantName.
  *         in: query
  *         schema:
  *           type: string
  *       - name: newTenantName
- *         description: A tenant name to create, then the user to when they are created
+ *         description: A name for a new tenant to create and add the new user to. Cannot be combined with tenantId.
  *         in: query
  *         schema:
  *           type: string
@@ -56,6 +56,9 @@ import { ProviderMethods } from "@nile-auth/core";
  *       "401":
  *         description: Unauthorized
  *         content: {}
+ *       "403":
+ *         description: The caller is not an active member of the target tenant
+ *         content: {}
  */
 export async function POST(req: NextRequest) {
   const [responder, reporter] = ResponseLogger(req, EventEnum.CREATE_USER);
@@ -72,6 +75,49 @@ export async function POST(req: NextRequest) {
       );
     if (!validEmail) {
       return handleFailure(responder, undefined, "Invalid email address");
+    }
+
+    const sps = new URL(req.url).searchParams;
+    let tenantId = sps.get("tenantId");
+    const newTenantName = sps.get("newTenantName");
+    if (tenantId && newTenantName) {
+      return responder("Use either tenantId or newTenantName, not both.", {
+        status: 400,
+      });
+    }
+    if (tenantId) {
+      if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(tenantId)) {
+        return responder("Invalid tenantId.", { status: 400 });
+      }
+      const [session] = await auth(preserve);
+      if (!session?.user?.id) {
+        return responder(null, { status: 401 });
+      }
+      // Check both IDs explicitly: this query must also be safe without
+      // tenant context, before any users, credentials or tenants are written.
+      const [membership] = await sql`
+        SELECT
+          EXISTS (
+            SELECT
+              1
+            FROM
+              users.tenant_users tu
+              JOIN public.tenants t ON t.id = tu.tenant_id
+            WHERE
+              tu.tenant_id = ${tenantId}
+              AND tu.user_id = ${session.user.id}
+              AND tu.deleted IS NULL
+              AND t.deleted IS NULL
+          ) AS "isMember"
+      `;
+      if (!membership || !("rows" in membership)) {
+        return responder("Unable to check tenant membership.", { status: 500 });
+      }
+      if (getRow<{ isMember: boolean }>(membership)?.isMember !== true) {
+        return responder("You are not a member of this tenant.", {
+          status: 403,
+        });
+      }
     }
     const [oldUser] = await sql`
       SELECT
@@ -197,10 +243,6 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-
-    const sps = new URL(req.url).searchParams;
-    let tenantId = sps.get("tenantId");
-    const newTenantName = sps.get("newTenantName");
 
     if (newTenantName) {
       const [tenant] = await sql`
