@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "build:spec": "yarn next-swagger-doc-cli openapi/next-swagger-doc.json && mv public/swagger.json openapi",
     "build:client": "yarn openapi-generator-cli generate -i openapi/swagger.json -g typescript-fetch -o openapi/region-rest --additional-properties=ngVersion=6.1.7,supportsES6=true,npmVersion=6.9.0,withInterfaces=true,typescriptThreePlus=true",
-    "start": "NODE_ENV=production PORT=3001 node --require ./.next/standalone/apps/server/tracing.cjs ./.next/standalone/apps/server/server.js",
+    "start": "cp -R .next/static .next/standalone/apps/server/.next/ && NODE_ENV=production PORT=3001 node --require ./.next/standalone/apps/server/tracing.cjs ./.next/standalone/apps/server/server.js",
     "lint": "eslint . --max-warnings 0",
     "test": "jest",
     "test:sql": "yarn build && jest --config jest.sql.config.js"
