@@ -12,6 +12,11 @@ Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
 
 We use [`yarn`](https://yarnpkg.com/) (please avoid `npm`) and [`Turborepo`](https://turbo.build/) for managing dependencies and builds.
 
+Use Node.js 22.19 or newer on a supported LTS release and Yarn 4.8.1. The
+Docker image uses Node.js 24. The runtime security update keeps Jest 29,
+otplib 12 (including the existing `thirty-two` patch), and Datadog's maintained
+5.x release line. Optional major upgrades are reviewed separately.
+
 ## Getting Started
 
 You can read a more detailed guide in our [documentation](https://thenile.dev/docs/auth/contributing/develop)
@@ -60,6 +65,29 @@ If you run into security issues, we prefer you contact [support@thenile.dev](mai
 ## Testing
 
 Review our [testing guide](https://thenile.dev/docs/auth/contributing/testing) for suggestions on how to test Nile Auth.
+
+Run `yarn test`, `yarn lint`, and `yarn build` before submitting dependency
+updates. Tests cover existing 10-byte authenticator secrets, the accepted clock
+drift window, MFA and recovery codes, and SMTP delivery to a local test server.
+The separate SDK integration test needs a configured database and is excluded
+from the default run.
+
+## Dependency security
+
+Run `yarn audit:security` to check every workspace and transitive dependency,
+including development tools. Two advisories have no published patched release:
+
+- [`braces` / GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+  affects deeply nested glob patterns used by source discovery and tools. The
+  application supplies fixed source globs.
+- [`sprintf-js` / GHSA-hp3w-g68c-fv3c](https://github.com/advisories/GHSA-hp3w-g68c-fv3c)
+  affects attacker-controlled precision specifiers and remains under legacy
+  `argparse` dependencies.
+
+These findings are not suppressed. The `basic-ftp` resolution selects a patched
+6.x version because `get-uri` still requests the affected 5.x line. NextAuth 4's
+optional Nodemailer peer range targets 7.x; the service uses Nodemailer 10 with
+its own delivery implementation, covered by the SMTP test.
 
 
 

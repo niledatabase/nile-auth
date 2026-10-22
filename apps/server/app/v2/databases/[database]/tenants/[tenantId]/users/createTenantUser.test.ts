@@ -113,7 +113,7 @@ describe("create users", () => {
       url: "http://localhost",
     };
     const res = await POST(req as NextRequest, {
-      params: { tenantId: "tenantId" },
+      params: Promise.resolve({ tenantId: "tenantId" }),
     });
     expect(res.status).toEqual(404);
     expect(runCommands).toEqual([
@@ -201,7 +201,7 @@ describe("create users", () => {
       },
     };
     const res = await POST(req as NextRequest, {
-      params: { tenantId: "tenantId" },
+      params: Promise.resolve({ tenantId: "tenantId" }),
     });
     expect(res.status).toEqual(201);
     expect(runCommands).toEqual([

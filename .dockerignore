@@ -1,0 +1,10 @@
+.git
+.yarn/install-state.gz
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/coverage
+**/.env
+**/.env.*
+out

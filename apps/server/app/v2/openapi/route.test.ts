@@ -31,7 +31,7 @@ describe("GET /openapi", () => {
     const validated = await SwaggerParser.validate(
       JSON.parse(JSON.stringify(parsed)) as any,
     );
-    expect(validated.openapi).toBe("3.0.0");
+    expect("openapi" in validated && validated.openapi).toBe("3.0.0");
     expect(validated.info).toMatchObject(expectedSpec.info);
     expect(typeof validated.paths).toBe("object");
     expect(Object.keys(validated.paths ?? {})).not.toHaveLength(0);

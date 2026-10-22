@@ -1,7 +1,12 @@
+jest.mock("nodemailer", () => ({
+  createTransport: () => ({
+    sendMail: async () => ({ rejected: [], pending: [] }),
+  }),
+}));
+
 import { NextRequest } from "next/server";
 import { queryByReq, queryBySingle } from "@nile-auth/query";
 import { GET, POST, PUT } from "./route";
-import { getCookieParts } from "@nile-auth/core/csrf";
 import { makeNewSessionJwt } from "@nile-auth/core/cookies";
 
 jest.mock("../../../../../../../../packages/query/src/query", () => ({

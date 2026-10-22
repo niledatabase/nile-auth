@@ -51,11 +51,11 @@ describe("DELETE /invite", () => {
     const req = { url: "http://localhost" };
 
     await DELETE(req as unknown as NextRequest, {
-      params: {
+      params: Promise.resolve({
         database: "db",
         tenantId: "tenant-xyz",
         inviteId: "invite-123",
-      },
+      }),
     });
 
     expect(mockResponder).toHaveBeenCalledWith(null, { status: 204 });

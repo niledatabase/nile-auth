@@ -50,7 +50,7 @@ describe("mfa/recoveryKeys", () => {
 
     const sqlCalls: string[] = [];
     const sqlMock = jest.fn(
-      async (strings: TemplateStringsArray, ...values: unknown[]) => {
+      async (strings: TemplateStringsArray, ..._values: unknown[]) => {
         sqlCalls.push(strings.join(" "));
         return { rows: [] };
       },

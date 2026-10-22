@@ -1,3 +1,9 @@
+jest.mock("nodemailer", () => ({
+  createTransport: () => ({
+    sendMail: async () => ({ rejected: [], pending: [] }),
+  }),
+}));
+
 import { NextRequest } from "next/server";
 
 import { auth } from "../../../../../../../../../packages/core/src/auth";
@@ -99,7 +105,7 @@ describe("list invites", () => {
     };
 
     await POST(req as NextRequest, {
-      params: { tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a" },
+      params: Promise.resolve({ tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a" }),
     });
     expect(mockResponder).toHaveBeenCalledWith("Unauthorized.", {
       status: 401,
@@ -192,7 +198,7 @@ describe("list invites", () => {
     };
 
     await POST(req as NextRequest, {
-      params: { tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a" },
+      params: Promise.resolve({ tenantId: "019073f4-75a6-72b9-a379-5ed38ca0d01a" }),
     });
     expect(mockResponder).toHaveBeenCalledWith(JSON.stringify(mockInvite), {
       status: 201,

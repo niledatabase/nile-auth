@@ -1,6 +1,5 @@
 import EmailProvider from "next-auth/providers/email";
 import { createTransport } from "nodemailer";
-import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { User as NextAuthUser } from "next-auth";
 
 import {
@@ -197,8 +196,7 @@ export async function sendEmail({
   try {
     const html = body;
 
-    const transportOptions: SMTPTransport.Options = {
-      url,
+    const message = {
       to,
       from,
       sender: from,
@@ -206,13 +204,13 @@ export async function sendEmail({
       subject,
     };
 
-    debug("sending email", { transportOptions });
-    const transport = createTransport(transportOptions);
+    debug("sending email", { message });
+    const transport = createTransport({ url });
 
-    const result = await transport.sendMail(transportOptions);
+    const result = await transport.sendMail(message);
     debug("mail sending response", { result });
 
-    const failed = result.rejected.concat(result.pending).filter(Boolean);
+    const failed = result.rejected.concat(result.pending ?? []).filter(Boolean);
     if (failed.length) {
       throw new Error(`Email(s) (${failed.join(", ")}) could not be sent`);
     }
@@ -226,7 +224,7 @@ export async function sendEmail({
       warn("unable to send email", { error: e });
     }
     if (e instanceof Error) {
-      throw new Error(e.message);
+      throw new Error(e.message, { cause: e });
     }
   }
 }
@@ -263,14 +261,8 @@ export function generateEmailBody(params: {
     // bad url, oh no
   }
 
-  let from = template?.sender;
-  const possibleSender = params.variables.find(({ name }) => name === "sender");
-  if (possibleSender && !from) {
-    from = possibleSender?.value;
-  }
-
   // if you accidentally deleted this, we should save you from the generic
-  from = replaceVars(
+  let from = replaceVars(
     String(template?.sender ? template?.sender : "${sender}"),
     params.variables,
   );

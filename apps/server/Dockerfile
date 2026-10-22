@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 
 # This Dockerfile is copy-pasted into our main docs at /docs/handbook/deploying-with-docker.
 # Make sure you update both files!
@@ -13,16 +13,14 @@ RUN apk update && apk add --no-cache \
 
 WORKDIR /app
 
-RUN yarn global add turbo
 COPY . .
-# build with node_modules, because I could not figure out pnp
-RUN echo 'nodeLinker: "node-modules"' > ./.yarnrc.yml
-RUN turbo prune @nile-auth/server --docker
+RUN corepack enable
+RUN yarn dlx turbo@2.11.10 prune @nile-auth/server --docker
 
 FROM base AS installer
 
 RUN corepack enable
-RUN corepack prepare yarn@4.7.0 --activate
+RUN corepack prepare yarn@4.8.1 --activate
 
 RUN apk update && apk add --no-cache \
   libc6-compat \
@@ -33,7 +31,8 @@ RUN apk update && apk add --no-cache \
 WORKDIR /app
 
 COPY --from=builder /app/out/json/ .
-RUN yarn install --network-timeout 1000000
+COPY --from=builder /app/.yarnrc.yml .
+RUN yarn install --immutable
 COPY --from=builder /app/out/full/ .
 RUN yarn turbo build --filter=@nile-auth/server...
 
@@ -41,7 +40,7 @@ FROM base AS runner
 
 RUN apk add dumb-init
 RUN corepack enable
-RUN corepack prepare yarn@4.7.0 --activate
+RUN corepack prepare yarn@4.8.1 --activate
 
 WORKDIR /app
 

@@ -8,28 +8,27 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "test": "turbo test",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "audit:security": "yarn npm audit --all --recursive --no-deprecations"
   },
   "devDependencies": {
-    "eslint": "^9.13.0",
+    "eslint": "^9.39.5",
     "prettier": "^3.2.5",
     "prettier-plugin-embed": "^0.4.15",
     "prettier-plugin-sql": "^0.18.1",
-    "turbo": "^2.2.3",
+    "turbo": "^2.11.10",
     "typescript": "^5.4.5"
   },
-  "resolutions": {
-    "prismjs": "^1.30.0",
-    "@nestjs/common": "^10.4.16",
-    "postgres-bytea": "3.0.0",
-    "thirty-two@npm:^1.0.2": "patch:thirty-two@npm%3A1.0.2#./.yarn/patches/thirty-two-npm-1.0.2-9d9270aa34.patch"
-  },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.19.0"
   },
   "packageManager": "yarn@4.8.1",
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "resolutions": {
+    "basic-ftp": "^6.2.3",
+    "thirty-two@npm:^1.0.2": "patch:thirty-two@npm%3A1.0.2#./.yarn/patches/thirty-two-npm-1.0.2-9d9270aa34.patch"
+  }
 }
