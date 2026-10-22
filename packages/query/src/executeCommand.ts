@@ -37,8 +37,6 @@ export async function executeCommand(params: {
   if (!timerClient) {
     return ["Client has gone away"] as unknown as QueryResult[];
   }
-  const client = timerClient.getClient();
-
   debug("pg client retrieved");
 
   try {
@@ -55,7 +53,7 @@ export async function executeCommand(params: {
     const reporter = report(logCommand);
 
     reporter.start();
-    const res = await client.query(_command).catch((e) => {
+    const res = await timerClient.query(_command).catch((e) => {
       const shouldLog =
         // Tenant auth failure is acceptable
         e?.code !== ErrorCodes.invalid_authorization_specification &&

@@ -100,6 +100,36 @@ it. These tests prove the covered queries execute on PostgreSQL and enforce the
 application's membership checks; Nile's native tenant isolation still needs
 testing against Nile.
 
+Runtime regression cases also check concurrent queries, per-request tenant and
+user context, rollback after a failed transaction, and idle or disconnected
+client recovery. The SQL test runner and the server process it launches treat
+Node.js deprecations as failures. The standalone build is copied outside the
+checkout before starting it, so missing packaged dependencies cannot resolve
+from source files.
+
+## Datadog tracing
+
+For dev and prod deployments through Nile's infrastructure, the cluster's
+Datadog admission controller already supplies service tags and agent connection
+settings, including `DD_SERVICE`, `DD_TRACE_AGENT_URL`, and `DD_DOGSTATSD_URL`.
+The agent endpoints use mounted Unix sockets. Deploying Nile Auth requires no
+additional Datadog environment configuration or agent setup.
+
+The Docker startup command and local `yarn dev` and `yarn start:server` commands
+preload `apps/server/tracing.cjs` before loading Next.js. This initializes the
+shared `dd-trace` SDK for both tracing and custom metrics; `report.ts` uses that
+initialized SDK's DogStatsD client. Initializing the SDK before Next.js enables
+the Next.js integration. HTTP and PostgreSQL spans can already be present when
+the SDK reports that Next.js loaded too early, so those spans alone do not
+verify the Next.js integration.
+
+The local commands preserve inherited `NODE_OPTIONS` and Datadog environment
+variables through Turbo. Sending local telemetry requires a reachable agent.
+The `yarn test:sql` runtime cases explicitly run the Docker startup command
+against a local fake Datadog agent over a Unix socket. They verify actual Next.js
+request spans and HTTP custom metrics with test service tags. These tests need
+no Datadog account, credentials, or running cluster agent.
+
 ## Dependency security
 
 Run `yarn audit:security` to check every workspace and transitive dependency,

@@ -1,4 +1,5 @@
 import { level, Logger } from "./logger";
+// Server launchers initialize this shared SDK before Next.js loads.
 import tracer from "dd-trace";
 
 const { debug, warn, error } = Logger("metrics");
@@ -14,15 +15,6 @@ type Metrics =
   | "http.latency"
   | "http.response.count"
   | "http.failure";
-
-try {
-  tracer.init({
-    tags: { env: process.env.DD_ENV, service: process.env.DD_SERVICE },
-  });
-  tracer.use("next");
-} catch (e) {
-  warn("failed to configure UDS. NOT LOGGING TO DATADOG");
-}
 
 export type Reporter = {
   time: [number, number];
