@@ -1,6 +1,9 @@
 import { getToken, JWT } from "next-auth/jwt";
 import { Logger } from "@nile-auth/logger";
+import { Pool } from "pg";
+import getDbInfo from "@nile-auth/query/getDbInfo";
 import { getSecureCookies } from "./next-auth/cookies";
+import { getJwtSession } from "./next-auth/jwtSession";
 
 type SessionUser = { user?: { id?: string } };
 
@@ -23,16 +26,19 @@ export async function buildFetch(
   });
 
   if (token) {
-    debug("token taken from request", { token });
-    const now = Math.floor(Date.now() / 1000);
-    if (
-      token &&
-      typeof token.exp === "number" &&
-      !isNaN(token.exp) &&
-      token.exp > now
-    ) {
-      return [{ user: { id: String(token.id) } }];
+    let pool: Pool | undefined;
+    try {
+      pool = new Pool(getDbInfo(undefined, req));
+      const active = await getJwtSession(pool, token);
+      return [{ user: active ? { id: active.user.id } : undefined }];
+    } catch (e) {
+      if (e instanceof Error) {
+        warn("revocation check failed", { message: e.message });
+      }
+    } finally {
+      await pool?.end();
     }
+    return [{ user: undefined }];
   }
   const url = new URL(req.url);
   const paths = url.pathname.split("/").slice(0, 4);

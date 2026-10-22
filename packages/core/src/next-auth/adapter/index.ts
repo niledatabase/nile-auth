@@ -14,6 +14,7 @@ import { updateUser } from "./updateUser";
 import { createSession } from "./createSession";
 import { getSessionAndUser } from "./getSessionAndUser";
 import { updateSession } from "./updateSession";
+import { deleteSession } from "./deleteSession";
 import { formatTime, query } from "@nile-auth/query";
 import { Logger } from "@nile-auth/logger";
 const { info } = Logger("[next-auth-adapter]");
@@ -47,6 +48,7 @@ export default function NileAdapter(
     createSession: createSession(pool),
     getSessionAndUser: getSessionAndUser(pool),
     updateSession: updateSession(pool),
+    deleteSession: deleteSession(pool),
 
     async unlinkAccount(partialAccount: {
       provider: string;
@@ -59,15 +61,6 @@ export default function NileAdapter(
         WHERE
           provider_account_id = ${providerAccountId}
           AND provider = ${provider}
-      `;
-    },
-
-    async deleteSession(sessionToken) {
-      const sql = await query(pool);
-      await sql`
-        DELETE FROM auth.sessions
-        WHERE
-          session_token = ${sessionToken}
       `;
     },
 

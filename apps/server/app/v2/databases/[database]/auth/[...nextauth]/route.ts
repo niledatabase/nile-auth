@@ -34,9 +34,23 @@ const sanitizeBody = (body: string) => {
   // may remove more than we want, but more is better than none
   return body.replace(/password=([^&#]*)/, "password=***&");
 };
+
+function redirectHeaders(res: Response) {
+  const headers = new Headers();
+  const location = res.headers.get("location");
+  if (location) {
+    headers.set("location", location);
+  }
+  for (const cookie of res.headers.getSetCookie()) {
+    headers.append("set-cookie", cookie);
+  }
+  return headers;
+}
 export async function GET(
   req: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ database: string; nextauth: string[] }> },
+  {
+    params: paramsPromise,
+  }: { params: Promise<{ database: string; nextauth: string[] }> },
 ) {
   const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_GET);
@@ -50,12 +64,7 @@ export async function GET(
     }
 
     if (res.status === 302) {
-      const location = res.headers.get("location");
-      const cookies = res.headers.get("set-cookie");
-      const headers = new Headers({
-        location: location,
-        "Set-Cookie": cookies,
-      });
+      const headers = redirectHeaders(res);
       return responder(
         null,
         {
@@ -82,7 +91,9 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ database: string; nextauth: string[] }> },
+  {
+    params: paramsPromise,
+  }: { params: Promise<{ database: string; nextauth: string[] }> },
 ) {
   const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.NILE_AUTH_POST);
@@ -104,12 +115,7 @@ export async function POST(
     }
 
     if (res.status === 302) {
-      const location = res.headers.get("location");
-      const cookies = res.headers.get("set-cookie");
-      const headers = new Headers({ location });
-      if (cookies) {
-        headers.set("Set-Cookie", cookies);
-      }
+      const headers = redirectHeaders(res);
       return responder(
         null,
         {
