@@ -102,17 +102,32 @@ testing against Nile.
 
 Runtime regression cases also check concurrent queries, per-request tenant and
 user context, rollback after a failed transaction, and idle or disconnected
-client recovery. The test runner and server fail on Node.js deprecations. A
-local fake Datadog agent verifies that the Docker startup command emits Next.js
-request spans. The standalone build is copied outside the checkout before
-starting it, so missing packaged dependencies cannot resolve from source files.
+client recovery. The SQL test runner and the server process it launches treat
+Node.js deprecations as failures. The standalone build is copied outside the
+checkout before starting it, so missing packaged dependencies cannot resolve
+from source files.
 
-The deployed containers already receive Datadog service tags and agent Unix
-socket settings from the cluster's admission controller. The Docker entrypoint
-preloads `apps/server/tracing.cjs` before Next.js and inherits those settings;
-deployment does not require additional Datadog environment configuration. The
-runtime regression tests verify request spans and HTTP metrics over an agent
-Unix socket, matching that deployed transport.
+## Datadog tracing
+
+For dev and prod deployments through Nile's infrastructure, the cluster's
+Datadog admission controller already supplies service tags and agent connection
+settings, including `DD_SERVICE`, `DD_TRACE_AGENT_URL`, and `DD_DOGSTATSD_URL`.
+The agent endpoints use mounted Unix sockets. Deploying Nile Auth requires no
+additional Datadog environment configuration or agent setup.
+
+The application initializes its bundled `dd-trace` SDK. The Docker startup
+command preloads `apps/server/tracing.cjs` before loading Next.js, inheriting the
+settings supplied by the cluster. This startup order enables the Next.js
+integration. HTTP and PostgreSQL spans can already be present when the SDK
+reports that Next.js loaded too early, so those spans alone do not verify the
+Next.js integration.
+
+Local `yarn dev` and `yarn start:server` use the normal Next.js commands and do
+not preload `tracing.cjs`. The `yarn test:sql` runtime cases explicitly run the
+Docker startup command against a local fake Datadog agent over a Unix socket.
+They verify actual Next.js request spans and HTTP custom metrics with test
+service tags. These tests need no Datadog account, credentials, or running
+cluster agent.
 
 ## Dependency security
 
