@@ -254,9 +254,9 @@ export async function makeNewSessionJwt(req: Request, user: User) {
   if (process.env.NEXTAUTH_SECRET) {
     // no salt for session cookie
     newToken = await encode({
-      ...jwt,
       token,
       secret: process.env.NEXTAUTH_SECRET,
+      maxAge,
     });
   }
 

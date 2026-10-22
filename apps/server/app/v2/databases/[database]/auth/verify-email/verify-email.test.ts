@@ -95,7 +95,7 @@ jest.mock("@nile-auth/logger", () => ({
       (body, { status = 200, headers = {} }) =>
         new Response(body, { status, headers }),
     ),
-    { error: (e: Error) => jest.fn },
+    { error: (e: Error) => console.log(e) },
   ],
 }));
 

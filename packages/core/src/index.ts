@@ -1,5 +1,6 @@
 import { Logger } from "@nile-auth/logger";
 import NextAuth, { AuthOptions as NextAuthOptions } from "next-auth";
+import { getToken } from "next-auth/jwt";
 
 import { buildOptions } from "./utils";
 import { nextOptions } from "./nextOptions";
@@ -7,6 +8,8 @@ import getDbInfo from "@nile-auth/query/getDbInfo";
 import {
   getOrigin,
   getTenantCookie,
+  getSecureCookies,
+  getSessionTokenCookie,
   setTenantCookie,
 } from "./next-auth/cookies";
 import { isFQDN } from "validator";
@@ -38,41 +41,6 @@ function isWellFormedUrl(input: string) {
     warn("Invalid nile origin url sent", { input });
     return false;
   }
-}
-
-function normalizeCredentialIdentifier(value: unknown): string | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length ? trimmed : null;
-}
-
-async function getCredentialIdentifier(req: Request): Promise<string | null> {
-  try {
-    const formData = await req.clone().formData();
-    const fromForm =
-      normalizeCredentialIdentifier(formData.get("email")) ??
-      normalizeCredentialIdentifier(formData.get("identifier"));
-    if (fromForm) {
-      return fromForm;
-    }
-  } catch {
-    // ignore parsing form errors
-  }
-
-  try {
-    const jsonData = (await req.clone().json()) as Record<string, unknown>;
-    const fromJson =
-      normalizeCredentialIdentifier(jsonData?.email) ??
-      normalizeCredentialIdentifier(jsonData?.identifier);
-    if (fromJson) {
-      return fromJson;
-    }
-  } catch {
-    // ignore parsing json errors
-  }
-  return null;
 }
 
 // Do not give NileAuth the `responder`, just return basic responses, let the wrappers handle the logging
@@ -111,7 +79,7 @@ export default async function NileAuth(
   const opts = buildOptions(req, cfg);
   try {
     const preserve = await req.clone();
-    const handler = await NextAuth(
+    const handler: Response = await NextAuth(
       req as unknown as any, // NextApiRequest
       { params } as unknown as any, // NextApiResponse
       opts as unknown as NextAuthOptions,
@@ -122,9 +90,50 @@ export default async function NileAuth(
     const isCallbackRoute = segments[0] === "callback";
     const isCredentials = segments[1] === "credentials";
 
-    const identifier = await getCredentialIdentifier(preserve);
-    if (identifier) {
+    if (handler.status < 402 && isCallbackRoute && isCredentials) {
+      const providerMfaResponse = await buildProviderMfaResponse(
+        await preserve.clone(),
+        dbInfo,
+      );
+      if (providerMfaResponse) {
+        return providerMfaResponse;
+      }
+    }
+
+    if (
+      req.method === "POST" &&
+      handler.status >= 200 &&
+      handler.status < 400 &&
+      isCallbackRoute &&
+      isCredentials
+    ) {
       try {
+        const cookieName = getSessionTokenCookie(getSecureCookies(req)).name;
+        const sessionCookies = handler.headers
+          .getSetCookie()
+          .filter((value) => {
+            const name = value.slice(0, value.indexOf("="));
+            return name === cookieName || name.startsWith(`${cookieName}.`);
+          });
+        const token = await getToken({
+          req: {
+            cookies: Object.fromEntries(
+              sessionCookies.map((value) => {
+                const cookie = value.split(";")[0]!;
+                const separator = cookie.indexOf("=");
+                return [
+                  cookie.slice(0, separator),
+                  cookie.slice(separator + 1),
+                ];
+              }),
+            ),
+          } as any,
+          cookieName,
+          secret: opts.secret,
+        });
+        if (!token || typeof token.id !== "string") {
+          return handler;
+        }
         const sql = await queryByReq(preserve);
         const [tenantRows] = await sql`
           SELECT DISTINCT
@@ -135,7 +144,7 @@ export default async function NileAuth(
             JOIN users.tenant_users tu ON t.id = tu.tenant_id
             JOIN users.users u ON u.id = tu.user_id
           WHERE
-            LOWER(u.email) = LOWER(${identifier})
+            u.id = ${token.id}
             AND tu.deleted IS NULL
             AND t.deleted IS NULL
             AND u.deleted IS NULL
@@ -161,16 +170,6 @@ export default async function NileAuth(
             stack: tenantError.stack,
           });
         }
-      }
-    }
-
-    if (handler.status < 402 && isCallbackRoute && isCredentials) {
-      const providerMfaResponse = await buildProviderMfaResponse(
-        await preserve.clone(),
-        dbInfo,
-      );
-      if (providerMfaResponse) {
-        return providerMfaResponse;
       }
     }
 

@@ -2,8 +2,8 @@ import { getToken, JWT } from "next-auth/jwt";
 import { Logger } from "@nile-auth/logger";
 import { Pool } from "pg";
 import getDbInfo from "@nile-auth/query/getDbInfo";
-import { query } from "@nile-auth/query";
 import { getSecureCookies } from "./next-auth/cookies";
+import { getJwtSession } from "./next-auth/jwtSession";
 
 type SessionUser = { user?: { id?: string } };
 
@@ -26,47 +26,19 @@ export async function buildFetch(
   });
 
   if (token) {
-    debug("token taken from request", { token });
-    const now = Math.floor(Date.now() / 1000);
-    if (
-      token &&
-      typeof token.exp === "number" &&
-      !isNaN(token.exp) &&
-      token.exp > now
-    ) {
-      try {
-        if (typeof token.jti !== "string") {
-          throw new Error("JWT missing jti");
-        }
-        const dbInfo = getDbInfo(undefined, req);
-        const pool = new Pool(dbInfo);
-        const sql = await query(pool);
-        const sessions = await sql`
-          SELECT
-            expires_at
-          FROM
-            auth.sessions
-          WHERE
-            session_token = ${token.jti}
-        `;
-        if (
-          sessions &&
-          "rowCount" in sessions &&
-          sessions.rowCount > 0 &&
-          sessions.rows[0]?.expires_at &&
-          new Date(sessions.rows[0].expires_at).getTime() > Date.now()
-        ) {
-          return [{ user: { id: String(token.id) } }];
-        }
-      } catch (e) {
-        if (e instanceof Error) {
-          warn("revocation check failed", {
-            message: e.message,
-            stack: e.stack,
-          });
-        }
+    let pool: Pool | undefined;
+    try {
+      pool = new Pool(getDbInfo(undefined, req));
+      const active = await getJwtSession(pool, token);
+      return [{ user: active ? { id: active.user.id } : undefined }];
+    } catch (e) {
+      if (e instanceof Error) {
+        warn("revocation check failed", { message: e.message });
       }
+    } finally {
+      await pool?.end();
     }
+    return [{ user: undefined }];
   }
   const url = new URL(req.url);
   const paths = url.pathname.split("/").slice(0, 4);

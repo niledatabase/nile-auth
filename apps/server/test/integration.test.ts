@@ -96,7 +96,7 @@ describe("api integration", () => {
 
     // be sure the session user is assigned to the created tenant
     const checkMeUpdate = await nile.api.users.me();
-    expect(checkMeUpdate).toMatchObject({ tenants: [{ id: newTenant.id }] });
+    expect(checkMeUpdate).toMatchObject({ tenants: [newTenant.id] });
 
     // contextualize the remaining queries
     nile.tenantId = newTenant.id;
@@ -174,9 +174,9 @@ describe("api integration", () => {
     const nile = new Server(config);
     await initialDebugCleanup(nile);
 
-    const user = (await nile.api.users.createUser(
-      staleJwtUser,
-    )) as unknown as { id: string };
+    const user = (await nile.api.users.createUser(staleJwtUser)) as unknown as {
+      id: string;
+    };
     expect(user.id).toBeTruthy();
 
     await nile.api.login(staleJwtUser, { returnResponse: true });
@@ -186,6 +186,11 @@ describe("api integration", () => {
 
     // capture the auth cookies before revocation
     const staleHeaders = new Headers(nile.api.headers);
+    expect(staleHeaders.get("cookie")).toMatch(/nile\.session-token=/);
+    const replayBeforeSignOut = await nile.api.users.me<{ email: string }>(
+      staleHeaders,
+    );
+    expect(replayBeforeSignOut.email).toEqual(staleJwtUser.email);
 
     const signOutRes = (await nile.api.auth.signOut({
       callbackUrl: "http://localhost:3000",

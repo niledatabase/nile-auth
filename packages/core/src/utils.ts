@@ -15,6 +15,7 @@ import handleGithubRefresh from "./next-auth/providers/github";
 import { Params, PartyResultSet } from "./next-auth/providers/types";
 import { ensureMfaChallenge } from "./mfa";
 import { buildMfaError, encodeMfaPayload } from "./mfa/utils";
+import { maxAge } from "./nextOptions";
 
 const { info, error, debug, warn } = Logger("nile-auth/RouteWrapper");
 
@@ -137,82 +138,77 @@ export async function jwt(params: {
   isNewUser?: boolean;
   session?: any;
   dbInfo?: DbCreds;
+  sessionMaxAge?: number;
 }): Promise<JWT> {
   const { user, token } = params;
   if (user) {
     token.id = user.id;
     token.name = user.name;
     token.picture = user.image;
+    // NextAuth replaces jti every time it encodes a JWT. Keep our database
+    // session key in a separate claim so renewed tokens revoke together.
+    token.sid = randomUUID();
   }
-  debug("JWT CALLBACK", { token, user });
-  if (!token.jti) {
-    token.jti = randomUUID();
+  if (
+    !params.dbInfo ||
+    typeof token.id !== "string" ||
+    typeof token.sid !== "string" ||
+    !token.sid
+  ) {
+    throw new Error("JWT session is missing its database session key");
   }
-  const exp =
-    typeof token.exp === "number" && !isNaN(token.exp) ? token.exp : null;
-  if (params.dbInfo && token.id && exp) {
-    await persistJwtSession({
-      token,
-      dbInfo: params.dbInfo,
-      userId: String(token.id),
-      expiresAt: new Date(exp * 1000),
-    });
+  const exp = Math.floor(Date.now() / 1000) + (params.sessionMaxAge ?? maxAge);
+  token.exp = exp;
+  const expiresAt = new Date(exp * 1000);
+  const pool = new Pool(params.dbInfo);
+  try {
+    const sql = query(pool);
+    const result = user
+      ? await sql`
+          INSERT INTO
+            auth.sessions (user_id, expires_at, session_token)
+          VALUES
+            (
+              ${token.id},
+              ${expiresAt},
+              ${token.sid}
+            )
+        `
+      : await sql`
+          UPDATE auth.sessions
+          SET
+            expires_at = ${expiresAt}
+          WHERE
+            session_token = ${token.sid}
+            AND user_id = ${token.id}
+            AND expires_at > CURRENT_TIMESTAMP
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                users.users
+              WHERE
+                id = ${token.id}
+                AND deleted IS NULL
+            )
+        `;
+    if (!result || !("rowCount" in result) || result.rowCount !== 1) {
+      throw new Error("JWT session could not be saved or has been revoked");
+    }
+  } finally {
+    await pool.end();
   }
   return token;
 }
 
-async function persistJwtSession({
-  token,
-  dbInfo,
-  userId,
-  expiresAt,
-}: {
-  token: JWT;
-  dbInfo: DbCreds;
-  userId: string;
-  expiresAt: Date;
-}) {
-  try {
-    const pool = new Pool(dbInfo);
-    pool.on("error", (e: Error) => {
-      info("Unexpected error on client", {
-        stack: e.stack,
-        message: e.message,
-      });
-    });
-    const sql = await query(pool);
-    await sql`
-      INSERT INTO
-        auth.sessions (user_id, expires_at, session_token)
-      VALUES
-        (
-          ${userId},
-          ${expiresAt},
-          ${token.jti}
-        )
-      ON CONFLICT (session_token) DO
-      UPDATE
-      SET
-        user_id = EXCLUDED.user_id,
-        expires_at = EXCLUDED.expires_at
-    `;
-  } catch (e) {
-    if (e instanceof Error) {
-      warn("Failed to persist JWT session", {
-        message: e.message,
-        stack: e.stack,
-      });
-    }
-  }
-}
-
 export function buildOptions(req: Request, cfg?: AuthOptions) {
-  const dbInfo = getDbInfo(cfg);
+  const dbInfo = getDbInfo(cfg, req);
   const config = cfg ? cfg : ({} as AuthOptions);
-  config.adapter = Adapter({
+  const adapter = Adapter({
     ...config,
     ...dbInfo,
   });
+  config.adapter = adapter;
   config.callbacks = {
     signIn: async function signIn(params) {
       const challenge = await ensureMfaChallenge({
@@ -230,6 +226,7 @@ export function buildOptions(req: Request, cfg?: AuthOptions) {
       jwt({
         ...params,
         dbInfo,
+        sessionMaxAge: config.session?.maxAge,
       }),
     session: async function session(params) {
       const { session, token, user } = params;
@@ -254,27 +251,14 @@ export function buildOptions(req: Request, cfg?: AuthOptions) {
       return { expires: new Date().toISOString() };
     },
   };
+  const signOut = config.events?.signOut;
   config.events = {
+    ...config.events,
     async signOut(message) {
-      if (!message?.token?.jti) {
-        return;
+      if ("token" in message && typeof message.token?.sid === "string") {
+        await adapter.deleteSession?.(message.token.sid);
       }
-      try {
-        const pool = new Pool(dbInfo);
-        const sql = await query(pool);
-        await sql`
-          DELETE FROM auth.sessions
-          WHERE
-            session_token = ${message.token.jti}
-        `;
-      } catch (e) {
-        if (e instanceof Error) {
-          warn("Failed to revoke JWT session", {
-            message: e.message,
-            stack: e.stack,
-          });
-        }
-      }
+      await signOut?.(message);
     },
   };
   return {

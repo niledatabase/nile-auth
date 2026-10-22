@@ -59,9 +59,7 @@ describe("accept invite", () => {
 
       values.forEach((val, idx) => {
         const normalized =
-          val &&
-          typeof val === "object" &&
-          "value" in (val as Record<string, any>)
+          val && typeof val === "object" && "value" in (val as Record<string, any>)
             ? (val as { value: string }).value
             : val;
         text = text.replace(`$${idx + 1}`, normalized as string);
@@ -131,9 +129,7 @@ describe("accept invite", () => {
       }
       values.forEach((val, i) => {
         const normalized =
-          val &&
-          typeof val === "object" &&
-          "value" in (val as Record<string, any>)
+          val && typeof val === "object" && "value" in (val as Record<string, any>)
             ? (val as { value: string }).value
             : val;
         text = text.replace(`$${i + 1}`, normalized as string);
@@ -145,6 +141,7 @@ describe("accept invite", () => {
       commands.push(text);
 
       if (text.includes("DELETE")) {
+        console.log(text, "not here?");
         return [null, { rowCount: 1 }];
       }
 

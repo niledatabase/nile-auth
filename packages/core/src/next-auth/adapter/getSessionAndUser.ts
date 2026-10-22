@@ -4,6 +4,7 @@ import { decode } from "next-auth/jwt";
 
 import { convertUser, convertSession, NileSession } from "./converter";
 import { query } from "@nile-auth/query";
+import { getJwtSession } from "../jwtSession";
 
 export function getSessionAndUser(pool: Pool) {
   return async function getSessionAndUser(
@@ -17,46 +18,17 @@ export function getSessionAndUser(pool: Pool) {
     }
     const sql = await query(pool);
 
-    // try doing jwt first, its maybe faster?
+    let parsed;
     try {
-      const parsed = await decode({
+      parsed = await decode({
         token: sessionToken,
         secret: String(process.env.NEXTAUTH_SECRET),
       });
-      if (
-        typeof parsed?.email === "string" &&
-        typeof parsed?.id === "string" &&
-        typeof parsed.exp === "number" &&
-        typeof parsed.jti === "string"
-      ) {
-        const sessions = await sql`
-          SELECT
-            expires_at
-          FROM
-            auth.sessions
-          WHERE
-            session_token = ${parsed.jti}
-        `;
-        if (!(sessions && "rowCount" in sessions && sessions.rowCount > 0)) {
-          return null;
-        }
-        const expires = sessions.rows[0]?.expires_at
-          ? new Date(sessions.rows[0].expires_at)
-          : null;
-        if (expires && expires.getTime() < Date.now()) {
-          return null;
-        }
-        return {
-          user: { id: parsed.id, email: parsed.email, emailVerified: null },
-          session: {
-            sessionToken: parsed.jti,
-            userId: parsed.id,
-            expires: new Date(parsed.exp * 1000),
-          },
-        };
-      }
-    } catch (e) {
-      // do nothing, they may have a valid session (non JWT)
+    } catch {
+      // OAuth and email sign-ins use opaque database session tokens.
+    }
+    if (parsed) {
+      return getJwtSession(pool, parsed);
     }
 
     const sessions = await sql`

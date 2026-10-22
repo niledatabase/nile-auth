@@ -40,6 +40,7 @@ jest.mock("./next-auth/providers/email", () => ({
 
 import NileAuth from "./index";
 import NextAuth from "next-auth";
+import { encode } from "next-auth/jwt";
 import { nextOptions } from "./nextOptions";
 import { buildOptions } from "./utils";
 import getDbInfo from "@nile-auth/query/getDbInfo";
@@ -79,15 +80,27 @@ describe("NileAuth", () => {
     port: 5432,
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
+    process.env.NEXTAUTH_SECRET = "unit-test-secret";
     getDbInfoMock.mockReturnValue(dbInfo as any);
     nextOptionsMock.mockResolvedValue([{ providers: [{}] } as any]);
     buildOptionsMock.mockReturnValue({} as any);
     getOriginMock.mockReturnValue("https://example.com");
     getTenantCookieMock.mockReturnValue(null);
     buildProviderMfaResponseMock.mockResolvedValue(null);
-    nextAuthMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const token = await encode({
+      token: { id: "authenticated-user", sid: "session-key" },
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+    nextAuthMock.mockResolvedValue(
+      new Response(null, {
+        status: 200,
+        headers: {
+          "set-cookie": `__Secure-nile.session-token=${token}; Path=/`,
+        },
+      }),
+    );
     setTenantCookieMock.mockReturnValue(
       new Headers([["set-cookie", "tenant=new"]]),
     );
@@ -133,9 +146,50 @@ describe("NileAuth", () => {
     expect(setTenantCookieMock).toHaveBeenCalledWith(req, [
       { id: "tenant-123", name: "Tenant 123" },
     ]);
-    expect(res.headers.get("set-cookie")).toEqual("tenant=new");
+    expect(res.headers.getSetCookie()).toContain("tenant=new");
     expect(executedQueries).toEqual([
-      "SELECT DISTINCT t.id, t.name FROM public.tenants t JOIN users.tenant_users tu ON t.id = tu.tenant_id JOIN users.users u ON u.id = tu.user_id WHERE LOWER(u.email) = LOWER(unit@example.com) AND tu.deleted IS NULL AND t.deleted IS NULL AND u.deleted IS NULL",
+      "SELECT DISTINCT t.id, t.name FROM public.tenants t JOIN users.tenant_users tu ON t.id = tu.tenant_id JOIN users.users u ON u.id = tu.user_id WHERE u.id = authenticated-user AND tu.deleted IS NULL AND t.deleted IS NULL AND u.deleted IS NULL",
     ]);
+  });
+
+  it.each([200, 302, 401, 403])(
+    "does not expose tenants without a new session cookie (HTTP %s)",
+    async (status) => {
+      nextAuthMock.mockResolvedValue(new Response(null, { status }));
+      const req = new Request("https://example.com/auth/callback/credentials", {
+        method: "POST",
+        body: new URLSearchParams({ email: "unit@example.com" }),
+      });
+      await NileAuth(req, {
+        params: { nextauth: ["callback", "credentials"] },
+      });
+      expect(queryByReqMock).not.toHaveBeenCalled();
+      expect(setTenantCookieMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not set tenant cookies during an MFA challenge", async () => {
+    const challenge = new Response(JSON.stringify({ mfa: true }), {
+      status: 401,
+    });
+    buildProviderMfaResponseMock.mockResolvedValue(challenge);
+    const req = new Request("https://example.com/auth/callback/credentials", {
+      method: "POST",
+    });
+    expect(
+      await NileAuth(req, {
+        params: { nextauth: ["callback", "credentials"] },
+      }),
+    ).toBe(challenge);
+    expect(queryByReqMock).not.toHaveBeenCalled();
+  });
+
+  it("does not refresh tenant cookies on unrelated auth routes", async () => {
+    const req = new Request("https://example.com/auth/signin/email", {
+      method: "POST",
+      body: new URLSearchParams({ email: "unit@example.com" }),
+    });
+    await NileAuth(req, { params: { nextauth: ["signin", "email"] } });
+    expect(queryByReqMock).not.toHaveBeenCalled();
   });
 });
