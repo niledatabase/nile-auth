@@ -20,7 +20,7 @@ const profile = {
 };
 
 async function state() {
-  const { rows } = await app.pool.query(`
+  const { rows } = await app.db.query(`
     SELECT
       (SELECT count(*)::int FROM users.users) AS users,
       (SELECT count(*)::int FROM auth.credentials) AS credentials,
@@ -32,7 +32,7 @@ async function state() {
 
 async function session(userId: string, kind: "jwt" | "opaque" = "jwt") {
   const sid = randomUUID();
-  await app.pool.query(
+  await app.db.query(
     `INSERT INTO auth.sessions (session_token, user_id, expires_at)
      VALUES ($1, $2, CURRENT_TIMESTAMP + INTERVAL '1 hour')`,
     [sid, userId],
@@ -106,16 +106,15 @@ async function assertUser(response: Response, expectedTenants: string[]) {
     multiFactor: null,
     tenants: expectedTenants,
   });
-  const saved = await app.pool.query(
-    "SELECT * FROM users.users WHERE id = $1",
-    [user.id],
-  );
+  const saved = await app.db.query("SELECT * FROM users.users WHERE id = $1", [
+    user.id,
+  ]);
   expect(saved.rows).toHaveLength(1);
   expect(saved.rows[0]).toMatchObject({
     email: profile.email,
     given_name: profile.givenName,
   });
-  const credential = await app.pool.query(
+  const credential = await app.db.query(
     `SELECT method, provider, payload->>'email' AS email,
        payload->>'hash' = public.crypt($2, payload->>'hash') AS valid_password
      FROM auth.credentials WHERE user_id = $1`,
@@ -129,7 +128,7 @@ async function assertUser(response: Response, expectedTenants: string[]) {
       valid_password: true,
     },
   ]);
-  const memberships = await app.pool.query(
+  const memberships = await app.db.query(
     "SELECT tenant_id, email FROM users.tenant_users WHERE user_id = $1 ORDER BY tenant_id",
     [user.id],
   );
@@ -147,7 +146,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await app.pool.query(`
+  await app.db.query(`
     TRUNCATE users.users, auth.credentials, auth.sessions,
       public.tenants, users.tenant_users, auth.tenant_oidc_relying_parties;
   `);
@@ -155,16 +154,16 @@ beforeEach(async () => {
   otherTenantId = randomUUID();
   member = randomUUID();
   outsider = randomUUID();
-  await app.pool.query(
+  await app.db.query(
     "INSERT INTO public.tenants (id, name) VALUES ($1, 'Target'), ($2, 'Other')",
     [tenantId, otherTenantId],
   );
-  await app.pool.query(
+  await app.db.query(
     `INSERT INTO users.users (id, email, name) VALUES
       ($1, 'member@example.test', 'Member'), ($2, 'outsider@example.test', 'Outsider')`,
     [member, outsider],
   );
-  await app.pool.query(
+  await app.db.query(
     "INSERT INTO users.tenant_users (tenant_id, user_id) VALUES ($1, $2), ($3, $4)",
     [tenantId, member, otherTenantId, outsider],
   );
@@ -240,7 +239,7 @@ describe.each(["users", "signup"] as const)(
     });
 
     it("rejects a deleted membership", async () => {
-      await app.pool.query(
+      await app.db.query(
         "UPDATE users.tenant_users SET deleted = CURRENT_TIMESTAMP WHERE user_id = $1",
         [member],
       );
@@ -255,7 +254,7 @@ describe.each(["users", "signup"] as const)(
     });
 
     it("rejects a deleted tenant", async () => {
-      await app.pool.query(
+      await app.db.query(
         "UPDATE public.tenants SET deleted = CURRENT_TIMESTAMP WHERE id = $1",
         [tenantId],
       );
@@ -282,7 +281,7 @@ describe.each(["users", "signup"] as const)(
 
     it("rejects a deleted caller", async () => {
       const cookie = await session(member);
-      await app.pool.query(
+      await app.db.query(
         "UPDATE users.users SET deleted = CURRENT_TIMESTAMP WHERE id = $1",
         [member],
       );
@@ -294,7 +293,7 @@ describe.each(["users", "signup"] as const)(
 
     it("rejects a revoked session", async () => {
       const cookie = await session(member);
-      await app.pool.query("DELETE FROM auth.sessions WHERE user_id = $1", [
+      await app.db.query("DELETE FROM auth.sessions WHERE user_id = $1", [
         member,
       ]);
       const before = await state();
@@ -305,7 +304,7 @@ describe.each(["users", "signup"] as const)(
 
     it("rejects a JWT whose stored session has expired", async () => {
       const cookie = await session(member);
-      await app.pool.query(
+      await app.db.query(
         "UPDATE auth.sessions SET expires_at = CURRENT_TIMESTAMP - INTERVAL '1 second' WHERE user_id = $1",
         [member],
       );
@@ -324,7 +323,7 @@ describe.each(["users", "signup"] as const)(
     it("keeps anonymous creation of a brand new tenant working", async () => {
       const response = await create(endpoint, { newTenantName: "New tenant" });
       await expectStatus(response, createdStatus);
-      const created = await app.pool.query(
+      const created = await app.db.query(
         "SELECT id FROM public.tenants WHERE name = 'New tenant'",
       );
       expect(created.rows).toHaveLength(1);
@@ -358,7 +357,7 @@ describe.each(["users", "signup"] as const)(
     it("fails closed when the membership query cannot execute", async () => {
       const before = await state();
       const cookie = await session(member);
-      await app.pool.query(
+      await app.db.query(
         "ALTER TABLE users.tenant_users RENAME COLUMN user_id TO unavailable_user_id",
       );
       try {
@@ -366,7 +365,7 @@ describe.each(["users", "signup"] as const)(
         await expectStatus(response, 500);
         expect(await state()).toEqual(before);
       } finally {
-        await app.pool.query(
+        await app.db.query(
           "ALTER TABLE users.tenant_users RENAME COLUMN unavailable_user_id TO user_id",
         );
       }
@@ -387,7 +386,7 @@ it("stores quoted profile values as data and produces a working login", async ()
   expect(user.email).toBe(body.email);
   expect(
     (
-      await app.pool.query("SELECT name FROM users.users WHERE id = $1", [
+      await app.db.query("SELECT name FROM users.users WHERE id = $1", [
         user.id,
       ])
     ).rows[0].name,
@@ -413,15 +412,13 @@ it("stores quoted profile values as data and produces a working login", async ()
 });
 
 it("supports the pre-MFA schema through the actual information_schema fallback", async () => {
-  await app.pool.query("ALTER TABLE users.users DROP COLUMN multi_factor");
+  await app.db.query("ALTER TABLE users.users DROP COLUMN multi_factor");
   try {
     const response = await create("users", { tenantId }, await session(member));
     await expectStatus(response, 201);
     await assertUser(response, [tenantId]);
   } finally {
-    await app.pool.query(
-      "ALTER TABLE users.users ADD COLUMN multi_factor text",
-    );
+    await app.db.query("ALTER TABLE users.users ADD COLUMN multi_factor text");
   }
 });
 
@@ -433,10 +430,9 @@ it("creates a user without password credentials when no password was supplied", 
   expect(user.tenants).toEqual([]);
   expect(
     (
-      await app.pool.query(
-        "SELECT * FROM auth.credentials WHERE user_id = $1",
-        [user.id],
-      )
+      await app.db.query("SELECT * FROM auth.credentials WHERE user_id = $1", [
+        user.id,
+      ])
     ).rows,
   ).toEqual([]);
 });
@@ -448,11 +444,11 @@ it.each([
   "checks existing SSO users with email_verified = %p using real credential rows",
   async (verified, message) => {
     const id = randomUUID();
-    await app.pool.query(
+    await app.db.query(
       "INSERT INTO users.users (id, email, email_verified) VALUES ($1, 'existing@example.test', $2)",
       [id, verified],
     );
-    await app.pool.query(
+    await app.db.query(
       "INSERT INTO auth.credentials (user_id, method, provider) VALUES ($1, 'OIDC', 'google')",
       [id],
     );

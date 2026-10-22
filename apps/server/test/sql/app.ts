@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { Client, Pool } from "pg";
+import { Client } from "pg";
 
 export const sessionSecret = "sql-integration-tests-only";
 
@@ -59,14 +59,15 @@ export async function startSqlTestApp() {
   // A fresh database prevents tests from changing an existing app's data.
   const database = `nile_auth_sql_${randomUUID().replaceAll("-", "")}`;
   let created = false;
-  let pool: Pool | undefined;
+  let db: Client | undefined;
   let app: ChildProcess | undefined;
   const stop = async () => {
     try {
       if (app) await stopApp(app);
-      await pool?.end();
-      if (created)
-        await admin.query(`DROP DATABASE "${database}" WITH (FORCE)`);
+      // Client.end() waits for the socket to close. Pool.end() can resolve
+      // while its idle connection is still closing, racing the database drop.
+      await db?.end();
+      if (created) await admin.query(`DROP DATABASE "${database}"`);
     } finally {
       await admin.end();
     }
@@ -77,8 +78,9 @@ export async function startSqlTestApp() {
     created = true;
     const dbUrl = new URL(connectionString);
     dbUrl.pathname = `/${database}`;
-    pool = new Pool({ connectionString: dbUrl.toString() });
-    await pool.query(await readFile(resolve(__dirname, "schema.sql"), "utf8"));
+    db = new Client({ connectionString: dbUrl.toString() });
+    await db.connect();
+    await db.query(await readFile(resolve(__dirname, "schema.sql"), "utf8"));
 
     const origin = `http://localhost:${await freePort()}`;
     app = spawn(
@@ -137,7 +139,7 @@ export async function startSqlTestApp() {
     if (!ready) throw new Error(`SQL test app did not start:\n${output}`);
 
     return {
-      pool,
+      db,
       url: `${origin}/v2/databases/${database}`,
       stop,
     };
