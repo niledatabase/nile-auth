@@ -115,19 +115,20 @@ settings, including `DD_SERVICE`, `DD_TRACE_AGENT_URL`, and `DD_DOGSTATSD_URL`.
 The agent endpoints use mounted Unix sockets. Deploying Nile Auth requires no
 additional Datadog environment configuration or agent setup.
 
-The application initializes its bundled `dd-trace` SDK. The Docker startup
-command preloads `apps/server/tracing.cjs` before loading Next.js, inheriting the
-settings supplied by the cluster. This startup order enables the Next.js
-integration. HTTP and PostgreSQL spans can already be present when the SDK
-reports that Next.js loaded too early, so those spans alone do not verify the
-Next.js integration.
+The Docker startup command and local `yarn dev` and `yarn start:server` commands
+preload `apps/server/tracing.cjs` before loading Next.js. This initializes the
+shared `dd-trace` SDK for both tracing and custom metrics; `report.ts` uses that
+initialized SDK's DogStatsD client. Initializing the SDK before Next.js enables
+the Next.js integration. HTTP and PostgreSQL spans can already be present when
+the SDK reports that Next.js loaded too early, so those spans alone do not
+verify the Next.js integration.
 
-Local `yarn dev` and `yarn start:server` use the normal Next.js commands and do
-not preload `tracing.cjs`. The `yarn test:sql` runtime cases explicitly run the
-Docker startup command against a local fake Datadog agent over a Unix socket.
-They verify actual Next.js request spans and HTTP custom metrics with test
-service tags. These tests need no Datadog account, credentials, or running
-cluster agent.
+The local commands preserve inherited `NODE_OPTIONS` and Datadog environment
+variables through Turbo. Sending local telemetry requires a reachable agent.
+The `yarn test:sql` runtime cases explicitly run the Docker startup command
+against a local fake Datadog agent over a Unix socket. They verify actual Next.js
+request spans and HTTP custom metrics with test service tags. These tests need
+no Datadog account, credentials, or running cluster agent.
 
 ## Dependency security
 

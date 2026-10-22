@@ -29,14 +29,16 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "passThroughEnv": ["DD_*", "NODE_OPTIONS"]
     },
     "test": {
       "cache": false,
       "persistent": true
     },
     "start": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["DD_*", "NODE_OPTIONS"]
     }
   }
 }

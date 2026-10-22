@@ -1,4 +1,5 @@
 import { level, Logger } from "./logger";
+// Server launchers initialize this shared SDK before Next.js loads.
 import tracer from "dd-trace";
 
 const { debug, warn, error } = Logger("metrics");
