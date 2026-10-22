@@ -287,7 +287,7 @@ describe("mfa/providerResponse", () => {
 
     it("issues authenticator setup challenges with recovery keys", async () => {
       const sqlMock = jest.fn(
-        async (strings: TemplateStringsArray, ...values: unknown[]) => {
+        async (strings: TemplateStringsArray, ..._values: unknown[]) => {
           const text = strings.join(" ");
           if (text.includes("SELECT") && text.includes("template_variables")) {
             return {
@@ -346,7 +346,7 @@ describe("mfa/providerResponse", () => {
 
     it("issues email setup challenge and sends OTP emails", async () => {
       const sqlMock = jest.fn(
-        async (strings: TemplateStringsArray, ...values: unknown[]) => {
+        async (strings: TemplateStringsArray, ..._values: unknown[]) => {
           const text = strings.join(" ");
           if (
             text.includes("INSERT INTO") &&
@@ -400,7 +400,7 @@ describe("mfa/providerResponse", () => {
 
     it("uses provider configuration when override is not supplied", async () => {
       const sqlMock = jest.fn(
-        async (strings: TemplateStringsArray, ...values: unknown[]) => {
+        async (strings: TemplateStringsArray, ..._values: unknown[]) => {
           const text = strings.join(" ");
           if (
             text.includes("INSERT INTO") &&
@@ -441,7 +441,7 @@ describe("mfa/providerResponse", () => {
     it("cleans up verification token when email delivery fails", async () => {
       const deleteCalls: string[] = [];
       const sqlMock = jest.fn(
-        async (strings: TemplateStringsArray, ...values: unknown[]) => {
+        async (strings: TemplateStringsArray, ..._values: unknown[]) => {
           const text = strings.join(" ");
           if (
             text.includes("INSERT INTO") &&
@@ -504,7 +504,7 @@ describe("mfa/providerResponse", () => {
 
     it("throws when email method chosen without user email", async () => {
       const sqlMock = jest.fn(
-        async (strings: TemplateStringsArray, ...values: unknown[]) => {
+        async (strings: TemplateStringsArray, ..._values: unknown[]) => {
           if (strings.join(" ").includes("INSERT INTO")) {
             return { rows: [{ expires: "2025-05-05T00:00:00.000Z" }] };
           }

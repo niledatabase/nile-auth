@@ -53,8 +53,9 @@ import { handleFailure } from "@nile-auth/query/utils";
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { userId?: string; tenantId?: string } },
+  { params: paramsPromise }: { params: Promise<{ userId?: string; tenantId?: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(
     req,
     EventEnum.UPDATE_TENANT_USER,
@@ -90,7 +91,7 @@ export async function PUT(
       if (
         principalInTenant &&
         "rowCount" in principalInTenant &&
-        (Number(principalInTenant.rows[0]?.count) ?? 0) === 0
+        Number(principalInTenant.rows[0]?.count) === 0
       ) {
         return responder(null, { status: 404 });
       }
@@ -114,7 +115,7 @@ export async function PUT(
       if (
         userInTenant &&
         "rowCount" in userInTenant &&
-        (Number(userInTenant.rows[0]?.count) ?? 0) === 0
+        Number(userInTenant.rows[0]?.count) === 0
       ) {
         return responder(null, { status: 404 });
       }

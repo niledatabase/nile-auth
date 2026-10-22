@@ -51,10 +51,9 @@ import { NextRequest } from "next/server";
 
 export async function DELETE(
   req: NextRequest,
-  {
-    params,
-  }: { params: { database: string; tenantId: string; inviteId: string } },
+  { params: paramsPromise }: { params: Promise<{ database: string; tenantId: string; inviteId: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.DELETE_INVITE);
   try {
     const [session] = await auth(req);

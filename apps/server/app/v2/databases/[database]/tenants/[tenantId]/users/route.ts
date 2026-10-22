@@ -54,8 +54,9 @@ import { addContext } from "@nile-auth/query/context";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { database?: string; tenantId?: string } },
+  { params: paramsPromise }: { params: Promise<{ database?: string; tenantId?: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(
     req,
     EventEnum.LIST_TENANT_USERS,
@@ -168,8 +169,9 @@ export async function GET(
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { database?: string; tenantId?: string } },
+  { params: paramsPromise }: { params: Promise<{ database?: string; tenantId?: string }> },
 ) {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(
     req,
     EventEnum.CREATE_TENANT_USER,
@@ -203,7 +205,7 @@ export async function POST(
       if (
         userInTenant &&
         "rowCount" in userInTenant &&
-        (Number(userInTenant.rows[0]?.count) ?? 0) === 0
+        Number(userInTenant.rows[0]?.count) === 0
       ) {
         return responder(null, { status: 404 });
       }

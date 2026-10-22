@@ -42,7 +42,6 @@ export async function executeCommand(params: {
   debug("pg client retrieved");
 
   try {
-    const start = Date.now();
     const command: Command = { ..._command };
     if (_command.rowMode !== "none") {
       command.rowMode = "array";

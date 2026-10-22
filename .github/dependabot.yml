@@ -1,0 +1,35 @@
+version: 2
+
+registries:
+  github-packages-npm:
+    type: npm-registry
+    url: https://npm.pkg.github.com
+    token: ${{ secrets.DEPENDABOT_PACKAGES_TOKEN }}
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    registries: ["github-packages-npm"]
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      non-major:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      non-major:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]

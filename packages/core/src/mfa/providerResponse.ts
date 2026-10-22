@@ -34,7 +34,7 @@ export async function buildProviderMfaResponse(
 ): Promise<Response | null> {
   let email;
   let callback;
-  let callbackCookie = findCallbackCookie(req);
+  const callbackCookie = findCallbackCookie(req);
   try {
     const form = await req.clone();
     const fd = await form.formData();

@@ -26,7 +26,6 @@ import {
   deleteSessionToken,
 } from "./sql";
 import { ProviderNames } from "../types";
-import { normalizeConfig } from "./utils";
 
 const queryMock = query as jest.MockedFunction<typeof query>;
 

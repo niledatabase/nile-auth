@@ -88,7 +88,7 @@ function deserializePayload(encoded: string): SplitPayload {
   try {
     buffer = Buffer.from(payloadSection, "base64");
   } catch (error) {
-    throw new Error("Authenticator secret payload is not valid base64.");
+    throw new Error("Authenticator secret payload is not valid base64.", { cause: error });
   }
 
   if (buffer.length === 0) {
@@ -164,6 +164,6 @@ export function decryptAuthenticatorSecret(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown decryption failure";
-    throw new Error(`Unable to decrypt authenticator secret: ${message}`);
+    throw new Error(`Unable to decrypt authenticator secret: ${message}`, { cause: error });
   }
 }

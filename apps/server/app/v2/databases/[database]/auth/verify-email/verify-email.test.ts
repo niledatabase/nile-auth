@@ -1,3 +1,9 @@
+jest.mock("nodemailer", () => ({
+  createTransport: () => ({
+    sendMail: async () => ({ rejected: [], pending: [] }),
+  }),
+}));
+
 import { NextRequest } from "next/server";
 import { GET, POST } from "./route";
 

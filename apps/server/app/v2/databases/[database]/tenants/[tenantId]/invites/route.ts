@@ -96,8 +96,9 @@ import { NextRequest } from "next/server";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { database?: string; tenantId?: string } },
+  { params: paramsPromise }: { params: Promise<{ database?: string; tenantId?: string }> },
 ): Promise<Response> {
+  const params = await paramsPromise;
   const [responder, reporter] = ResponseLogger(req, EventEnum.LIST_INVITES);
   try {
     const [session] = await auth(req);

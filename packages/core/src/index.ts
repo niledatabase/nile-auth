@@ -1,4 +1,4 @@
-import { Logger, ResponderFn } from "@nile-auth/logger";
+import { Logger } from "@nile-auth/logger";
 import NextAuth, { AuthOptions as NextAuthOptions } from "next-auth";
 
 import { buildOptions } from "./utils";

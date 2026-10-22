@@ -6,7 +6,6 @@ import {
   getCsrfTokenCookie,
   getOrigin,
   getSecureCookies,
-  X_NILE_ORIGIN,
 } from "@nile-auth/core/cookies";
 import { getCsrfCookie, getCookieParts } from "@nile-auth/core/csrf";
 import { Logger } from "@nile-auth/logger";
@@ -22,7 +21,7 @@ const routes = {
 
 export async function login(
   req: NextRequest,
-  { params }: { params: { database: string; nextauth: string[] } },
+  { params }: { params: { database: string } },
 ) {
   const { email, password } = await req.json();
   if (!email || !password) {
@@ -77,7 +76,7 @@ export async function login(
   });
 
   const loginRes = await handlers.POST(postReq, {
-    params: { ...params, nextauth: ["callback", "credentials"] },
+    params: Promise.resolve({ ...params, nextauth: ["callback", "credentials"] }),
   });
   const authCookie = loginRes?.headers.get("set-cookie");
   const details: Record<string, unknown> = {
