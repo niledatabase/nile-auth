@@ -2101,7 +2101,7 @@ __metadata:
     "@turbo/gen": "npm:^2.11.10"
     "@types/jest": "npm:^29.5.14"
     "@types/node": "npm:^24.19.2"
-    dd-trace: "npm:^5.132.0"
+    dd-trace: "npm:^6.21.0"
     eslint: "npm:^9.39.5"
     jest: "npm:^29.7.0"
     ts-jest: "npm:^29.4.15"
@@ -4694,9 +4694,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dd-trace@npm:^5.132.0":
-  version: 5.132.0
-  resolution: "dd-trace@npm:5.132.0"
+"dd-trace@npm:^6.21.0":
+  version: 6.21.0
+  resolution: "dd-trace@npm:6.21.0"
   dependencies:
     "@datadog/libdatadog": "npm:^0.21.0"
     "@datadog/libdatadog-extras": "npm:^0.21.0"
@@ -4732,7 +4732,7 @@ __metadata:
       optional: true
     oxc-parser:
       optional: true
-  checksum: 10c0/7ba1b243647d0830aa9b30778d8afb0304330425cbba9e2558c8103ebc61fb69451be4e48a1de873fb132e86f0fa9003ca0226a80c1b2c37ca97b37ff4d99a16
+  checksum: 10c0/69fc9945b2435a6b0cafb33f73b0a1331ab966d5b971dd8e308d5a677b52238d2af5e9c146c43331448e9a96ce77c6dc37e9702a9fc349dfde1cd27052b3c2d7
   languageName: node
   linkType: hard
 
