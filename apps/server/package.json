@@ -24,7 +24,7 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "@apidevtools/swagger-parser": "^10.1.0",
+    "@apidevtools/swagger-parser": "^13.1.0",
     "@nile-auth/eslint-config": "workspace:*",
     "@nile-auth/typescript-config": "workspace:*",
     "@niledatabase/server": "^4.1.0",
