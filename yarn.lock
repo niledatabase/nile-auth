@@ -2057,7 +2057,7 @@ __metadata:
     "@nile-auth/typescript-config": "workspace:*"
     "@turbo/gen": "npm:^2.11.10"
     "@types/jest": "npm:^29.5.14"
-    "@types/node": "npm:^24.19.2"
+    "@types/node": "npm:^26.6.5"
     "@types/pg": "npm:^8.23.1"
     "@types/react": "npm:^19.3.0"
     "@types/validator": "npm:^13.15.10"
@@ -2100,7 +2100,7 @@ __metadata:
     "@nile-auth/typescript-config": "workspace:*"
     "@turbo/gen": "npm:^2.11.10"
     "@types/jest": "npm:^29.5.14"
-    "@types/node": "npm:^24.19.2"
+    "@types/node": "npm:^26.6.5"
     dd-trace: "npm:^5.132.0"
     eslint: "npm:^9.39.5"
     jest: "npm:^29.7.0"
@@ -2132,7 +2132,7 @@ __metadata:
     "@nile-auth/typescript-config": "workspace:*"
     "@turbo/gen": "npm:^2.11.10"
     "@types/jest": "npm:^29.5.14"
-    "@types/node": "npm:^24.19.2"
+    "@types/node": "npm:^26.6.5"
     "@types/pg": "npm:^8.23.1"
     "@types/pg-format": "npm:^1.0.5"
     eslint: "npm:^9.39.5"
@@ -2157,7 +2157,7 @@ __metadata:
     "@niledatabase/server": "npm:^4.1.0"
     "@openapitools/openapi-generator-cli": "npm:^2.42.0"
     "@types/jest": "npm:^29.5.12"
-    "@types/node": "npm:^24.19.2"
+    "@types/node": "npm:^26.6.5"
     "@types/react": "npm:^19.3.0"
     "@types/react-dom": "npm:^19.3.0"
     "@types/swagger-ui-react": "npm:^4.19.0"
@@ -3503,12 +3503,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^24.19.2":
-  version: 24.19.2
-  resolution: "@types/node@npm:24.19.2"
+"@types/node@npm:^26.6.5":
+  version: 26.6.5
+  resolution: "@types/node@npm:26.6.5"
   dependencies:
-    undici-types: "npm:>=7.24.0 <7.24.7"
-  checksum: 10c0/b51a7f8854007ad579dffdd0633d8addbfeb2c97cceb380f2eba0ed163638ec52e17565385a6cc04d54ac4ff99c70c64aee68a4ca45b6128c035e828794e29c5
+    undici-types: "npm:~8.9.0"
+  checksum: 10c0/4f791f69466ace7842c09e7bef96cb1ddbb65cf3db916ef7e84f0e2b2a17220b6b816dc7539d01520cadfb17ed7169b8214910900493e0a83be8bc7d124ec20a
   languageName: node
   linkType: hard
 
@@ -9655,17 +9655,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:>=7.24.0 <7.24.7":
-  version: 7.24.6
-  resolution: "undici-types@npm:7.24.6"
-  checksum: 10c0/d9cd8befb643ac904615c280a095ba4240531f6bb4a5e75a22a7483630ca8d3f1016d2ab6ace6ceda1f63b3a2db2fe037fafe121d6917a0187573aa548ff78ca
-  languageName: node
-  linkType: hard
-
 "undici-types@npm:~6.21.0":
   version: 6.21.0
   resolution: "undici-types@npm:6.21.0"
   checksum: 10c0/c01ed51829b10aa72fc3ce64b747f8e74ae9b60eafa19a7b46ef624403508a54c526ffab06a14a26b3120d055e1104d7abe7c9017e83ced038ea5cf52f8d5e04
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~8.9.0":
+  version: 8.9.0
+  resolution: "undici-types@npm:8.9.0"
+  checksum: 10c0/51c712c20c087368f62c6fc0f2bc49fa76bfe5dec28ff01584bb677ff29b0622569783c02d43e151143808c48c0503f804093bd2c491b10f2a830138034cb451
   languageName: node
   linkType: hard
 
