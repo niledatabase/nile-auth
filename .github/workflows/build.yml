@@ -1,13 +1,19 @@
 name: Build
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref_name != 'main' }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 on:
   push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
-  test:
+  checks:
     runs-on: public-ubuntu-x64-2-core
     services:
       postgres:
@@ -22,19 +28,24 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: lts/*
+          node-version: "24"
           cache: "yarn"
 
       - name: Install deps
         run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
 
       - name: test
         run: yarn test
@@ -42,13 +53,65 @@ jobs:
         run: yarn test:sql
         env:
           SQL_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+
+  build-image:
+    if: github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [public-ubuntu-x64-2-core, public-ubuntu-arm64-2-core]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Build production image
+        run: docker build --file apps/server/Dockerfile --tag nile-auth:ci .
+
+      - name: Check production image starts
+        run: |
+          trap 'docker logs nile-auth-ci; docker rm --force nile-auth-ci' EXIT
+          docker run --detach --name nile-auth-ci \
+            --publish 127.0.0.1:3001:3001 \
+            --env HOSTNAME=0.0.0.0 \
+            --env DD_TRACE_ENABLED=false \
+            nile-auth:ci
+          for attempt in {1..30}; do
+            if curl --fail --silent --max-time 2 http://127.0.0.1:3001/v2/ready; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+
+  # Keep the branch protection's required "test" check and include image builds.
+  test:
+    runs-on: public-ubuntu-x64-2-core
+    needs: [checks, build-image]
+    if: always()
+    steps:
+      - name: Require successful validation
+        env:
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          IMAGE_RESULT: ${{ needs.build-image.result }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          test "$CHECKS_RESULT" = success
+          if [ "$EVENT_NAME" = pull_request ]; then
+            test "$IMAGE_RESULT" = success
+          fi
+
   tag:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: public-ubuntu-x64-2-core
     needs: [ "test" ]
+    permissions:
+      contents: write
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Bump tag
         id: tag
@@ -57,6 +120,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docker:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: niledatabase/workflows/.github/workflows/docker-multi-arch-v2.yaml@main
     needs: [ "tag" ]
     permissions:
@@ -70,6 +134,7 @@ jobs:
         type=sha,format=long
 
   publish-helm-chart:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     name: Publish Helm Chart
     runs-on: public-ubuntu-x64-2-core
     needs: [ "docker", "tag" ]
@@ -77,7 +142,9 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Push helm chart
         uses: niledatabase/workflows/.github/actions/helm-release@main
