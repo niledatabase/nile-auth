@@ -2160,7 +2160,7 @@ __metadata:
     "@types/node": "npm:^24.19.2"
     "@types/react": "npm:^19.3.0"
     "@types/react-dom": "npm:^19.3.0"
-    "@types/swagger-ui-react": "npm:^4.19.0"
+    "@types/swagger-ui-react": "npm:^5.18.0"
     bcryptjs: "npm:^3.0.3"
     dotenv: "npm:^16.6.1"
     eslint: "npm:^9.39.5"
@@ -3587,12 +3587,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/swagger-ui-react@npm:^4.19.0":
-  version: 4.19.0
-  resolution: "@types/swagger-ui-react@npm:4.19.0"
+"@types/swagger-ui-react@npm:^5.18.0":
+  version: 5.18.0
+  resolution: "@types/swagger-ui-react@npm:5.18.0"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 10c0/21bd3fff6d45af3242d9a1d5f3d0fb061793eebc62794edc4f1d145237f3595914099ee3333ea9f3c597d56202c0b170608865cbd96f272c970dacfe9940e605
+  checksum: 10c0/948cdd763e7f247a5a620ccef109b2f3baa967e44ec0e02e11492543bcd39793b65dfa5399600d6e7233ffd21917cab403d63c6d614109b83e11017384b8a023
   languageName: node
   linkType: hard
 
