@@ -14,7 +14,7 @@
     "@nile-auth/typescript-config": "workspace:*",
     "@turbo/gen": "^2.11.10",
     "@types/jest": "^29.5.14",
-    "@types/node": "^24.19.2",
+    "@types/node": "^26.6.5",
     "eslint": "^9.39.5",
     "jest": "^29.7.0",
     "ts-jest": "^29.4.15",
