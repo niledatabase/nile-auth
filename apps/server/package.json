@@ -16,7 +16,7 @@
     "@nile-auth/core": "*",
     "@nile-auth/logger": "*",
     "@nile-auth/query": "*",
-    "next": "^16.4.2",
+    "next": "^16.4.3",
     "next-swagger-doc": "^0.5.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
