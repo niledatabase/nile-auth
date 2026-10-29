@@ -15,8 +15,8 @@
   "devDependencies": {
     "eslint": "^9.39.5",
     "prettier": "^3.2.5",
-    "prettier-plugin-embed": "^0.4.15",
-    "prettier-plugin-sql": "^0.18.1",
+    "prettier-plugin-embed": "^0.8.1",
+    "prettier-plugin-sql": "^0.20.0",
     "turbo": "^2.11.10",
     "typescript": "^5.4.5"
   },
