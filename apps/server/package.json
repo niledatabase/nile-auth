@@ -16,11 +16,11 @@
     "@nile-auth/core": "*",
     "@nile-auth/logger": "*",
     "@nile-auth/query": "*",
-    "next": "^16.4.2",
+    "next": "^16.4.4",
     "next-swagger-doc": "^0.5.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "swagger-ui-react": "^5.34.0",
+    "swagger-ui-react": "^5.34.1",
     "yaml": "^2.9.1"
   },
   "devDependencies": {
@@ -33,7 +33,7 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@types/swagger-ui-react": "^4.19.0",
+    "@types/swagger-ui-react": "^5.18.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^16.6.1",
     "eslint": "^9.39.5",
