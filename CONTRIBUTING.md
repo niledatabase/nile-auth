@@ -133,19 +133,26 @@ no Datadog account, credentials, or running cluster agent.
 ## Dependency security
 
 Run `yarn audit:security` to check every workspace and transitive dependency,
-including development tools. Two advisories have no published patched release:
+including development tools. Audit findings are not suppressed. The root
+`resolutions` enforce patched releases where transitive dependencies still
+request vulnerable versions:
 
-- [`braces` / GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
-  affects deeply nested glob patterns used by source discovery and tools. The
-  application supplies fixed source globs.
-- [`sprintf-js` / GHSA-hp3w-g68c-fv3c](https://github.com/advisories/GHSA-hp3w-g68c-fv3c)
-  affects attacker-controlled precision specifiers and remains under legacy
-  `argparse` dependencies.
+- `basic-ftp` uses 6.2.6 or newer to include the
+  [MLSD parser fix](https://github.com/advisories/GHSA-5pm8-86m8-9m6r).
+- `swagger-jsdoc` and `@openapitools/openapi-generator-cli` use `glob` 14.0.6
+  or newer. These overrides cover the
+  [cancellation fix](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) and
+  subsequent fixes on the 14.x line, without changing Jest's legacy glob API.
+- Requests for `minimatch` in the affected 10.x ranges use 11.0.9 or newer to
+  include the [pattern amplification fix](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+  The overrides leave consumers of the separate 3.x API unchanged.
 
-These findings are not suppressed. The `basic-ftp` resolution selects a patched
-6.x version because `get-uri` still requests the affected 5.x line. NextAuth 4's
-optional Nodemailer peer range targets 7.x; the service uses Nodemailer 10 with
-its own delivery implementation, covered by the SMTP test.
+Review these overrides when updating their parent packages. Verify generated
+OpenAPI output, lint, tests, and the standalone build when changing globbing
+dependencies.
+
+NextAuth 4's optional Nodemailer peer range targets 7.x; the service uses
+Nodemailer 10 with its own delivery implementation, covered by the SMTP test.
 
 
 
