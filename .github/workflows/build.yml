@@ -103,7 +103,9 @@ jobs:
           fi
 
   tag:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # The PR-only build-image job is skipped on main. Use an explicit status
+    # function so that skip does not propagate past the successful test gate.
+    if: ${{ !cancelled() && needs.test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: public-ubuntu-x64-2-core
     needs: [ "test" ]
     permissions:
@@ -120,7 +122,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docker:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && needs.tag.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     uses: niledatabase/workflows/.github/workflows/docker-multi-arch-v2.yaml@main
     needs: [ "tag" ]
     permissions:
@@ -134,7 +136,7 @@ jobs:
         type=sha,format=long
 
   publish-helm-chart:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && needs.docker.result == 'success' && needs.tag.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     name: Publish Helm Chart
     runs-on: public-ubuntu-x64-2-core
     needs: [ "docker", "tag" ]
