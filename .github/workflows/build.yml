@@ -102,56 +102,17 @@ jobs:
             test "$IMAGE_RESULT" = success
           fi
 
-  tag:
-    # The PR-only build-image job is skipped on main. Use an explicit status
-    # function so that skip does not propagate past the successful test gate.
-    if: ${{ !cancelled() && needs.test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    runs-on: public-ubuntu-x64-2-core
-    needs: [ "test" ]
-    permissions:
-      contents: write
-    outputs:
-      tag: ${{ steps.tag.outputs.tag }}
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Bump tag
-        id: tag
-        uses: niledatabase/bump-git-tag-action@v0.0.17
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   docker:
-    if: ${{ !cancelled() && needs.tag.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    # The PR-only build-image job is skipped on main. The explicit status check
+    # lets publication proceed after the test gate succeeds.
+    if: ${{ !cancelled() && needs.test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: [test]
     uses: niledatabase/workflows/.github/workflows/docker-multi-arch-v2.yaml@main
-    needs: [ "tag" ]
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
     with:
       file: 'apps/server/Dockerfile'
-      tags: |
-        type=raw,value=${{ needs.tag.outputs.tag }}
-        type=sha
-        type=sha,format=long
-
-  publish-helm-chart:
-    if: ${{ !cancelled() && needs.docker.result == 'success' && needs.tag.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    name: Publish Helm Chart
-    runs-on: public-ubuntu-x64-2-core
-    needs: [ "docker", "tag" ]
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Push helm chart
-        uses: niledatabase/workflows/.github/actions/helm-release@main
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ needs.tag.outputs.tag }}
-          path: ./charts/server
-          app_version: sha-${{ github.sha }}
+      attest: true
