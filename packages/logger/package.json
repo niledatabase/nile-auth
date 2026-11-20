@@ -21,7 +21,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "dd-trace": "^5.132.0",
+    "dd-trace": "^6.21.0",
     "winston": "^3.19.0"
   }
 }
