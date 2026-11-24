@@ -148,7 +148,7 @@ describe("NileAuth", () => {
     ]);
     expect(res.headers.getSetCookie()).toContain("tenant=new");
     expect(executedQueries).toEqual([
-      "SELECT DISTINCT t.id, t.name FROM public.tenants t JOIN users.tenant_users tu ON t.id = tu.tenant_id JOIN users.users u ON u.id = tu.user_id WHERE u.id = authenticated-user AND tu.deleted IS NULL AND t.deleted IS NULL AND u.deleted IS NULL",
+      "SELECT t.id, t.name FROM public.tenants t JOIN users.tenant_users tu ON t.id = tu.tenant_id JOIN users.users u ON u.id = tu.user_id WHERE u.id = authenticated-user AND tu.deleted IS NULL AND t.deleted IS NULL AND u.deleted IS NULL ORDER BY tu.created DESC",
     ]);
   });
 
