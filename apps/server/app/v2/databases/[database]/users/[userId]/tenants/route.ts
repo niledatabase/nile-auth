@@ -51,8 +51,10 @@ export async function GET(req: NextRequest) {
     const [session] = await auth(req);
     if (session && session?.user?.id) {
       const sql = await queryByReq(req);
+      // setTenantCookie falls back to the first row, so list the most
+      // recently joined tenant first.
       const [tenantRows] = await sql`
-        SELECT DISTINCT
+        SELECT
           t.id,
           t.name
         FROM
@@ -62,6 +64,8 @@ export async function GET(req: NextRequest) {
           tu.user_id = ${session.user.id}
           AND tu.deleted IS NULL
           AND t.deleted IS NULL
+        ORDER BY
+          tu.created DESC
       `;
       if (tenantRows && "name" in tenantRows) {
         return handleFailure(responder, tenantRows as ErrorResultSet);

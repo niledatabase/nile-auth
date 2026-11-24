@@ -135,8 +135,10 @@ export default async function NileAuth(
           return handler;
         }
         const sql = await queryByReq(preserve);
+        // setTenantCookie falls back to the first row, so list the most
+        // recently joined tenant first.
         const [tenantRows] = await sql`
-          SELECT DISTINCT
+          SELECT
             t.id,
             t.name
           FROM
@@ -148,6 +150,8 @@ export default async function NileAuth(
             AND tu.deleted IS NULL
             AND t.deleted IS NULL
             AND u.deleted IS NULL
+          ORDER BY
+            tu.created DESC
         `;
 
         if (tenantRows && "name" in tenantRows) {

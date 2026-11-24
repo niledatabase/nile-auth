@@ -373,6 +373,79 @@ describe.each(["users", "signup"] as const)(
   },
 );
 
+describe.each([
+  [
+    "sorts last by id",
+    "00000000-0000-4000-8000-000000000001",
+    "ffffffff-ffff-4fff-8fff-ffffffffffff",
+  ],
+  [
+    "sorts first by id",
+    "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    "00000000-0000-4000-8000-000000000001",
+  ],
+])(
+  "tenant cookie when the most recently joined tenant %s",
+  (_order, olderTenant, newerTenant) => {
+    async function joinBothTenants(userId: string) {
+      await app.db.query(
+        "INSERT INTO public.tenants (id, name) VALUES ($1, 'Older'), ($2, 'Newer')",
+        [olderTenant, newerTenant],
+      );
+      await app.db.query(
+        `INSERT INTO users.tenant_users (tenant_id, user_id, created) VALUES
+          ($1, $3, TIMESTAMP '2026-01-01 00:00:00'),
+          ($2, $3, TIMESTAMP '2026-06-01 00:00:00')`,
+        [olderTenant, newerTenant, userId],
+      );
+    }
+
+    function tenantCookie(response: Response) {
+      return response.headers
+        .getSetCookie()
+        .find((value) => value.startsWith("nile.tenant-id="))
+        ?.split(";")[0];
+    }
+
+    it("lists tenants newest first and sets the cookie to the newest", async () => {
+      const user = randomUUID();
+      await app.db.query(
+        "INSERT INTO users.users (id, email) VALUES ($1, 'joiner@example.test')",
+        [user],
+      );
+      await joinBothTenants(user);
+      const response = await fetch(`${app.url}/users/${user}/tenants`, {
+        headers: { cookie: await session(user) },
+      });
+      await expectStatus(response, 200);
+      expect(
+        (await response.json()).map((tenant: { id: string }) => tenant.id),
+      ).toEqual([newerTenant, olderTenant]);
+      expect(tenantCookie(response)).toBe(`nile.tenant-id=${newerTenant}`);
+    });
+
+    it("sets the cookie to the newest tenant at sign-in", async () => {
+      const created = await create("users");
+      await expectStatus(created, 201);
+      const user = await created.json();
+      await joinBothTenants(user.id);
+      const token = await csrf();
+      const login = await fetch(`${app.url}/auth/callback/credentials`, {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie: token.cookie },
+        body: JSON.stringify({
+          email: profile.email,
+          password,
+          csrfToken: token.csrfToken,
+        }),
+        redirect: "manual",
+      });
+      expect(login.status).toBe(200);
+      expect(tenantCookie(login)).toBe(`nile.tenant-id=${newerTenant}`);
+    });
+  },
+);
+
 it("stores quoted profile values as data and produces a working login", async () => {
   const body = {
     ...profile,
