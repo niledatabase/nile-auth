@@ -12,7 +12,7 @@
   "devDependencies": {
     "@nile-auth/eslint-config": "workspace:*",
     "@nile-auth/typescript-config": "workspace:*",
-    "@turbo/gen": "^2.11.10",
+    "@turbo/gen": "^2.11.13",
     "@types/jest": "^29.5.14",
     "@types/node": "^24.19.2",
     "eslint": "^9.39.5",
